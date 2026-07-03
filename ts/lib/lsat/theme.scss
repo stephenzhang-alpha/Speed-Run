@@ -1,0 +1,133 @@
+/* Copyright: Ankitects Pty Ltd and contributors
+ * License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+ *
+ * Semantic design tokens for the LSAT UI, layered on Anki's theme variables
+ * (--canvas, --fg, --accent-*, --flag-*, --border-radius-*), which are defined
+ * globally by ts/lib/sass/_root-vars.scss and flip under `.night-mode`. Every
+ * token carries a hardcoded fallback so the components still look right when
+ * rendered outside the Anki app (e.g. the mobile PWA in a plain browser tab).
+ *
+ * Design language: inside the desktop app the accent/canvas inherit Anki's
+ * theme (so the dashboard matches light/dark automatically); the fallbacks give
+ * the standalone mobile PWA a distinctive, focused identity -- a deep indigo
+ * accent, a violet secondary, calm slate surfaces, a signature hero gradient,
+ * soft layered shadows, and a consistent type scale. Components read only these
+ * `--lsat-*` tokens, so restyling happens here, once.
+ *
+ * Imported as a global side-effect stylesheet from the LSAT dashboard page and
+ * the mobile layout, so the :root block below applies to those routes. */
+
+:root {
+    /* surfaces + text */
+    --lsat-canvas: var(--canvas, #eef1f6);
+    --lsat-surface: var(--canvas-elevated, #ffffff);
+    --lsat-inset: var(--canvas-inset, #eceff4);
+    --lsat-fg: var(--fg, #171a21);
+    --lsat-fg-subtle: var(--fg-subtle, #5b6472);
+    /* faint text tier: bumped from #98a1b0 (~2.6:1, below AA) to ~4.6:1 on the
+     * light canvas so it is safe for small text; still clearly the faintest tier. */
+    --lsat-fg-faint: var(--fg-faint, #646d7c);
+    --lsat-border: var(--border, rgba(120, 130, 150, 0.3));
+    --lsat-border-subtle: var(--border-subtle, rgba(120, 130, 150, 0.16));
+
+    /* brand + status palette. --lsat-accent inherits Anki's accent inside the
+     * app; the fallback is the LSAT identity indigo used by the mobile PWA. */
+    --lsat-accent: var(--accent-card, #4c5ce0);
+    --lsat-accent-2: #8a5cf6; /* violet secondary, for the signature gradient */
+    --lsat-good: var(--accent-note, #17915a);
+    --lsat-warn: var(--flag-2, #d9840a);
+    --lsat-bad: var(--accent-danger, #d64541);
+    --lsat-accent-soft: color-mix(in srgb, var(--lsat-accent) 12%, transparent);
+    --lsat-good-soft: color-mix(in srgb, var(--lsat-good) 15%, transparent);
+    --lsat-warn-soft: color-mix(in srgb, var(--lsat-warn) 18%, transparent);
+    --lsat-bad-soft: color-mix(in srgb, var(--lsat-bad) 14%, transparent);
+
+    /* signature gradient (hero surfaces, active states, progress fills) */
+    --lsat-hero: linear-gradient(
+        135deg,
+        var(--lsat-accent) 0%,
+        color-mix(in srgb, var(--lsat-accent) 55%, var(--lsat-accent-2)) 100%
+    );
+
+    /* shape + elevation + motion */
+    --lsat-radius: var(--border-radius-medium, 16px);
+    --lsat-radius-sm: var(--border-radius, 9px);
+    --lsat-radius-pill: 999px;
+    --lsat-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 14px rgba(16, 24, 40, 0.06);
+    --lsat-shadow-lift: 0 2px 6px rgba(16, 24, 40, 0.08), 0 16px 40px rgba(16, 24, 40, 0.12);
+    --lsat-glow: 0 0 0 1px color-mix(in srgb, var(--lsat-accent) 22%, transparent),
+        0 6px 22px color-mix(in srgb, var(--lsat-accent) 20%, transparent);
+    --lsat-ring: 0 0 0 3px color-mix(in srgb, var(--lsat-accent) 32%, transparent);
+    --lsat-transition: var(--transition, 180ms);
+    --lsat-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* type scale */
+    --lsat-font: var(
+        --font,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        sans-serif
+    );
+    --lsat-display: clamp(2rem, 1.4rem + 2.6vw, 2.6rem); /* headline scores */
+    --lsat-h2: 1rem;
+    --lsat-num: 700; /* weight for tabular numerals */
+
+    /* rhythm (8px baseline unit) */
+    --lsat-gap: 0.9rem;
+    --lsat-pad: 1.1rem;
+    --lsat-maxw: 980px;
+
+    /* ---- "PROVEN" design language ------------------------------------------
+     * Identity is carried by GEOMETRY + TEXTURE + NOTATION, not by the accent
+     * hue (which inherits Anki's arbitrary theme colour in-app). So: reserve the
+     * gradient for "earned/proven" only, render logic in monospace, and mark
+     * "not yet proven" with a hatch. */
+
+    /* Monospace for LOGIC NOTATION + numerals (conditional arrows,
+     * contrapositives, verdict tokens, proof steps, scores). System stack only. */
+    --lsat-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
+        "Liberation Mono", monospace;
+
+    /* The gradient means PROVEN/EARNED. Alias it so intent is explicit and
+     * decorative gradient use can be audited away. */
+    --lsat-proven: var(--lsat-hero);
+
+    /* Abstain texture: a diagonal hatch that reads "rigour, not empty" -- the
+     * first-class "not yet proven" state (replaces muted em-dashes / opacity). */
+    --lsat-hatch: repeating-linear-gradient(
+        -45deg,
+        var(--lsat-border-subtle) 0,
+        var(--lsat-border-subtle) 1px,
+        transparent 1px,
+        transparent 7px
+    );
+
+    /* Proof gutter / evidence rail: the 2px connective motif (systematises the
+     * ad-hoc section ticks + left borders + the study-stem rule into one token). */
+    --lsat-rail-w: 2px;
+    --lsat-rail: var(--lsat-proven);
+
+    /* Whisper-quiet graph-paper canvas (LSAT scratch-work feel; ~2-3% ink). */
+    --lsat-graph-size: 24px;
+    --lsat-graph:
+        linear-gradient(
+                to right,
+                color-mix(in srgb, var(--lsat-border) 26%, transparent) 1px,
+                transparent 1px
+            )
+            0 0 / var(--lsat-graph-size) var(--lsat-graph-size),
+        linear-gradient(
+                to bottom,
+                color-mix(in srgb, var(--lsat-border) 26%, transparent) 1px,
+                transparent 1px
+            )
+            0 0 / var(--lsat-graph-size) var(--lsat-graph-size);
+
+    /* Semantic elevation: elevated = ACTIONABLE; flat hairline = RECORDED
+     * evidence. (Retires the uniform shadow+hover-lift on every card.) */
+    --lsat-elev-action: var(--lsat-shadow-lift);
+    --lsat-elev-evidence: inset 0 0 0 1px var(--lsat-border-subtle);
+}

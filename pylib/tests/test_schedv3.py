@@ -1183,3 +1183,30 @@ def test_initial_repeat():
 
     ivl = col.db.scalar("select ivl from revlog")
     assert ivl == -5.5 * 60
+
+
+def test_points_at_stake_queue():
+    # Anki for LSAT: the read-only points-at-stake RPC, called from Python.
+    col = getEmptyCol()
+    for tag in ("lsat::lr::weaken", "lsat::lr::evaluate"):
+        note = col.newNote()
+        note["Front"] = tag
+        note["Back"] = "answer"
+        note.tags = [tag]
+        col.addNote(note)
+    # turn the new cards into due review cards so they enter the "is:due" set
+    col.db.execute("update cards set queue = 2, type = 2, due = 0")
+
+    entries = col.sched.points_at_stake_queue(
+        [("lsat::lr::weaken", 0.9, 0.0), ("lsat::lr::evaluate", 0.1, 0.0)],
+        limit=10,
+    )
+
+    assert len(entries) == 2
+    # higher exam weight -> higher points -> first
+    assert entries[0].top_tag == "lsat::lr::weaken"
+    assert abs(entries[0].points - 0.9) < 1e-5
+    assert entries[1].top_tag == "lsat::lr::evaluate"
+    assert entries[0].points > entries[1].points
+    # read-only: the collection still has no scheduling modifications recorded
+    assert col.db.scalar("select count() from revlog") == 0

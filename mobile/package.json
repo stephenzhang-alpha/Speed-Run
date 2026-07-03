@@ -1,0 +1,20 @@
+{
+    "name": "lsat-prep-mobile",
+    "version": "1.0.0",
+    "private": true,
+    "description": "LSAT Prep - Android app: a Capacitor WebView wrapper around the lsat-mobile PWA served by lsat/server.",
+    "scripts": {
+        "add:android": "cap add android",
+        "sync": "cap sync android",
+        "open": "cap open android",
+        "assets": "capacitor-assets generate --android"
+    },
+    "dependencies": {
+        "@capacitor/android": "^6.0.0",
+        "@capacitor/core": "^6.0.0"
+    },
+    "devDependencies": {
+        "@capacitor/assets": "^3.0.5",
+        "@capacitor/cli": "^6.0.0"
+    }
+}

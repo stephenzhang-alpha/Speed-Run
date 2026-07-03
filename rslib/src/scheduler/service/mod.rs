@@ -382,6 +382,29 @@ impl crate::services::SchedulerService for Collection {
             delta_days: self.get_fuzz_delta(input.card_id.into(), input.interval)?,
         })
     }
+
+    fn get_points_at_stake_queue(
+        &mut self,
+        input: scheduler::GetPointsAtStakeQueueRequest,
+    ) -> Result<scheduler::GetPointsAtStakeQueueResponse> {
+        let topics: Vec<(String, f32, f32)> = input
+            .topics
+            .into_iter()
+            .map(|t| (t.tag, t.weight, t.perf_mastery))
+            .collect();
+        let entries =
+            self.points_at_stake_queue(DeckId(input.deck_id), input.limit as usize, &topics)?;
+        Ok(scheduler::GetPointsAtStakeQueueResponse {
+            entries: entries
+                .into_iter()
+                .map(|entry| scheduler::PointsAtStakeEntry {
+                    card_id: entry.card_id.0,
+                    points: entry.points,
+                    top_tag: entry.top_tag,
+                })
+                .collect(),
+        })
+    }
 }
 
 impl crate::services::BackendSchedulerService for Backend {

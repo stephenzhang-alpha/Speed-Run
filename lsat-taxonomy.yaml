@@ -1,0 +1,415 @@
+# LSAT skill taxonomy + coverage config
+#
+# This file is the single source of truth for: (1) the coverage map ("% of the exam
+# covered"), (2) the readiness score composition (per-question-type weights), and
+# (3) the points-at-stake review queue (the Rust change). The LSAT publishes no
+# factual content outline because it is a SKILLS test, so this taxonomy IS the
+# "official outline" analogue, anchored to LSAC's published question-type/skill
+# descriptions.
+#
+# IMPORTANT — the weights are MODELED ESTIMATES, not official LSAC data.
+#   - section split: LR ~2/3, RC ~1/3 of scored questions (2 LR + 1 RC sections).
+#   - within-section frequencies are typical prep-community estimates and vary by form.
+#   - calibrate `within_section_weight` to YOUR deck and to official question
+#     descriptions; `exam_weight` = section.exam_weight * within_section_weight.
+#   - scored question_type `exam_weight`s sum to ~1.0 (rounding drift is expected).
+#   - cross-cutting skills carry `study_weight` (used by the queue/mastery only) and
+#     do NOT participate in score composition, to avoid double-counting.
+
+exam: LSAT
+format_as_of: "2024-08"          # Analytical Reasoning ("Logic Games") removed
+scoring:
+  scale: [120, 180]
+  scored_sections: ["LR", "LR", "RC"]   # + 1 unscored experimental (LR or RC)
+  scored_questions_estimate: 76          # ~75-78; varies by form
+  measurement_band_points: 3             # LSAC reports ~±3; see readiness.min_range_points
+  equating: true                         # no fixed raw->scaled formula; documented approximation
+
+sections:
+  - id: lr
+    name: Logical Reasoning
+    exam_weight: 0.66
+    scored_questions_estimate: 50
+  - id: rc
+    name: Reading Comprehension
+    exam_weight: 0.34
+    scored_questions_estimate: 26
+
+# ---------------------------------------------------------------------------
+# Scored question types (the coverage denominator + readiness composition)
+# ---------------------------------------------------------------------------
+topics:
+  # --- Logical Reasoning ---
+  - id: lr.flaw
+    section: lr
+    kind: question_type
+    name: Flaw in the Reasoning
+    within_section_weight: 0.13
+    exam_weight: 0.086
+    stem_cues: ["vulnerable to criticism", "questionable because", "flaw in the reasoning", "error in reasoning"]
+    subtypes_ref: flaw_catalog          # see flaw_catalog below; shares this weight
+
+  - id: lr.assumption_necessary
+    section: lr
+    kind: question_type
+    name: Necessary Assumption
+    within_section_weight: 0.11
+    exam_weight: 0.073
+    stem_cues: ["depends on the assumption", "requires assuming", "assumption on which the argument depends"]
+
+  - id: lr.inference_must_be_true
+    section: lr
+    kind: question_type
+    name: Inference / Must Be True
+    within_section_weight: 0.11
+    exam_weight: 0.073
+    stem_cues: ["must also be true", "can be properly inferred", "follows logically"]
+
+  - id: lr.strengthen
+    section: lr
+    kind: question_type
+    name: Strengthen
+    within_section_weight: 0.10
+    exam_weight: 0.066
+    stem_cues: ["most strengthens", "most supports", "if true, most justifies"]
+
+  - id: lr.weaken
+    section: lr
+    kind: question_type
+    name: Weaken
+    within_section_weight: 0.10
+    exam_weight: 0.066
+    stem_cues: ["most weakens", "most undermines", "casts the most doubt", "calls into question"]
+
+  - id: lr.principle
+    section: lr
+    kind: question_type
+    name: Principle (Identify & Apply)
+    within_section_weight: 0.09
+    exam_weight: 0.059
+    stem_cues: ["principle", "conforms to which", "proposition most helps to justify"]
+
+  - id: lr.assumption_sufficient
+    section: lr
+    kind: question_type
+    name: Sufficient Assumption / Justify
+    within_section_weight: 0.06
+    exam_weight: 0.040
+    stem_cues: ["if assumed, enables the conclusion", "the conclusion follows if", "justifies the reasoning"]
+
+  - id: lr.paradox
+    section: lr
+    kind: question_type
+    name: Resolve / Explain the Paradox
+    within_section_weight: 0.05
+    exam_weight: 0.033
+    stem_cues: ["most helps to resolve", "explain the discrepancy", "reconcile"]
+
+  - id: lr.most_strongly_supported
+    section: lr
+    kind: question_type
+    name: Most Strongly Supported
+    within_section_weight: 0.05
+    exam_weight: 0.033
+    stem_cues: ["most strongly supported by", "statements above provide the most support for"]
+
+  - id: lr.parallel_reasoning
+    section: lr
+    kind: question_type
+    name: Parallel Reasoning
+    within_section_weight: 0.04
+    exam_weight: 0.026
+    stem_cues: ["most similar in its reasoning", "pattern of reasoning most parallel"]
+
+  - id: lr.method_of_reasoning
+    section: lr
+    kind: question_type
+    name: Method of Reasoning / Argument
+    within_section_weight: 0.04
+    exam_weight: 0.026
+    stem_cues: ["argument proceeds by", "technique of reasoning", "responds to ... by"]
+
+  - id: lr.main_conclusion
+    section: lr
+    kind: question_type
+    name: Main Conclusion
+    within_section_weight: 0.03
+    exam_weight: 0.020
+    stem_cues: ["main conclusion", "overall conclusion drawn"]
+
+  - id: lr.role_in_argument
+    section: lr
+    kind: question_type
+    name: Role in Argument
+    within_section_weight: 0.03
+    exam_weight: 0.020
+    stem_cues: ["plays which role", "figures in the argument", "the statement that ... serves to"]
+
+  - id: lr.parallel_flaw
+    section: lr
+    kind: question_type
+    name: Parallel Flaw
+    within_section_weight: 0.02
+    exam_weight: 0.013
+    stem_cues: ["flawed pattern of reasoning most similar", "exhibits a flaw most similar"]
+
+  - id: lr.point_at_issue
+    section: lr
+    kind: question_type
+    name: Point at Issue / Agreement
+    within_section_weight: 0.02
+    exam_weight: 0.013
+    stem_cues: ["disagree about whether", "committed to disagreeing", "point at issue"]
+
+  - id: lr.evaluate
+    section: lr
+    kind: question_type
+    name: Evaluate the Argument
+    within_section_weight: 0.01
+    exam_weight: 0.007
+    stem_cues: ["most useful to know in evaluating", "most relevant to evaluating"]
+
+  - id: lr.cannot_be_true
+    section: lr
+    kind: question_type
+    name: Cannot Be True
+    within_section_weight: 0.01
+    exam_weight: 0.007
+    stem_cues: ["cannot be true", "if the statements are true, which CANNOT"]
+
+  # --- Reading Comprehension ---
+  - id: rc.inference
+    section: rc
+    kind: question_type
+    name: Inference
+    within_section_weight: 0.22
+    exam_weight: 0.075
+    stem_cues: ["the passage suggests", "most likely to agree", "can be inferred"]
+
+  - id: rc.specific_detail
+    section: rc
+    kind: question_type
+    name: Specific Detail / Lookup
+    within_section_weight: 0.18
+    exam_weight: 0.061
+    stem_cues: ["according to the passage", "the passage states", "the author mentions"]
+
+  - id: rc.main_point_purpose
+    section: rc
+    kind: question_type
+    name: Main Point / Primary Purpose
+    within_section_weight: 0.12
+    exam_weight: 0.041
+    stem_cues: ["main point of the passage", "primary purpose", "central idea"]
+
+  - id: rc.function_role
+    section: rc
+    kind: question_type
+    name: Function / Role of a Statement
+    within_section_weight: 0.12
+    exam_weight: 0.041
+    stem_cues: ["in order to", "function of the reference to", "why the author mentions"]
+
+  - id: rc.attitude_tone
+    section: rc
+    kind: question_type
+    name: Author's Attitude / Tone
+    within_section_weight: 0.08
+    exam_weight: 0.027
+    stem_cues: ["attitude toward", "the author's tone", "would most likely regard"]
+
+  - id: rc.strengthen_weaken_rc
+    section: rc
+    kind: question_type
+    name: Strengthen / Weaken (RC)
+    within_section_weight: 0.08
+    exam_weight: 0.027
+    stem_cues: ["would most strengthen", "would most weaken", "if true, would most support the author"]
+
+  - id: rc.structure_organization
+    section: rc
+    kind: question_type
+    name: Structure / Organization
+    within_section_weight: 0.07
+    exam_weight: 0.024
+    stem_cues: ["organized in which", "how the passage proceeds", "the structure of the passage"]
+
+  - id: rc.application_analogy
+    section: rc
+    kind: question_type
+    name: Application / Analogy
+    within_section_weight: 0.07
+    exam_weight: 0.024
+    stem_cues: ["most analogous", "situation most similar", "to which of the following would the author's reasoning apply"]
+
+  - id: rc.comparative_dual_passage
+    section: rc
+    kind: question_type
+    name: Comparative (Dual-Passage Relationship)
+    within_section_weight: 0.06
+    exam_weight: 0.020
+    stem_cues: ["both passages", "passage A and passage B", "the author of passage B would respond"]
+
+# ---------------------------------------------------------------------------
+# Cross-cutting skills (study_weight only; queue/mastery, NOT score composition)
+# ---------------------------------------------------------------------------
+cross_cutting:
+  - id: skill.conditional_logic
+    name: Conditional logic (sufficient/necessary, contrapositive)
+    study_weight: 0.9
+    appears_in: [lr.assumption_sufficient, lr.assumption_necessary, lr.parallel_reasoning, lr.inference_must_be_true, lr.principle, lr.flaw, lr.cannot_be_true]
+  - id: skill.quantifier_logic
+    name: Quantifier logic (some / most / all chains)
+    study_weight: 0.6
+    appears_in: [lr.inference_must_be_true, lr.most_strongly_supported, lr.parallel_reasoning]
+  - id: skill.argument_parts
+    name: Conclusion vs. evidence identification
+    study_weight: 0.8
+    appears_in: [lr.main_conclusion, lr.role_in_argument, lr.method_of_reasoning, lr.flaw, lr.strengthen, lr.weaken, lr.assumption_necessary, lr.assumption_sufficient]
+  - id: skill.rc_structural_reading
+    name: Structural reading (thesis, viewpoints, transitions)
+    study_weight: 0.7
+    appears_in: [rc.main_point_purpose, rc.function_role, rc.structure_organization, rc.attitude_tone]
+  - id: skill.pacing
+    name: Pacing / timing under the 35-minute clock
+    study_weight: 0.8
+    note: "Not a question type; a measured competency. Feeds the performance and readiness models via response timing (PRD §5.2)."
+  # answer-choice trap patterns (used in elimination across LR and RC)
+  - id: skill.trap.out_of_scope
+    name: "Trap: out of scope"
+    study_weight: 0.5
+    appears_in: [lr, rc]
+  - id: skill.trap.extreme_language
+    name: "Trap: extreme / absolute language"
+    study_weight: 0.4
+    appears_in: [lr, rc]
+  - id: skill.trap.reversal
+    name: "Trap: reversal of sufficient/necessary or causal direction"
+    study_weight: 0.4
+    appears_in: [lr, rc]
+  - id: skill.trap.half_right
+    name: "Trap: half-right / partially supported"
+    study_weight: 0.4
+    appears_in: [lr, rc]
+  - id: skill.trap.irrelevant_comparison
+    name: "Trap: irrelevant comparison"
+    study_weight: 0.3
+    appears_in: [lr, rc]
+
+# ---------------------------------------------------------------------------
+# Flaw catalog (tags under lr.flaw / skill.* ; share lr.flaw's exam_weight)
+# ---------------------------------------------------------------------------
+flaw_catalog:
+  - id: flaw.causal            # correlation -> causation, post hoc
+  - id: flaw.sampling          # unrepresentative / biased sample
+  - id: flaw.ad_hominem
+  - id: flaw.appeal_to_authority
+  - id: flaw.equivocation
+  - id: flaw.circular
+  - id: flaw.composition       # part -> whole
+  - id: flaw.division          # whole -> part
+  - id: flaw.false_dichotomy
+  - id: flaw.affirming_consequent
+  - id: flaw.denying_antecedent
+  - id: flaw.percentage_vs_number
+  - id: flaw.necessary_sufficient_confusion
+  - id: flaw.straw_man
+  - id: flaw.appeal_to_ignorance
+
+# ---------------------------------------------------------------------------
+# Diction primitives (diction.*) — precise meanings of terms/connectives whose
+# misreading costs working-memory capacity mid-passage (SPOV 1, cognitive load:
+# Sweller 1988). Drilled as `diction` primitive-type cards; not scored types.
+# ---------------------------------------------------------------------------
+diction:
+  - id: diction.some            # "some" = at least one (possibly all)
+  - id: diction.most            # "most" = more than half (possibly all)
+  - id: diction.unless          # "A unless B" = if not B then A
+  - id: diction.only_if         # "A only if B" = A -> B (B necessary)
+  - id: diction.if_and_only_if  # biconditional
+  - id: diction.except          # scope inversion in stems ("each ... EXCEPT")
+  - id: diction.few             # "few" carries "most are not"
+  - id: diction.tends_to        # qualified/statistical claims vs absolutes
+  - id: diction.necessary_vs_sufficient_markers  # "requires"/"depends" vs "guarantees"/"ensures"
+
+# ---------------------------------------------------------------------------
+# Argument-structure schemas (struct.*) — surface-independent reasoning skeletons
+# used by the Transfer Meter to separate "memorized here" from "transferred".
+# A schema recurs across many surface topics; being right on it only on drilled
+# topics (low surface distance) is memorization, not learning.
+# ---------------------------------------------------------------------------
+structures:
+  - id: struct.causal
+    name: "Causal (X causes Y; correlation/temporal support)"
+    appears_in: [lr.weaken, lr.strengthen, lr.flaw, lr.evaluate, lr.paradox]
+  - id: struct.conditional
+    name: "Conditional (if-then chains, sufficient/necessary)"
+    appears_in: [lr.assumption_sufficient, lr.assumption_necessary, lr.inference_must_be_true, lr.parallel_reasoning, lr.principle]
+  - id: struct.analogy
+    name: "Analogy (two cases share relevant structure)"
+    appears_in: [lr.parallel_reasoning, lr.method_of_reasoning, rc.application_analogy]
+  - id: struct.statistical
+    name: "Statistical generalization (sample -> population)"
+    appears_in: [lr.flaw, lr.weaken, lr.strengthen, lr.most_strongly_supported]
+  - id: struct.parts_whole
+    name: "Part/whole (composition & division)"
+    appears_in: [lr.flaw, lr.inference_must_be_true]
+  - id: struct.comparison
+    name: "Comparison / proportion (percentages vs numbers)"
+    appears_in: [lr.flaw, lr.weaken, lr.strengthen]
+  - id: struct.principle_application
+    name: "Principle application (general rule -> specific case)"
+    appears_in: [lr.principle, lr.parallel_reasoning, rc.application_analogy]
+
+# ---------------------------------------------------------------------------
+# Coverage map + give-up rule (PRD §6.2, §5.4) — proposed defaults, tunable
+# ---------------------------------------------------------------------------
+coverage:
+  # denominator for "% of the exam covered" = the scored question_type leaves
+  basis: question_type_leaves
+  # a topic counts as "covered" once it has >= min_graded_items_to_count graded items
+  min_graded_items_to_count: 5
+
+give_up:
+  readiness:                       # show NO readiness score until ALL hold
+    min_graded_performance_items: 150
+    min_lr_question_type_coverage: 0.60     # >= 60% of LR question types covered
+    require_each_rc_question_type: true     # >= 1 graded item in every RC type
+    min_timed_items: 40                     # so pacing is actually observed
+    max_heldout_calibration_ece: 0.05       # trust our own probabilities first
+    # D3: abstain when the STUDENT's measured overconfidence (mean stated
+    # confidence - actual accuracy, from the one-tap ratings) is too high to
+    # trust a point estimate. Only enforced once calibration is measurable.
+    max_student_overconfidence: 0.15
+    # D3/A3: abstain when the deck covers too little of the primitive taxonomy
+    # (diction + logic + qtype node coverage; a vocabulary-only deck must not
+    # read as "ready").
+    min_primitive_coverage: 0.50
+  memory:
+    min_reviews_per_topic_for_display: 10
+
+# D2: readiness-range widening for a miscalibrated student. Each point of
+# measured overconfidence widens the reported band: extra_half_width_points =
+# round(widen_points_per_overconfidence * max(0, overconfidence_index)).
+# Example: overconfidence +0.10 -> +2 points each side. Documented in
+# docs/models.md + README; underconfidence never narrows the range.
+readiness_uncertainty:
+  widen_points_per_overconfidence: 20
+
+readiness:
+  min_range_points: 3              # never report a range tighter than the LSAT's ±3 band
+  required_display_fields:        # the honesty contract (PRD §5.3) — all required
+    [point_estimate, range, percent_covered, confidence, last_updated,
+     top_reasons, best_next_to_study, past_projection_track_record]
+
+# ---------------------------------------------------------------------------
+# Points-at-stake review queue (the Rust change) — study prioritization
+# ---------------------------------------------------------------------------
+queue:
+  # highest-value cards first: exam-weighted skill x how weak the student is
+  formula: "study_priority(card) = max over card.tags of ( weight(tag) * (1 - mastery(tag)) )"
+  weight_of_tag: "exam_weight if tag is a question_type else study_weight"
+  mastery_definition: "blend of FSRS recall and recent performance on items tagging the topic (define exact blend in the model docs)"
+  notes:
+    - "Uses exam_weight so frequent, high-value LR types outrank rare ones at equal weakness."
+    - "Cross-cutting skills (e.g. conditional_logic, pacing) can surface via study_weight even though they aren't scored question types."

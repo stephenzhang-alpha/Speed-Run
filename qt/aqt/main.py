@@ -83,7 +83,13 @@ from aqt.webview import AnkiWebView, AnkiWebViewKind
 install_pylib_legacy()
 
 MainWindowState = Literal[
-    "startup", "deckBrowser", "overview", "review", "resetRequired", "profileManager"
+    "startup",
+    "lsatHome",
+    "deckBrowser",
+    "overview",
+    "review",
+    "resetRequired",
+    "profileManager",
 ]
 
 
@@ -662,7 +668,12 @@ class AnkiQt(QMainWindow):
             self.update_undo_actions()
             gui_hooks.collection_did_load(self.col)
             self.apply_collection_options()
-            self.moveToState("deckBrowser")
+            # Anki for LSAT: land on the LSAT dashboard instead of the deck list.
+            # Deck management stays one click away (toolbar "Decks" / the "d" key).
+            # First run also populates the starter decks so the dashboard and the
+            # flashcards have content immediately (idempotent; see below).
+            self._lsat_autoseed_if_needed()
+            self.moveToState("lsatHome")
         except Exception:
             # dump error to stderr so it gets picked up by errors.py
             traceback.print_exc()
@@ -768,6 +779,20 @@ class AnkiQt(QMainWindow):
         if state != "resetRequired":
             self.bottomWeb.adjustHeightToFit()
         gui_hooks.state_did_change(state, oldState)
+
+    def _lsatHomeState(self, oldState: MainWindowState) -> None:
+        # Anki for LSAT: the LSAT dashboard IS the home screen -- it replaces the
+        # deck list in the main window. The SvelteKit page fetches its data from the
+        # `lsatDashboardData` mediasrv endpoint (same page as the old dialog). Deck
+        # management is reachable from the top toolbar's "Decks" link or the "d" key.
+        self.toolbar.redraw()
+        self.web.load_sveltekit_page("lsat-dashboard")
+        self.bottomWeb.stdHtml(
+            "<center style='padding:6px;font-size:12px;opacity:.7'>"
+            "LSAT home &mdash; press <b>D</b> for your decks, or use the toolbar above."
+            "</center>",
+            context=self,
+        )
 
     def _deckBrowserState(self, oldState: MainWindowState) -> None:
         self.deckBrowser.show()
@@ -1311,6 +1336,161 @@ title="{}" {}>{}</button>""".format(
         else:
             aqt.dialogs.open("NewDeckStats", self)
 
+    def _lsat_autoseed_if_needed(self) -> None:
+        """First run: populate the LSAT starter decks so the home dashboard and the
+        flashcards have content immediately. Idempotent and guarded by the
+        ``lsat:seeded`` flag (which :func:`lsat.seed.seed_deck` sets), so it never
+        repeats and never re-adds decks a user has deliberately removed. Non-fatal:
+        a failure just leaves an empty dashboard rather than blocking startup."""
+        try:
+            if bool(self.col.get_config("lsat:seeded", False)):
+                return
+            from aqt.lsat_dashboard import _ensure_lsat_on_path
+
+            _ensure_lsat_on_path()
+            from lsat.seed import seed_deck
+
+            seed_deck(self.col)  # idempotent; sets lsat:seeded=True
+        except Exception:
+            traceback.print_exc()
+
+    def onLsatDashboard(self) -> None:
+        # The LSAT dashboard is the home screen now, so the menu action / Ctrl+Shift+L
+        # simply returns to it (no redundant popup). First-run seeding is handled on
+        # collection load; this call is a cheap idempotent safety net.
+        self._lsat_autoseed_if_needed()
+        self.moveToState("lsatHome")
+
+    def onLsatMobilePair(self) -> None:
+        from aqt.lsat_mobile import show_pairing_dialog
+
+        show_pairing_dialog(self)
+
+    def onLsatSeedDecks(self) -> None:
+        """Install the original LSAT starter decks -- diction / logic / question-type
+        flashcards + graded multiple-choice practice items -- so a fresh profile has
+        something to study and every LSAT panel has a path to populate. Idempotent
+        (``lsat.seed``); re-loading replaces the starter cards."""
+        from aqt.lsat_dashboard import _ensure_lsat_on_path
+        from aqt.utils import askUser, showInfo
+
+        # The top-level `lsat` package sits at the repo root (a sibling of
+        # pylib/qt) and is not on the app's sys.path; add it before importing,
+        # exactly as the dashboard data endpoint does.
+        _ensure_lsat_on_path()
+        from lsat.seed import seed_deck
+
+        already = bool(self.col.get_config("lsat:seeded", False))
+        if already and not askUser(
+            "The LSAT starter decks are already loaded. Re-load them? This replaces "
+            "the starter cards (and their review history); your own cards are "
+            "untouched.",
+            parent=self,
+            defaultno=True,
+        ):
+            return
+        result = seed_deck(self.col, force=already)
+        self.reset()  # refresh the deck list / study screen so the decks appear
+        showInfo(
+            f"Loaded {result['cards']} flashcards "
+            f"(diction / logic / question-type) + {result['items']} graded practice "
+            "items into <b>LSAT::Drills</b> and <b>LSAT::Practice</b>.<br><br>"
+            "Study those decks to build your Memory, Performance and Readiness "
+            "scores, or open the LSAT Dashboard (Ctrl+Shift+L).",
+            parent=self,
+        )
+
+    def onLsatSetPhase(self, phase: str) -> None:
+        """Set the phase stamped onto subsequently-graded LSAT answers (Feature 4).
+
+        Timed answers feed mastery; a blind/relaxed second pass over the same items
+        feeds the Gap Map / Choke Index without inflating mastery (the honest-mastery
+        filter). Switching to an untimed mode is the intended flow for reviewing
+        flagged questions after a timed set."""
+        from aqt.lsat_performance import set_session_phase
+        from aqt.utils import tooltip
+
+        set_session_phase(phase)
+        labels = {
+            "timed": "Timed -- answers count toward mastery",
+            "blind": "Blind Review -- untimed second pass (does not inflate mastery)",
+            "relaxed": "Relaxed -- untimed learning (does not inflate mastery)",
+        }
+        tooltip(f"LSAT study mode: {labels.get(phase, phase)}", parent=self)
+
+    def onLsatSetExamDate(self) -> None:
+        """Set/clear the LSAT exam date (DECISION-round2 #7). The deadline-aware
+        consolidation queue and the dashboard days-to-exam read this."""
+        import time as _time
+
+        from aqt.qt import QInputDialog
+        from aqt.utils import tooltip
+
+        import lsat.exam_schedule as es
+
+        current = es.get_exam_date(self.col)
+        prefill = ""
+        if current:
+            prefill = _time.strftime("%Y-%m-%d", _time.localtime(current / 1000))
+        text, ok = QInputDialog.getText(
+            self,
+            "LSAT Exam Date",
+            "Exam date (YYYY-MM-DD), or blank to clear:",
+            text=prefill,
+        )
+        if not ok:
+            return
+        text = text.strip()
+        if not text:
+            es.set_exam_date(self.col, None)
+            tooltip("LSAT exam date cleared.", parent=self)
+            return
+        try:
+            t = _time.strptime(text, "%Y-%m-%d")
+            epoch_ms = int(_time.mktime(t) * 1000)
+        except ValueError:
+            tooltip("Couldn't read that date -- use YYYY-MM-DD.", parent=self)
+            return
+        es.set_exam_date(self.col, epoch_ms)
+        days = es.days_until_exam(self.col)
+        tooltip(f"LSAT exam date set -- {days} day(s) to go.", parent=self)
+
+    def onLsatSetStudyPlan(self) -> None:
+        """Set/clear the If-Then study plan (DECISION-round2 #4). Deliberately a
+        single implementation-intention sentence -- no streaks, no shaming."""
+        from aqt.qt import QInputDialog
+        from aqt.utils import tooltip
+
+        import lsat.adherence as ad
+
+        existing = ad.get_plan(self.col)
+        cue, ok = QInputDialog.getText(
+            self,
+            "LSAT Study Plan",
+            "When & where will you study? (e.g. '8am, after coffee, at my desk')\n"
+            "Leave blank to clear the plan.",
+            text=existing.cue if existing else "",
+        )
+        if not ok:
+            return
+        cue = cue.strip()
+        if not cue:
+            ad.clear_plan(self.col)
+            tooltip("LSAT study plan cleared.", parent=self)
+            return
+        n, ok = QInputDialog.getInt(
+            self,
+            "LSAT Study Plan",
+            "How many cards per day?",
+            existing.n_cards if existing else 15,
+            1,
+            500,
+        )
+        if not ok:
+            return
+        plan = ad.set_plan(self.col, cue=cue, habit="", place="", n_cards=n)
+        tooltip(ad.if_then_string(plan), parent=self)
+
     def onPrefs(self) -> None:
         aqt.dialogs.open("Preferences", self)
 
@@ -1447,6 +1627,59 @@ title="{}" {}>{}</button>""".format(
         qconnect(m.actionNoteTypes.triggered, self.onNoteTypes)
         qconnect(m.action_check_for_updates.triggered, self.on_check_for_updates)
         qconnect(m.actionPreferences.triggered, self.onPrefs)
+
+        # Anki for LSAT: one consolidated "LSAT" submenu under Tools instead of a
+        # scatter of top-level entries. The three essentials (open the dashboard,
+        # load the starter decks, study on a phone) sit up top; the session
+        # settings (study mode / exam date / study plan) sit below a separator.
+        from aqt.qt import QActionGroup
+
+        lsat_menu = m.menuTools.addMenu("LSAT")
+
+        lsat_action = QAction("Dashboard", self)
+        lsat_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
+        qconnect(lsat_action.triggered, self.onLsatDashboard)
+        lsat_menu.addAction(lsat_action)
+
+        # Prominent: install the original starter decks (diction/logic/qtype
+        # flashcards + graded practice items) so there is something to study on a
+        # fresh profile. Idempotent (lsat.seed skips if already seeded).
+        lsat_seed_action = QAction("Load Starter Decks…", self)
+        qconnect(lsat_seed_action.triggered, self.onLsatSeedDecks)
+        lsat_menu.addAction(lsat_seed_action)
+
+        lsat_mobile_action = QAction("Study on Your Phone…", self)
+        qconnect(lsat_mobile_action.triggered, self.onLsatMobilePair)
+        lsat_menu.addAction(lsat_mobile_action)
+
+        lsat_menu.addSeparator()
+
+        # Session-mode control. Stamps the phase onto every graded answer so the
+        # Blind-Review / pacing diagnostics receive blind/relaxed events -- without
+        # it nothing ever leaves the default "timed" and those panels stay dark.
+        lsat_mode_menu = lsat_menu.addMenu("Study Mode")
+        self._lsat_mode_group = QActionGroup(self)
+        for phase, label in (
+            ("timed", "Timed (counts toward mastery)"),
+            ("blind", "Blind Review (untimed second pass)"),
+            ("relaxed", "Relaxed (untimed learning)"),
+        ):
+            act = QAction(label, self)
+            act.setCheckable(True)
+            act.setChecked(phase == "timed")
+            qconnect(
+                act.triggered, lambda _checked=False, p=phase: self.onLsatSetPhase(p)
+            )
+            self._lsat_mode_group.addAction(act)
+            lsat_mode_menu.addAction(act)
+
+        lsat_exam_action = QAction("Set Exam Date…", self)
+        qconnect(lsat_exam_action.triggered, self.onLsatSetExamDate)
+        lsat_menu.addAction(lsat_exam_action)
+
+        lsat_plan_action = QAction("Set Study Plan…", self)
+        qconnect(lsat_plan_action.triggered, self.onLsatSetStudyPlan)
+        lsat_menu.addAction(lsat_plan_action)
 
         # View
         qconnect(
@@ -1828,7 +2061,7 @@ title="{}" {}>{}</button>""".format(
 
     def interactiveState(self) -> bool:
         "True if not in profile manager, syncing, etc."
-        return self.state in ("overview", "review", "deckBrowser")
+        return self.state in ("lsatHome", "overview", "review", "deckBrowser")
 
     # GC
     ##########################################################################

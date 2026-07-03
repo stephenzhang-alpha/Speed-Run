@@ -21,6 +21,8 @@ ScheduleCardsAsNew = scheduler_pb2.ScheduleCardsAsNewRequest
 ScheduleCardsAsNewDefaults = scheduler_pb2.ScheduleCardsAsNewDefaultsResponse
 FilteredDeckForUpdate = decks_pb2.FilteredDeckForUpdate
 RepositionDefaults = scheduler_pb2.RepositionDefaultsResponse
+TopicWeight = scheduler_pb2.TopicWeight
+PointsAtStakeEntry = scheduler_pb2.PointsAtStakeEntry
 
 from collections.abc import Sequence
 from typing import overload
@@ -106,6 +108,30 @@ class SchedulerBase(DeprecatedNamesMixin):
     def extend_limits(self, new: int, rev: int) -> None:
         did = self.col.decks.current()["id"]
         self.col._backend.extend_limits(deck_id=did, new_delta=new, review_delta=rev)
+
+    # LSAT points-at-stake queue (Anki for LSAT)
+    ##########################################################################
+
+    def points_at_stake_queue(
+        self,
+        topic_weights: Sequence[tuple[str, float, float]],
+        deck_id: DeckId | int = 0,
+        limit: int = 0,
+    ) -> Sequence[PointsAtStakeEntry]:
+        """Due cards ordered by topic weight x student weakness, highest first.
+
+        topic_weights: (tag, weight, perf_mastery) triples; tags are hierarchical
+        lsat:: tags (e.g. "lsat::lr::weaken"). deck_id 0 = whole collection;
+        limit 0 = no limit. Read-only (no scheduling state is modified)."""
+        topics = [
+            TopicWeight(tag=tag, weight=weight, perf_mastery=perf)
+            for tag, weight, perf in topic_weights
+        ]
+        # The generated backend method auto-unwraps single-field responses, so
+        # this already returns the repeated `entries` sequence.
+        return self.col._backend.get_points_at_stake_queue(
+            deck_id=int(deck_id), limit=limit, topics=topics
+        )
 
     # fixme: only used by total_rev_for_current_deck and old deck stats;
     # schedv2 defines separate version

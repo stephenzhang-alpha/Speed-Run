@@ -1,0 +1,142 @@
+# Round 1 — Opening Position: The Student Advocate
+
+**Speaker:** Sam Okafor, learning-experience designer & student advocate
+**Judged by:** cognitive load · adherence · motivation · psychological well-being (test anxiety / choking)
+**One-line thesis:** *The best-evidenced feature is worth zero points if the student stops using it, and negative points if it makes them more anxious. I judge every proposal by "will a stressed 25-year-old actually keep doing this at 10pm after work — and is it healthy for them?"*
+
+I have read the brief, all four memos (`01`–`04`), both proposals (`B`, `C`), and the two `docs/research` memos (`R1`, `R2`). My colleagues have done excellent science. My job is to be the voice in the room asking the question none of their effect sizes answer: **retention of the human, not just retention of the material.** A g = 0.55 self-explanation effect measured in a 20-minute lab session tells us nothing about whether a burned-out test-taker will type a paragraph after every question for three months. They won't.
+
+---
+
+## 1. Priorities & rubric
+
+The LSAT is a months-long, self-directed solo grind for a high-stakes, heavily-**speeded** exam (four 35-min sections; from Aug 2026, high-stakes **in-center**; see `03`, `B`). Two facts from the brief and memo `03` dominate my thinking:
+
+- **Working memory is the bottleneck under pressure.** Beilock & Carr (2005): pressure harms the *ablest* most because worry consumes the very working memory they rely on (choking). Cognitive Load Theory (Sweller, via `02`) says the same for learning: if the *interface* eats working memory, there's none left for the *reasoning*. **A high-friction feature doesn't just get skipped — when it isn't skipped, it actively degrades the thing we're training.**
+- **Perceived competence and autonomy drive adherence.** Metcalfe & Kornell (region of proximal learning, `04`) show humans *choose* to study the easiest-not-yet-mastered material and thrive there; Macnamara (2014, `03`) shows volume barely matters — *targeted, feedback-rich, edge-of-ability* practice is the win. Motivation is not a "nice to have"; it is the delivery mechanism for every other feature's effect size.
+
+### The four axes I score on
+
+| Axis | Question | Why it's decisive |
+|---|---|---|
+| **Cognitive load** (per use) | Does this consume working memory a stressed learner needs for reasoning? | High load degrades both learning (Sweller) and timed performance (Beilock). |
+| **Friction / adherence** | How many taps/keystrokes/steps per use? Will it be done on day 60, not just day 1? | Heavy typing & multi-step flows get abandoned; abandoned features have effect size 0. |
+| **Motivation** | Autonomy, competence, relatedness, visible progress, *insight*. | Insight ("you're overconfident on Strengthen") is high-motivation **and** low-friction — my favorite quadrant. |
+| **Anxiety / well-being** | Does it raise test anxiety, invite choking, or use punitive/dark-pattern framing? | Test anxiety is a real LSAT score-killer (`03`). A feature that spikes it is negative-value even if it "works." |
+
+### Rating scales used below
+
+- **Friction/Load (per use):** `Feather` (passive / zero added action) · `Light` (one tap) · `Moderate` (a few taps or a short read) · `Heavy` (typing, multi-step, or holds two stimuli under a clock).
+- **Motivation/Adherence impact:** `++` strong-positive · `+` positive · `0` neutral · `−` negative · `−−` strong-negative.
+
+**North star:** *maximize the integral of engagement × effectiveness over months, not the peak effect size in a single session.* A Feather-friction feature at 70% of the ideal effect beats a Heavy-friction feature at 100% that gets used twice.
+
+---
+
+## 2. Consolidated candidate list (merged across memos)
+
+I merged the ~26 raw proposals into distinct candidates, collapsing duplicates. Sources are tagged by memo/proposal (`01`–`04`, `B`, `C`, `R1`, `R2`) with the key empirical anchor. **Friction/Load** and **Motivation/Adherence** are *my* ratings, from the student's chair.
+
+| # | Candidate (merged) | Sources | Friction/Load | Motiv./Adher. | Anxiety / well-being note |
+|---|---|---|---|---|---|
+| 1 | **Right-Difficulty (ZPD) item selection** — serve cards near ~85% success, not the hardest card in the weakest topic | `04`-F1 (Metcalfe & Kornell; Wilson 85%) | Feather | `++` | *Protective.* Surmountable items build competence/flow; fixes the demoralizing default. |
+| 2 | **One-tap confidence + human-calibration dashboard** — sure/likely/guess → reliability curve, over-confidence index, "sure-and-wrong" list | `03`-F1, `B`-F2a (Nelson–Narens; Kruger–Dunning; Rhodes–Castel) | Light | `++` | Neutral→positive *if* framed as insight, not a report card. |
+| 3 | **Trap / reasoning-bug diagnosis** — map chosen distractor → trap family; "extreme-language owns 38% of your Strengthen misses" | `03`-F3, `R2`-F1 (Sadler; Metcalfe) | Feather (passive) | `++` | Positive: names the enemy, externalizes the error to a fixable habit. |
+| 4 | **Hypercorrection-prioritized spaced re-test** — confident-wrong items resurface first, spaced | `03`-F2, `B`-F2b, `R2`-F3 (Butterfield & Metcalfe; Butler–Fazio–Marsh) | Feather (rides #2) | `+` | *Watch:* leading every session with your worst misses can feel punishing → framing constraint. |
+| 5 | **Self-explanation "Trap Autopsy"** — why is right right / each wrong wrong | `02`-F3, `B`-F3, articulation in `01`-F1 (Bisra g=0.55) | Moderate→**Heavy if free-text** | `+` / `−` if forced | Fine if select-not-type; homework-feel if mandatory typing. |
+| 6 | **Trap-retrieval / distractor-rejection cards** — spaced "why is (C) wrong?" micro-cards | `01`-F1 (Little & Bjork; Bisra) | Moderate (adds card volume) | `0`/`+` | Neutral; volume can fatigue. |
+| 7 | **Contrasting minimal-pair trap drills (predict-the-trap)** | `R1`-F3, `R2`-F2 (Schwartz & Bransford; Gentner; Booth Con-ErrEx; Kellman d′) | Moderate (2-choice) | `+` | Neutral; predict-first is engaging if fast. |
+| 8 | **Structure Twins / Same-Bones pairs** — compare two surface-different, same-structure args; produce shared skeleton before reveal | `02`-F1, `C`-Twins (Gick & Holyoak; Gentner ~3×) | **Heavy** (two stimuli + produce structure) | `+` / `−` under clock | *Concern:* high WM load — exactly what chokes stressed novices if timed. |
+| 9 | **Faded worked examples ("Faded Parallels")** — worked → completion → solo, backward fading | `02`-F2 (Sweller; Renkl; CLT) | Moderate (but *reduces* load for novices) | `+`/`++` | *Protective:* worked examples are the pro-cognitive-load-theory move; gentle on-ramp. |
+| 10 | **Skeleton Builder / argument mapping** — click conclusion, premises, move, flaw | `02`-F4 (van Gelder; Chi 1981) | **Heavy** (span-select multi-step UI) | `0`/`−` | Neutral; heavy per-use, weakest (quasi-experimental) evidence. |
+| 11 | **Spot-the-Structure Sort** — drag 9–12 args into structure groups | `C`-Sort (Chi 1981) | Moderate–Heavy (occasional) | `+` (game-like) | Neutral as an *occasional* diagnostic. |
+| 12 | **Structure Sprints** — speeded seconds-long "name the type/flaw" classification drill | `R1`-F1 (Kellman & Kaiser; Kellman/Massey/Son) | Light (game-like) | `++` | Mild speed pressure; low-stakes so low anxiety; fun. |
+| 13 | **Fluency Gates** — automaticity-aware mastery (accurate *and* fast); Not-yet→Effortful→Automatic badge | `R1`-F2 (Mettler/Kellman ARTS; Logan; Beilock 2004) | Feather (passive) | `+`/`++` | *Protective:* automaticity is the proven **anti-choke** intervention (Beilock 2004). Watch speed-shaming framing. |
+| 14 | **Pattern Mastery Loops** — successive relearning of a pattern with *fresh* items across N days | `01`-F3 (Rawson d≈4.19; time-cost caveat) | Moderate (more sessions) | `+` / `−` if reset-shaming | *Concern:* "miss resets your streak" is a punitive dark-pattern risk. |
+| 15 | **Prime-then-Read prequestions** — guess before reading an RC passage / new LR concept | `01`-F4 (Richland; Pan & Carpenter) | Light–Moderate | `0`/`−` | *Concern:* guaranteed-fail items can stress anxious learners; needs zero-stakes framing. |
+| 16 | **Commit-First / productive-failure drills** — commit answer **+ typed rationale** before the method | `01`-F5 (Kornell/Hays/Bjork; Sinha & Kapur) | **Heavy** (typing before instruction) | `−` | *Concern:* frustration + typing friction; boundary-conditioned evidence. |
+| 17 | **Delayed elaborated feedback** — schedule the explanation as its own spaced event | `01`-F2 (Butler/Karpicke/Roediger; *contested*) | Moderate | `0` | Withholding correction can raise "did I get it?" anxiety. |
+| 18 | **Pacing & Choke Trainer + opt-in anxiety reset** — Choke Index (relaxed−timed acc.), gentle time-budget ramp, opt-in 90s worry-dump | `03`-F5, composes w/ `04`-F5 (Beilock & Carr; Ramirez & Beilock d=0.57; Myers null) | Moderate | `++` | **The well-being centerpiece.** Separates "too slow" from "don't know" → less self-blame. Anxiety tools must be opt-in + measured. |
+| 19 | **Full section simulator + pacing policy** — faithful timed 2×LR+RC mock | `04`-F5 (LSAC format) | **Heavy** (35-min blocks) | `0`/`+` | *High anxiety by nature.* Needed for exposure, but periodic/opt-in, graded ramp. |
+| 20 | **SRL loop (predict → do → reflect + attribution)** | `03`-F6 (Zimmerman) | Light–Moderate (~20s ends) | `+`/`++` | *Protective:* attribution to controllable causes (strategy/effort) is anti-anxiety. Watch "reflection theater." |
+| 21 | **Deliberate-practice micro-loops on weakest sub-skill** | `03`-F4 (Macnamara high-predictability 24%) | Moderate | `+` | Neutral; narrow grinding can demotivate → bounded + celebrate the stop. |
+| 22 | **Bayesian Knowledge Tracing (mastery posterior)** | `04`-F2 (Corbett & Anderson) | Feather (backend) | `0` | Invisible; healthy. |
+| 23 | **CDM attribute profile (latent prerequisite mastery)** | `04`-F3 (de la Torre) | Feather (backend) | `0`/`+` (insight) | Invisible; abstain on sparse data so it doesn't mislead. |
+| 24 | **Adaptive measurement probe — mini-CAT at P≈0.5** | `04`-F4 (Weiss) | **Heavy on morale** (50% success) | `−−` if daily | *Toxic if used daily:* repeated 50% failure → helplessness, anxiety. Fine as a rare, labeled level-check. |
+| 25 | **Mastery-gated advanced item types (soft prereqs)** | `04`-F6 (Kulik 0.52; completion caveat) | Feather (backend) | `+` / `−` if hard-locked | Gatekeeping can frustrate; Kulik warns self-paced mastery cuts completion. |
+| 26 | **Blind Review loop (timed↔untimed gap 2×2)** | `B`-F1 (7Sage; Kruger–Dunning) | **Heavy** (doubles session) | `+` insight / `−−` friction | Insight is gold (pressure vs knowledge); doubling work is adherence poison. |
+
+---
+
+## 3. Ranked verdict — "will they keep doing it, and is it healthy?"
+
+### CHAMPION — build these; they are the healthy adherence core
+
+**C1. Right-Difficulty (ZPD) selection (#1).** This is my single highest pick and it isn't close. The current queue serves *"the hardest card in the weakest topic"* — which memo `04` correctly calls the **opposite** of the region of proximal learning. That default is an adherence catastrophe: nothing kills motivation like being handed only the things you fail. Metcalfe & Kornell (8 experiments, `04`) show humans learn fastest and *choose to persist* on easiest-not-yet-mastered material; Wilson's 85% rule points the same way. Serving items at ~85% success turns study into a competence-building flow state instead of a wall of failure. **Feather friction, `++` motivation, actively protective against anxiety.** It's also nearly free (a Python re-rank). If we ship one thing, ship this.
+
+**C2. One-tap confidence → calibration + trap-profile insight (#2 + #3, merged).** This is the *insight quadrant* I live for: near-zero friction, maximum motivating self-knowledge. One tap (sure/likely/guess) — captured at the moment of a *graded* answer, which respects Rhodes & Castel (2008) and Nelson & Dunlosky (1991) on avoiding fluency-driven judgments — turns into "*you're 28 points hotter than your accuracy on Necessary Assumption*" and (via the already-captured chosen letter, `03`/`R2`) "*extreme-language traps own 38% of your Strengthen misses.*" Kruger–Dunning (1999) shows learners cannot see their own gaps unaided; this shows them, humanely. Crucially, I heed Gignac & Zajenkowski (2020): we measure the *individual's* calibration curve, we do **not** assume "the incompetent are uniquely blind" or shame anyone. **Light friction, `++` motivation.**
+
+**C3. Fluency Gates + Structure Sprints (#13 + #12).** Automaticity is where my adherence lens and the anxiety evidence *converge*. Beilock et al. (2004, `03`): problems practiced to automatic retrieval **show no choking under pressure.** So a Not-yet → Effortful → Automatic badge (passive, Feather) isn't just satisfying progress-visibility — it's literally training the anti-choke mechanism, and it targets the real LSAT plateau ("I know it, I just run out of time"). Structure Sprints add a genuinely *fun*, seconds-long, game-like drill (Light friction) — a rare thing in prep that people *want* to open. **The one caution:** frame the speed signal as "becoming automatic," never "you're too slow" (see constraints).
+
+**C4. Choke/Pacing Trainer with opt-in anxiety reset (#18).** This is the well-being centerpiece and the reason I'm in the room. The single most humane diagnostic we can offer is the **Choke Index** = relaxed-mode accuracy − timed-mode accuracy: it tells a struggling student "*you're not stupid, you're rushing*," which is both true and profoundly de-shaming. Beilock & Carr (2005) is the evidence that this is a distinct failure mode. The anxiety-reset (expressive writing) must be handled with integrity: Ramirez & Beilock (2011) found d = 0.57, but Myers, Davis & Chan (2021) found **null** — evidence is CONTESTED, so it ships **opt-in and measured in our own harness, never promised.** `++` motivation, and the only feature explicitly designed to *lower* anxiety rather than risk raising it.
+
+### CONDITIONAL — real value, but only with my constraints (§4)
+
+- **Self-explanation "Trap Autopsy" (#5)** — strong evidence (Bisra g = 0.55) but *only* as **select-not-type** (tap the trap from the `skill.trap.*` menu), **on misses/confident-wrong only**, one optional free-text line as bonus. Mandatory typing is a hard no (see CUT).
+- **Hypercorrection spaced re-test (#4)** — high ROI (Butterfield & Metcalfe; and Butler–Fazio–Marsh show confident errors *return* without re-practice, so spacing is essential). Condition: **blend, don't replace** the queue; cap the boost; frame corrections as *surprise/insight*, never "wrong again."
+- **Faded worked examples (#9)** — I actively *like* this one: worked examples are Cognitive Load Theory's own prescription for freeing novice working memory. Condition: adaptive fade (Kalyuga expertise-reversal) so it doesn't bore strong learners; ship as a "learn" mode, not a test.
+- **SRL predict-do-reflect (#20)** — the attribution step ("ran out of time" vs "didn't know the rule") routes to the right fix and, per Zimmerman, trains attribution to *controllable* causes — the motivational core. Condition: ~20-second caps, one-tap attribution, tie every reflection to a concrete route or it's theater.
+- **Structure Twins (#8), Skeleton-adjacent drills (#7, #11)** — powerful transfer science (Gick & Holyoak; Gentner ~3×), but **Heavy** working-memory load. Condition: dedicated **untimed** "study" mode, fill-the-skeleton by **select/drag not free-type**, never every-item, never under the clock.
+- **Trap-retrieval cards (#6), prequestions (#15), section sim (#19), mastery-gating (#25), BKT/CDM (#22/#23), delayed feedback (#17), micro-loops (#21), Blind Review (#26)** — all keep-able with the constraints in §4 (MC-not-text; zero-stakes framing; periodic/opt-in; *soft* gates with a visible "path to unlock"; abstain on sparse data; measured knobs; scope Blind Review to flagged items + make the 2nd pass optional).
+
+### CUT — do not build as proposed
+
+- **★ Mini-CAT at P≈0.5 as a *daily* study engine (#24).** *(My single strongest cut — see §6.)*
+- **Mandatory typed/free-text articulation on every item (#16 Commit-First typed form; free-text-every-item self-explanation).** Cut the *typed, mandatory, every-item* mechanic outright. Cognitive Load Theory + adherence reality: typing a rationale after each question, at 10pm, for months, will not happen — and when forced, it eats the working memory needed for the actual reasoning. Keep the *learning mechanism* as the one-tap select autopsy (C-conditional above).
+- **Full argument-mapping "Skeleton Builder" as a routine task (#10).** Heaviest per-use UI in the set, paired with the weakest (advocate-led, quasi-experimental) evidence. At most an occasional optional tool; not a daily drill.
+- **Any punitive gamification** — streak-reset shaming, loss-aversion nags, guilt-based "you broke your chain" mechanics (a risk lurking in #14). Cut on principle: engagement dark-patterns without substance are exactly what makes prep feel like a slot machine, and they raise anxiety.
+
+---
+
+## 4. Design constraints I impose on WHICHEVER features win
+
+These are non-negotiable implementation rules. They matter regardless of which proposals survive the debate.
+
+1. **One tap, never a form.** Confidence, attribution, trap-selection = a single tap. Sample every Nth item if fatigue appears; always skippable. (Enables #2/#4/#20 at Feather–Light cost.)
+2. **Select, don't type.** Any articulation/self-explanation uses a menu of taxonomy trap/flaw categories (`skill.trap.*`, `flaw_catalog`). Free text is *optional bonus*, never required, never gates progress or mastery.
+3. **Only on misses and confident-wrong items.** Never add friction to questions the student got right. Spend the interaction budget where the ROI is (hypercorrection targets).
+4. **Anxiety features are opt-in and measured, never promised.** Expressive-writing/worry-dump and any "reset" are toggles, default-off, with our own eval numbers shown and the contested evidence disclosed (Ramirez d=0.57 vs Myers null). No guaranteed-benefit claims.
+5. **No punitive framing, no dark patterns.** Errors are framed as *surprise/insight* ("you were sure — here's the trap"), progress as *competence gained* ("Automatic!"). No streak-shaming, no guilt nags, no manufactured loss-aversion, no "engagement" for its own sake.
+6. **Daily practice targets ~85% success (ZPD), not 50%.** The everyday engine must feel surmountable. Any P≈0.5 *measurement* is a rare, clearly-labeled, opt-in "level check," capped as a small share of a session — never the daily driver.
+7. **Gentle, opt-in time-pressure ramp; always keep an untimed mode.** Separate a "learn" mode (no clock) from a "train pacing" mode. Tighten budgets only as accuracy holds, with consent — build pressure *tolerance*, don't shock. (Directly serves the choking evidence, Beilock & Carr.)
+8. **Respect working-memory limits (Cognitive Load Theory).** No single interaction may stack multiple heavy steps, and no novice-facing feature should require holding two full stimuli **and** producing a structure from scratch **under a clock**. Scaffold first (worked/faded examples), fade adaptively.
+9. **Insight over grind.** Prefer features that convert *already-captured* data (correctness, latency, chosen letter, confidence) into motivating dashboards/badges over features that add per-item work.
+10. **Abstain honestly; never shame a small sample.** Mirror the readiness "give-up" gate everywhere: show confidence bands, and never render "you're bad at X" from 4 data points.
+11. **Bounded sessions with a celebrated stop.** Every loop has a stop-rule; we celebrate finishing and protect against burnout. No infinite queues.
+
+---
+
+## 5. My straw-man final set (maximizes sustained, healthy engagement — and is still effective)
+
+Four features that cohere into one low-friction loop. Notice they share plumbing (a one-tap confidence field + the chosen-letter capture already flagged by every memo), so the *marginal* friction of the whole bundle is one tap per item plus passive dashboards.
+
+1. **Right-Difficulty (ZPD) selection (C1).** The adherence backbone: daily practice at ~85% success. Fixes the demoralizing "hardest-card-in-weakest-topic" default. *Feather friction, protective, near-free to build.*
+2. **One-Tap Confidence → Calibration + Trap-Profile Insight (C2).** Highest insight-per-friction in the entire set. "You're overconfident on Strengthen; extreme-language traps own your misses." One tap in, motivating self-knowledge out.
+3. **Fluency Gates + Structure Sprints (C3).** Automaticity as visible progress *and* as the proven anti-choke mechanism (Beilock 2004). A passive badge plus the one drill students will actually enjoy opening.
+4. **Choke/Pacing Trainer with opt-in anxiety reset (C4).** The well-being spine: separates "too slow" from "don't know," ramps pressure gently and by consent, and offers (never imposes) an anxiety reset that we measure honestly.
+
+*Optional 5th, CONDITIONAL:* **Hypercorrection spaced re-test (#4)** — it rides entirely on the confidence tap already in the bundle, so it's near-zero added friction and high score-relevant ROI, *if* it blends into (never replaces) the queue and uses non-punitive framing.
+
+**Why this set wins my rubric:** every daily-facing element is Feather-or-Light friction; three of the four are actively *anxiety-reducing* (competence via ZPD, de-shaming via Choke Index, automaticity via Fluency Gates); and the whole thing is powered by *insight from data we already collect* rather than by new homework. It is effective (ZPD + calibration + automaticity + pacing are exactly the levers memos `03`/`04` rate highest) **and** it is something a tired human will still open on day 60.
+
+---
+
+## 6. Pre-emptive critiques of my colleagues
+
+**To the Cognitive Scientist (memos `01`, `02`) — you optimize effect size and ignore adherence.** Your evidence is real and I'll cite it *for* you: Bisra g=0.55, Gick & Holyoak, Rawson's d≈4.19 successive relearning. But every one of those numbers comes from a *supervised, short, compliant* study session. You propose **Commit-First typed rationales (`01`-F5)**, **free-text self-explanation on every item (`02`-F3)**, and **Structure Twins that make a novice produce an argument skeleton from two stimuli (`02`-F1)** — and you never once ask whether a person will do that unprompted for three months, or whether the typing eats the working memory Beilock says they need. Your own literature contains the rebuttal: Rawson's successive-relearning effect **shrinks to d≈0.28 when time is matched** (`01`), and worked-example transfer is structure-specific with an expertise-reversal cliff (`02`). Give me your mechanisms as **select-not-type, misses-only, adaptively-faded** interactions and I'll champion them. Ship them as mandatory paragraphs and I'll watch students quit in week two.
+
+**To the Coach / pacing enthusiast (`04`-F5, and the timed-pressure instinct across `R1`/`04`) — you may weaponize the clock.** The LSAT is speeded, yes, and pacing must be trained. But "make everything timed and tighten it" courts the exact failure mode memo `03` documents: Beilock & Carr (2005) show **pressure hurts your strongest students most** by consuming working memory, and full timed section sims (`04`-F5) are anxiety-inducing by construction. Do not let "train pacing" become "manufacture panic." My constraints (7) are aimed at you: keep an always-available untimed mode, ramp only by consent and only as accuracy holds, and use the *Choke Index* to *diagnose* pressure problems before drilling under more of it. Automaticity (Beilock 2004), not raw clock pressure, is how you actually cure choking.
+
+**To the Engineer / Psychometrician (`04`, and the UI-heavy features in `02`/`C`) — you may ship elegant, high-friction machines.** BKT, DINA/G-DINA, and mini-CAT are beautiful, and the *backend* ones (BKT, CDM) I happily wave through because the student never sees them. My fight is with the **student-facing** cost: the drag-and-drop **Skeleton Builder / argument map (`02`-F4)**, the **Structure Sort grid (`C`)**, and above all the **P≈0.5 measurement probe (`04`-F4)**. Your instinct is measurement efficiency — "pin ability in half the items." But efficiency of *measurement* is not the same as health of *practice*, and you said so yourself: max information sits at 50% success, the learning optimum at 85%.
+
+> **My single strongest cut: do not use the P≈0.5 mini-CAT (`04`-F4) as a daily study engine.** A student who is served questions calibrated to make them wrong half the time, every day, for months, will experience exactly what the motivation and anxiety literature predicts — collapsing self-efficacy, learned helplessness, and rising test anxiety — and they will abandon the app. This is the direct antithesis of the region-of-proximal-learning evidence (Metcalfe & Kornell: humans thrive on the *easiest-not-yet-mastered*) and the 85% rule (Wilson 2019). Keep the CAT probe **only** as a rare, opt-in, explicitly-labeled "level check" (a few minutes, capped share), and let the **ZPD selector run the daily loop at ~85%.** Measuring the student and *practicing* the student are opposite-difficulty jobs; conflating them is the most dangerous mistake on the table for adherence and well-being.

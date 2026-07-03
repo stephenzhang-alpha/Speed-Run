@@ -1,0 +1,55 @@
+<!doctype html>
+<!--
+Copyright: Ankitects Pty Ltd and contributors
+License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
+
+Placeholder shell. With `server.url` set in capacitor.config.ts the WebView loads
+the lsat-mobile PWA from the hosted backend, and this file is not shown. It
+exists so `cap sync` has a webDir, and is what you'd see only if the app is
+built without a server URL.
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <title>LSAT Prep</title>
+        <style>
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: system-ui, -apple-system, sans-serif;
+                background: #f4f6f9;
+                color: #1b1c1e;
+                text-align: center;
+                padding: 1.5rem;
+            }
+            .brand {
+                font-weight: 750;
+                font-size: 1.4rem;
+                margin-bottom: 0.5rem;
+            }
+            .muted {
+                color: #626873;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                max-width: 22rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <div class="brand">LSAT Prep</div>
+            <p class="muted">
+                Configure your server in <code>capacitor.config.ts</code>
+                (<code>LSAT_SERVER_URL</code>) and rebuild. The app loads the study
+                UI from your LSAT backend.
+            </p>
+        </div>
+    </body>
+</html>

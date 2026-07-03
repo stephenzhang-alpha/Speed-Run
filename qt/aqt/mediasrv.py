@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import enum
+import json
 import logging
 import mimetypes
 import os
@@ -422,6 +423,9 @@ def is_sveltekit_page(path: str) -> bool:
         "import-csv",
         "import-page",
         "image-occlusion",
+        "lsat-dashboard",
+        "lsat-mobile",
+        "lsat-section-runner",
     ]
 
 
@@ -704,6 +708,190 @@ def save_custom_colours() -> bytes:
     return b""
 
 
+def lsat_dashboard_data() -> Response | bytes:
+    # Anki for LSAT: returns the dashboard payload (memory / coverage / readiness)
+    # as JSON bytes. The data builder lives in the top-level `lsat` package,
+    # reached via aqt.lsat_dashboard (which adds the repo root to sys.path).
+    # Require the pairing bearer token like the other LSAT endpoints, so a
+    # LAN-bound (ANKI_API_HOST=0.0.0.0) instance never serves the collection's
+    # readiness/coverage data unauthenticated (mediasrv's global gate is bypassed
+    # in that mode -- see aqt.lsat_web.pairing_authorized).
+    from aqt.lsat_web import pairing_authorized
+
+    if not pairing_authorized():
+        return Response(
+            json.dumps({"error": "unauthorized"}),
+            status=403,
+            mimetype="application/json",
+        )
+    from aqt.lsat_dashboard import dashboard_json
+
+    return dashboard_json(aqt.mw.col)
+
+
+def lsat_next_item() -> bytes:
+    # Anki for LSAT (mobile PWA): the next item to study.
+    from aqt.lsat_web import next_item
+
+    return next_item()
+
+
+def lsat_submit_answer() -> bytes:
+    # Anki for LSAT (mobile PWA): grade + log a chosen answer over HTTP (the
+    # pycmd-free equivalent of the reviewer hook; reuses lsat.grading).
+    from aqt.lsat_web import submit_answer
+
+    return submit_answer()
+
+
+def lsat_submit_trap() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a "which trap?" tap over HTTP.
+    from aqt.lsat_web import submit_trap
+
+    return submit_trap()
+
+
+def lsat_submit_classify() -> bytes:
+    # Anki for LSAT (mobile PWA): grade the identification-first stage.
+    from aqt.lsat_web import submit_classify
+
+    return submit_classify()
+
+
+def lsat_conditional_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Conditional Translation Drill (#19).
+    from aqt.lsat_web import conditional_drill
+
+    return conditional_drill()
+
+
+def lsat_submit_conditional() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a conditional-translation attempt (#19).
+    from aqt.lsat_web import submit_conditional
+
+    return submit_conditional()
+
+
+def lsat_chain_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Conditional-Chain Drill (r4 #22).
+    from aqt.lsat_web import chain_drill
+
+    return chain_drill()
+
+
+def lsat_submit_chain() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a conditional-chain judgment (r4 #22).
+    from aqt.lsat_web import submit_chain
+
+    return submit_chain()
+
+
+def lsat_worked_example_drill() -> bytes:
+    # Anki for LSAT: the next Oracle-Verified Faded Worked Example (research #1).
+    from aqt.lsat_web import worked_example_drill
+
+    return worked_example_drill()
+
+
+def lsat_submit_worked_step() -> bytes:
+    # Anki for LSAT: oracle-grade a faded-worked-example move (research #1).
+    from aqt.lsat_web import submit_worked_step
+
+    return submit_worked_step()
+
+
+def lsat_oracle_theater() -> Response | bytes:
+    # Anki for LSAT: the Oracle Proof Theater (marquee AI demo) -- a recorded model
+    # draft checked LIVE, step by step, by the material-entailment oracle. Read-only.
+    from aqt.lsat_web import oracle_theater
+
+    return oracle_theater()
+
+
+def lsat_evil_twin_drill() -> bytes:
+    # Anki for LSAT: the next oracle-proven "Skill or Luck?" evil twin.
+    from aqt.lsat_web import evil_twin_drill
+
+    return evil_twin_drill()
+
+
+def lsat_submit_evil_twin() -> bytes:
+    # Anki for LSAT: oracle-grade a verdict on an evil twin.
+    from aqt.lsat_web import submit_evil_twin
+
+    return submit_evil_twin()
+
+
+def lsat_quantifier_validity_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Quantifier Validity Drill (r3 #1).
+    from aqt.lsat_web import quantifier_validity_drill
+
+    return quantifier_validity_drill()
+
+
+def lsat_submit_quantifier_validity() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a quantifier-validity judgment (r3 #1).
+    from aqt.lsat_web import submit_quantifier_validity
+
+    return submit_quantifier_validity()
+
+
+def lsat_quantifier_negation_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Quantifier Negation Drill (r3 #1).
+    from aqt.lsat_web import quantifier_negation_drill
+
+    return quantifier_negation_drill()
+
+
+def lsat_submit_quantifier_negation() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a quantifier-negation choice (r3 #1).
+    from aqt.lsat_web import submit_quantifier_negation
+
+    return submit_quantifier_negation()
+
+
+def lsat_stem_polarity_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Stem-Polarity Micro-Drill (r4 #13).
+    from aqt.lsat_web import stem_polarity_drill
+
+    return stem_polarity_drill()
+
+
+def lsat_submit_stem_polarity() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a stem-polarity call (r4 #13).
+    from aqt.lsat_web import submit_stem_polarity
+
+    return submit_stem_polarity()
+
+
+def lsat_assumption_drill() -> bytes:
+    # Anki for LSAT (mobile PWA): the next Necessary/Sufficient drill (r4 #5).
+    from aqt.lsat_web import assumption_drill
+
+    return assumption_drill()
+
+
+def lsat_submit_assumption() -> bytes:
+    # Anki for LSAT (mobile PWA): grade a four-cell assumption sort (r4 #5).
+    from aqt.lsat_web import submit_assumption
+
+    return submit_assumption()
+
+
+def lsat_section_items() -> bytes:
+    # Anki for LSAT (mobile PWA): a batch of distinct items for a timed section (r4 #17).
+    from aqt.lsat_web import section_items
+
+    return section_items()
+
+
+def lsat_submit_section_attempt() -> bytes:
+    # Anki for LSAT (mobile PWA): persist a timed-section attempt (r4 #17).
+    from aqt.lsat_web import submit_section_attempt
+
+    return submit_section_attempt()
+
+
 post_handler_list = [
     congrats_info,
     get_deck_configs_for_update,
@@ -720,6 +908,30 @@ post_handler_list = [
     deck_options_require_close,
     deck_options_ready,
     save_custom_colours,
+    lsat_dashboard_data,
+    lsat_next_item,
+    lsat_submit_answer,
+    lsat_submit_trap,
+    lsat_submit_classify,
+    lsat_conditional_drill,
+    lsat_submit_conditional,
+    lsat_quantifier_validity_drill,
+    lsat_submit_quantifier_validity,
+    lsat_quantifier_negation_drill,
+    lsat_submit_quantifier_negation,
+    lsat_stem_polarity_drill,
+    lsat_submit_stem_polarity,
+    lsat_assumption_drill,
+    lsat_submit_assumption,
+    lsat_section_items,
+    lsat_submit_section_attempt,
+    lsat_chain_drill,
+    lsat_submit_chain,
+    lsat_worked_example_drill,
+    lsat_submit_worked_step,
+    lsat_oracle_theater,
+    lsat_evil_twin_drill,
+    lsat_submit_evil_twin,
 ]
 
 
@@ -873,6 +1085,11 @@ def _have_api_access() -> bool:
         request.headers.get("Authorization") == f"Bearer {_APIKEY}"
         or os.environ.get("ANKI_API_HOST") == "0.0.0.0"
     )
+
+
+def get_api_key() -> str:
+    """The per-session API bearer token (used by the LSAT phone-pairing link)."""
+    return _APIKEY
 
 
 # this currently only handles a single method; in the future, idempotent

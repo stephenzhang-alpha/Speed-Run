@@ -64,6 +64,11 @@ service SchedulerService {
   // The number of days the calculated interval was fuzzed by on the previous
   // review (if any). Utilized by the FSRS add-on.
   rpc FuzzDelta(FuzzDeltaRequest) returns (FuzzDeltaResponse);
+  // Anki for LSAT: read-only "points at stake" review ordering
+  // (topic exam weight x student weakness). Implemented in
+  // rslib/src/scheduler/points_at_stake.rs.
+  rpc GetPointsAtStakeQueue(GetPointsAtStakeQueueRequest)
+      returns (GetPointsAtStakeQueueResponse);
 }
 
 // Implicitly includes any of the above methods that are not listed in the
@@ -482,4 +487,37 @@ message FuzzDeltaRequest {
 
 message FuzzDeltaResponse {
   sint32 delta_days = 1;
+}
+
+// Anki for LSAT: points-at-stake review queue (the Rust engine change).
+// A read-only ordering of due cards by (topic exam weight x student weakness),
+// so the single most valuable card to study surfaces first.
+message GetPointsAtStakeQueueRequest {
+  // Restrict to this deck and its children. 0 = whole collection.
+  int64 deck_id = 1;
+  // Maximum entries to return. 0 = no limit.
+  uint32 limit = 2;
+  // Per-tag weight and recent performance mastery, supplied by the caller from
+  // the LSAT taxonomy (tags are hierarchical, e.g. lsat::lr::weaken).
+  repeated TopicWeight topics = 3;
+}
+
+message TopicWeight {
+  string tag = 1;
+  // Exam weight (question types) or study weight (cross-cutting skills), 0..1.
+  float weight = 2;
+  // Recent performance mastery on this topic, 0..1.
+  float perf_mastery = 3;
+}
+
+message GetPointsAtStakeQueueResponse {
+  repeated PointsAtStakeEntry entries = 1;
+}
+
+message PointsAtStakeEntry {
+  int64 card_id = 1;
+  // weight(top_tag) * (1 - mastery): the study priority of this card.
+  float points = 2;
+  // The card tag that produced the maximum points.
+  string top_tag = 3;
 }

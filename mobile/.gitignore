@@ -1,0 +1,15 @@
+# Capacitor / node
+node_modules/
+package-lock.json.bak
+
+# Generated native projects (regenerate with `npx cap add android`)
+android/
+ios/
+
+# Generated icon raster (source is resources/icon.svg)
+resources/icon.png
+resources/splash.png
+
+# misc
+*.log
+.DS_Store

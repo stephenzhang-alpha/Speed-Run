@@ -111,7 +111,10 @@ import aqt.forms
 
 
 from aqt import addcards, addons, browser, editcurrent, filtered_deck  # isort:skip
-from aqt import stats, about, preferences, mediasync  # isort:skip
+from aqt import stats, about, preferences, mediasync, lsat_dashboard, lsat_performance  # isort:skip
+
+# Anki for LSAT: capture graded LSAT Item answers posted from the reviewer.
+lsat_performance.register_lsat_performance()
 
 
 class DialogManager:
@@ -126,6 +129,7 @@ class DialogManager:
         "About": [about.show, None],
         "Preferences": [preferences.Preferences, None],
         "sync_log": [mediasync.MediaSyncDialog, None],
+        "LSATDashboard": [lsat_dashboard.LsatDashboardDialog, None],
     }
 
     def open(self, name: str, *args: Any, **kwargs: Any) -> Any:
