@@ -2,7 +2,7 @@
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 
-from anki.app import main
+from prep.app import main
 
 if __name__ == "__main__":
     import sys
@@ -15,7 +15,9 @@ if __name__ == "__main__":
             sys.stdin = open("CONIN$", "r")
     except Exception:
         pass
-    sys.modules.pop("anki")
-    sys.modules.pop("anki.app")
+    # The launcher package is named ``prep`` (not ``anki``) so it never shadows
+    # the real ``anki`` pylib package; drop it from sys.modules for tidiness.
+    sys.modules.pop("prep", None)
+    sys.modules.pop("prep.app", None)
 
     main()

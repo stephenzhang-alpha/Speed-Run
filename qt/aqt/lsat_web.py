@@ -247,6 +247,45 @@ def oracle_theater() -> bytes | flask.Response:
     return json.dumps(api.oracle_theater(aqt.mw.col)).encode()
 
 
+def prove_step() -> bytes | flask.Response:
+    """Interactive "Prove It": oracle-check a learner-built ordered move list against
+    a theater scenario (read-only, no LLM). Returns per-step verdicts + a
+    counterexample world on an entailment failure."""
+    if not pairing_authorized():
+        return _unauthorized()
+    _ensure_lsat_on_path()
+    from lsat import api
+
+    body = _body()
+    try:
+        result = api.prove_step(
+            aqt.mw.col,
+            scenario_id=body.get("scenario_id", ""),
+            moves=body.get("moves"),
+        )
+    except Exception as exc:
+        return json.dumps({"error": str(exc)}).encode()
+    return json.dumps(result).encode()
+
+
+def oracle_draft_live() -> bytes | flask.Response:
+    """"Draft it live": the real model drafts a derivation and the oracle checks it
+    LIVE (read-only; degrades to the recorded scenario when AI is off/unavailable)."""
+    if not pairing_authorized():
+        return _unauthorized()
+    _ensure_lsat_on_path()
+    from lsat import api
+
+    body = _body()
+    try:
+        result = api.oracle_draft_live(
+            aqt.mw.col, scenario_id=body.get("scenario_id", "")
+        )
+    except Exception as exc:
+        return json.dumps({"error": str(exc)}).encode()
+    return json.dumps(result).encode()
+
+
 def evil_twin_drill() -> bytes | flask.Response:
     """Return the next oracle-proven "Skill or Luck?" evil twin (never the verdict)."""
     if not pairing_authorized():

@@ -1,133 +1,155 @@
 /* Copyright: Ankitects Pty Ltd and contributors
  * License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
  *
- * Semantic design tokens for the LSAT UI, layered on Anki's theme variables
- * (--canvas, --fg, --accent-*, --flag-*, --border-radius-*), which are defined
- * globally by ts/lib/sass/_root-vars.scss and flip under `.night-mode`. Every
- * token carries a hardcoded fallback so the components still look right when
- * rendered outside the Anki app (e.g. the mobile PWA in a plain browser tab).
+ * LSAT Prep design system — the single source of truth for the product's look.
+ * Every component reads only these `--lsat-*` tokens, so the whole UI is
+ * restyled here, once.
  *
- * Design language: inside the desktop app the accent/canvas inherit Anki's
- * theme (so the dashboard matches light/dark automatically); the fallbacks give
- * the standalone mobile PWA a distinctive, focused identity -- a deep indigo
- * accent, a violet secondary, calm slate surfaces, a signature hero gradient,
- * soft layered shadows, and a consistent type scale. Components read only these
- * `--lsat-*` tokens, so restyling happens here, once.
+ * Theming strategy (hybrid, deliberate):
+ *   - SURFACES + TEXT inherit the host app's theme vars (`--canvas`, `--fg`, …)
+ *     when present, so inside the desktop app the dashboard tracks the host
+ *     light/dark automatically. Each carries a hand-tuned fallback, so the
+ *     standalone PWA (plain browser tab, no host vars) still looks finished —
+ *     and a `prefers-color-scheme: dark` block supplies dark fallbacks that ONLY
+ *     take effect when the host vars are absent (i.e. the PWA), never fighting
+ *     the in-app theme.
+ *   - The BRAND (accent, gradient, focus ring) is PINNED to LSAT Prep's identity
+ *     — it does NOT inherit the host's arbitrary accent — so the product looks
+ *     the same indigo everywhere.
  *
- * Imported as a global side-effect stylesheet from the LSAT dashboard page and
- * the mobile layout, so the :root block below applies to those routes. */
+ * Identity — "PROVEN": carried by GEOMETRY (the turnstile ⊢, a proof rail,
+ * confidence-interval bands) + NOTATION (mono for logic + numerals) + a
+ * gradient reserved strictly for "earned / proven" + a hatch for "not yet
+ * proven". Never a decorative flourish. */
 
 :root {
-    /* surfaces + text */
-    --lsat-canvas: var(--canvas, #eef1f6);
+    color-scheme: light;
+
+    /* ---- surfaces + text (inherit host theme; premium light fallback) ------ */
+    --lsat-canvas: var(--canvas, #f4f6fb);
     --lsat-surface: var(--canvas-elevated, #ffffff);
-    --lsat-inset: var(--canvas-inset, #eceff4);
-    --lsat-fg: var(--fg, #171a21);
-    --lsat-fg-subtle: var(--fg-subtle, #5b6472);
-    /* faint text tier: bumped from #98a1b0 (~2.6:1, below AA) to ~4.6:1 on the
-     * light canvas so it is safe for small text; still clearly the faintest tier. */
-    --lsat-fg-faint: var(--fg-faint, #646d7c);
-    --lsat-border: var(--border, rgba(120, 130, 150, 0.3));
-    --lsat-border-subtle: var(--border-subtle, rgba(120, 130, 150, 0.16));
+    --lsat-surface-2: #f7f9fc;
+    --lsat-inset: var(--canvas-inset, #eef1f7);
+    --lsat-fg: var(--fg, #101526);
+    --lsat-fg-subtle: var(--fg-subtle, #4a5468);
+    /* faintest tier, kept >= 4.5:1 on the light canvas so small text stays AA */
+    --lsat-fg-faint: var(--fg-faint, #667085);
+    --lsat-border: var(--border, rgba(16, 24, 48, 0.1));
+    --lsat-border-subtle: var(--border-subtle, rgba(16, 24, 48, 0.06));
+    --lsat-border-strong: rgba(16, 24, 48, 0.16);
 
-    /* brand + status palette. --lsat-accent inherits Anki's accent inside the
-     * app; the fallback is the LSAT identity indigo used by the mobile PWA. */
-    --lsat-accent: var(--accent-card, #4c5ce0);
-    --lsat-accent-2: #8a5cf6; /* violet secondary, for the signature gradient */
-    --lsat-good: var(--accent-note, #17915a);
-    --lsat-warn: var(--flag-2, #d9840a);
-    --lsat-bad: var(--accent-danger, #d64541);
-    --lsat-accent-soft: color-mix(in srgb, var(--lsat-accent) 12%, transparent);
-    --lsat-good-soft: color-mix(in srgb, var(--lsat-good) 15%, transparent);
-    --lsat-warn-soft: color-mix(in srgb, var(--lsat-warn) 18%, transparent);
-    --lsat-bad-soft: color-mix(in srgb, var(--lsat-bad) 14%, transparent);
+    /* ---- brand + status (PINNED — the LSAT Prep identity) ------------------ */
+    --lsat-accent: #4f46e5; /* indigo 600 — confident, analytical */
+    --lsat-accent-strong: #4338ca;
+    --lsat-accent-2: #7c3aed; /* violet — the gradient partner */
+    --lsat-ink-on-accent: #f5f6ff;
+    --lsat-good: #0f9d6a;
+    --lsat-warn: #d97706;
+    --lsat-bad: #e0483d;
+    --lsat-accent-soft: color-mix(in srgb, var(--lsat-accent) 10%, transparent);
+    --lsat-accent-tint: color-mix(in srgb, var(--lsat-accent) 6%, var(--lsat-surface));
+    --lsat-good-soft: color-mix(in srgb, var(--lsat-good) 14%, transparent);
+    --lsat-warn-soft: color-mix(in srgb, var(--lsat-warn) 16%, transparent);
+    --lsat-bad-soft: color-mix(in srgb, var(--lsat-bad) 13%, transparent);
 
-    /* signature gradient (hero surfaces, active states, progress fills) */
-    --lsat-hero: linear-gradient(
-        135deg,
-        var(--lsat-accent) 0%,
-        color-mix(in srgb, var(--lsat-accent) 55%, var(--lsat-accent-2)) 100%
-    );
+    /* signature gradient — means PROVEN / EARNED, nothing else */
+    --lsat-hero: linear-gradient(135deg, var(--lsat-accent) 0%, var(--lsat-accent-2) 100%);
+    --lsat-proven: var(--lsat-hero);
 
-    /* shape + elevation + motion */
-    --lsat-radius: var(--border-radius-medium, 16px);
-    --lsat-radius-sm: var(--border-radius, 9px);
+    /* ---- shape + elevation + motion ---------------------------------------- */
+    --lsat-radius: 18px;
+    --lsat-radius-sm: 11px;
     --lsat-radius-pill: 999px;
-    --lsat-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 14px rgba(16, 24, 40, 0.06);
-    --lsat-shadow-lift: 0 2px 6px rgba(16, 24, 40, 0.08), 0 16px 40px rgba(16, 24, 40, 0.12);
-    --lsat-glow: 0 0 0 1px color-mix(in srgb, var(--lsat-accent) 22%, transparent),
-        0 6px 22px color-mix(in srgb, var(--lsat-accent) 20%, transparent);
-    --lsat-ring: 0 0 0 3px color-mix(in srgb, var(--lsat-accent) 32%, transparent);
-    --lsat-transition: var(--transition, 180ms);
+    /* soft, layered, low-opacity — presence without heaviness */
+    --lsat-shadow: 0 1px 2px rgba(16, 24, 48, 0.04), 0 6px 18px -6px rgba(16, 24, 48, 0.1);
+    --lsat-shadow-lift: 0 2px 6px rgba(16, 24, 48, 0.06), 0 22px 48px -12px rgba(16, 24, 48, 0.18);
+    --lsat-glow: 0 0 0 1px color-mix(in srgb, var(--lsat-accent) 24%, transparent),
+        0 10px 30px -8px color-mix(in srgb, var(--lsat-accent) 45%, transparent);
+    --lsat-ring: 0 0 0 3px color-mix(in srgb, var(--lsat-accent) 30%, transparent);
+    --lsat-transition: 180ms;
     --lsat-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-    /* type scale */
+    /* ---- type -------------------------------------------------------------- */
     --lsat-font: var(
         --font,
         -apple-system,
         BlinkMacSystemFont,
         "Segoe UI",
+        "Inter",
         Roboto,
         "Helvetica Neue",
         sans-serif
     );
-    --lsat-display: clamp(2rem, 1.4rem + 2.6vw, 2.6rem); /* headline scores */
+    /* logic notation + every numeral: tabular mono = "a number you can trust" */
+    --lsat-mono: ui-monospace, "SF Mono", "SFMono-Regular", "JetBrains Mono", Menlo,
+        Consolas, "Liberation Mono", monospace;
+    --lsat-display: clamp(2rem, 1.35rem + 2.8vw, 2.75rem);
     --lsat-h2: 1rem;
-    --lsat-num: 700; /* weight for tabular numerals */
+    --lsat-num: 700;
 
-    /* rhythm (8px baseline unit) */
-    --lsat-gap: 0.9rem;
-    --lsat-pad: 1.1rem;
-    --lsat-maxw: 980px;
+    /* ---- rhythm ------------------------------------------------------------ */
+    --lsat-gap: 1rem;
+    --lsat-pad: 1.15rem;
+    --lsat-maxw: 1200px;
 
-    /* ---- "PROVEN" design language ------------------------------------------
-     * Identity is carried by GEOMETRY + TEXTURE + NOTATION, not by the accent
-     * hue (which inherits Anki's arbitrary theme colour in-app). So: reserve the
-     * gradient for "earned/proven" only, render logic in monospace, and mark
-     * "not yet proven" with a hatch. */
-
-    /* Monospace for LOGIC NOTATION + numerals (conditional arrows,
-     * contrapositives, verdict tokens, proof steps, scores). System stack only. */
-    --lsat-mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
-        "Liberation Mono", monospace;
-
-    /* The gradient means PROVEN/EARNED. Alias it so intent is explicit and
-     * decorative gradient use can be audited away. */
-    --lsat-proven: var(--lsat-hero);
-
-    /* Abstain texture: a diagonal hatch that reads "rigour, not empty" -- the
-     * first-class "not yet proven" state (replaces muted em-dashes / opacity). */
+    /* ---- "PROVEN" motifs --------------------------------------------------- */
+    /* abstain texture — a fine diagonal hatch reading "rigour, not empty" */
     --lsat-hatch: repeating-linear-gradient(
         -45deg,
         var(--lsat-border-subtle) 0,
         var(--lsat-border-subtle) 1px,
         transparent 1px,
-        transparent 7px
+        transparent 8px
     );
-
-    /* Proof gutter / evidence rail: the 2px connective motif (systematises the
-     * ad-hoc section ticks + left borders + the study-stem rule into one token). */
-    --lsat-rail-w: 2px;
+    /* proof gutter / evidence rail — the 2px connective motif */
+    --lsat-rail-w: 3px;
     --lsat-rail: var(--lsat-proven);
-
-    /* Whisper-quiet graph-paper canvas (LSAT scratch-work feel; ~2-3% ink). */
-    --lsat-graph-size: 24px;
-    --lsat-graph:
+    /* page background — a soft brand aura fading into the canvas (replaces the
+     * old graph-paper grid). Built from accent + canvas, so the standalone PWA
+     * dark fallbacks and the in-app host theme both adapt automatically. */
+    --lsat-bg:
+        radial-gradient(
+                1100px 560px at 50% -10%,
+                color-mix(in srgb, var(--lsat-accent) 10%, transparent) 0%,
+                transparent 68%
+            ),
         linear-gradient(
-                to right,
-                color-mix(in srgb, var(--lsat-border) 26%, transparent) 1px,
-                transparent 1px
-            )
-            0 0 / var(--lsat-graph-size) var(--lsat-graph-size),
-        linear-gradient(
-                to bottom,
-                color-mix(in srgb, var(--lsat-border) 26%, transparent) 1px,
-                transparent 1px
-            )
-            0 0 / var(--lsat-graph-size) var(--lsat-graph-size);
+                180deg,
+                color-mix(in srgb, var(--lsat-accent) 3%, var(--lsat-canvas)) 0%,
+                var(--lsat-canvas) 46%
+            );
 
-    /* Semantic elevation: elevated = ACTIONABLE; flat hairline = RECORDED
-     * evidence. (Retires the uniform shadow+hover-lift on every card.) */
-    --lsat-elev-action: var(--lsat-shadow-lift);
+    /* semantic elevation: elevated = ACTIONABLE, flat hairline = RECORDED */
+    --lsat-elev-action: var(--lsat-shadow);
     --lsat-elev-evidence: inset 0 0 0 1px var(--lsat-border-subtle);
+}
+
+/* Dark fallbacks for the STANDALONE PWA only. In the desktop app the host
+ * supplies real `--canvas`/`--fg`/… so these `var(..., dark)` fallbacks are
+ * never used there; they only kick in when the host vars are absent. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+        --lsat-canvas: var(--canvas, #0d1017);
+        --lsat-surface: var(--canvas-elevated, #161b26);
+        --lsat-surface-2: #1a2130;
+        --lsat-inset: var(--canvas-inset, #1c2331);
+        --lsat-fg: var(--fg, #e8ebf2);
+        --lsat-fg-subtle: var(--fg-subtle, #aab2c2);
+        --lsat-fg-faint: var(--fg-faint, #8b93a5);
+        --lsat-border: var(--border, rgba(255, 255, 255, 0.12));
+        --lsat-border-subtle: var(--border-subtle, rgba(255, 255, 255, 0.07));
+        --lsat-border-strong: rgba(255, 255, 255, 0.2);
+        /* lift the accent a touch for legibility on dark surfaces */
+        --lsat-accent: #7c86ff;
+        --lsat-accent-strong: #949bff;
+        --lsat-accent-2: #a78bfa;
+        --lsat-ink-on-accent: #0d1017;
+        --lsat-accent-tint: color-mix(in srgb, var(--lsat-accent) 12%, var(--lsat-surface));
+        --lsat-good: #34d399;
+        --lsat-warn: #fbbf24;
+        --lsat-bad: #f87171;
+        --lsat-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
+        --lsat-shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 56px -12px rgba(0, 0, 0, 0.7);
+    }
 }

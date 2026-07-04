@@ -2,20 +2,27 @@
 Copyright: Ankitects Pty Ltd and contributors
 License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
-ORACLE PROOF THEATER — the marquee, offline-demoable AI feature.
+ORACLE PROOF THEATER — the marquee, offline-demoable AI feature, now interactive.
 
-A *recorded* model draft of a conditional-chain derivation is replayed and checked
-LIVE, step by step, by the exact material-entailment oracle our tests run
-(lsat.conditional_chain.entails via lsat.worked_example). Most steps verify and
-resolve to a ✓ "entails" pill; the one planted hallucination flips to
-"✗ does not follow — blocked" with the oracle's verbatim reason, and then the
-oracle substitutes the continuation it can prove. The AI's WORDS are a committed
-recording; every VERDICT is computed at request time server-side — nothing baked.
+Three modes over the same conditional-chain scenarios, all judged by the exact
+material-entailment oracle our tests run (lsat.conditional_chain.entails via
+lsat.worked_example — the LLM/user only ever PROPOSE; the oracle DISPOSES):
 
-Tagline: "Watch the AI get overruled." Self-fetches via client.oracleTheater();
-no props, no page mount here (the coordinator mounts <OracleProofTheater/>).
-Motion is transform/opacity only; prefers-reduced-motion disables auto-play and
-offers a "Step through ▸" control, with an aria-live region mirroring each beat.
+  • Watch — a *recorded* model draft is replayed and checked LIVE, step by step.
+    The one planted hallucination flips to "✗ blocked" with the oracle's reason
+    (and, when the claim genuinely fails, a concrete counterexample world), then
+    the oracle substitutes the continuation it can prove. "Watch the AI get overruled."
+  • Your turn — the learner assembles the proof from the scenario's closed set of
+    premise edges; every pick is oracle-checked instantly. Try to sneak a bad step
+    past the checker — you can't.
+  • Draft it live — when a model key is present, the REAL model drafts the moves and
+    the oracle checks them live (degrades to the recorded draft when AI is off).
+
+The AI's words are a recording (Watch) or a live proposal (Draft it live); every
+VERDICT is computed at request time server-side — nothing baked. Self-fetches via
+client.oracleTheater(); no props. Motion is transform/opacity only;
+prefers-reduced-motion disables auto-play and offers a "Step through ▸" control,
+with an aria-live region mirroring each beat.
 -->
 <script lang="ts">
     import { onDestroy, onMount, tick } from "svelte";
@@ -25,9 +32,13 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
     import type {
         OracleTheater,
         OracleTheaterCorrectedStep,
+        OracleTheaterMove,
         OracleTheaterScenario,
         OracleTheaterStep,
+        ProveStepResult,
     } from "./types";
+
+    type View = "recorded" | "prove" | "live";
 
     type State =
         | "loading"
@@ -39,7 +50,7 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         | "receipt"
         | "error";
 
-    // One renderable beat of the replay: a recorded draft step, or a step the
+    // One renderable beat of the replay: a recorded/live draft step, or a step the
     // oracle substituted after the veto.
     type Beat =
         | { type: "draft"; step: OracleTheaterStep }
@@ -48,9 +59,10 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
     let data: OracleTheater | null = null;
     let state: State = "loading";
     let error = "";
+    let view: View = "recorded";
 
     let idx = 0; // selected scenario
-    let started = false; // has the current run begun?
+    let started = false; // has the current replay begun?
     let revealed = 0; // how many beats are shown
     let reduceMotion = false;
     let liveMsg = ""; // mirrored into the aria-live region
@@ -59,12 +71,29 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
     const radios: HTMLButtonElement[] = [];
     let mql: MediaQueryList | null = null;
 
-    $: current = data && data.scenarios.length ? data.scenarios[idx] : null;
+    // "Draft it live": the real model's draft, replayed through the oracle.
+    let liveScenario: OracleTheaterScenario | null = null;
+    let liveState: "idle" | "drafting" | "error" = "idle";
+    let liveError = "";
+
+    // "Your turn": the learner-built proof, oracle-checked move by move.
+    let builtMoves: { premise_index: number; contrapositive: boolean }[] = [];
+    let proveResult: ProveStepResult | null = null;
+    let proveBusy = false;
+    let proveError = "";
+
+    $: recordedScenario = data && data.scenarios.length ? data.scenarios[idx] : null;
+    // The replay (Watch / Draft it live) runs on this; the builder uses the recorded
+    // scenario's chain + closed move options.
+    $: activeScenario = view === "live" ? liveScenario : recordedScenario;
+    $: frameScenario = activeScenario ?? recordedScenario;
     $: chipLabel =
-        data?.mode === "live" ? "live model draft" : "recorded · replayed offline";
-    $: beats = buildBeats(current);
-    $: blockedBeatIndex = current
-        ? current.steps.findIndex((s) => s.blocked)
+        activeScenario?.provenance === "live"
+            ? `live model draft${activeScenario?.model_used ? ` · ${activeScenario.model_used}` : ""}`
+            : "recorded · replayed offline";
+    $: beats = buildBeats(activeScenario);
+    $: blockedBeatIndex = activeScenario
+        ? activeScenario.steps.findIndex((s) => s.blocked)
         : -1;
     $: running = started && state !== "receipt";
     function labelFor(hasStarted: boolean, st: string): string {
@@ -74,6 +103,12 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         return st === "receipt" ? "Run again ▶" : "Running…";
     }
     $: runLabel = labelFor(started, state);
+
+    // Builder-derived state.
+    $: proveSteps = proveResult?.steps ?? [];
+    $: lastStepBlocked = proveSteps.some((s) => s.blocked);
+    $: proved = !!proveResult?.proved;
+    $: currentFrontier = proveResult?.frontier ?? recordedScenario?.start ?? "";
 
     function buildBeats(sc: OracleTheaterScenario | null): Beat[] {
         if (!sc) {
@@ -107,6 +142,8 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         }
         if (revealed === 0) {
             state = "drafting";
+        } else if (blockedBeatIndex < 0) {
+            state = "checking";
         } else if (revealed <= blockedBeatIndex) {
             state = "checking";
         } else if (revealed === blockedBeatIndex + 1) {
@@ -117,16 +154,16 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
     }
 
     function announce(): void {
-        if (!started || !current) {
+        if (!started || !activeScenario) {
             liveMsg = "";
             return;
         }
         if (revealed === 0) {
-            liveMsg = `${chipLabel}. Checking ${current.steps.length} proposed steps against the oracle.`;
+            liveMsg = `${chipLabel}. Checking ${activeScenario.steps.length} proposed steps against the oracle.`;
             return;
         }
         if (revealed >= beats.length) {
-            liveMsg = `Proof complete. ${current.receipt.note}`;
+            liveMsg = `Proof complete. ${activeScenario.receipt.note}`;
             return;
         }
         const b = beats[revealed - 1];
@@ -184,9 +221,28 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         state = "poster";
     }
 
+    // Switch mode (Watch / Your turn / Draft it live), resetting the others.
+    function setView(v: View): void {
+        if (v === view) {
+            return;
+        }
+        view = v;
+        resetCascade();
+        if (v !== "live") {
+            liveScenario = null;
+            liveState = "idle";
+            liveError = "";
+        }
+        resetProve();
+    }
+
     async function select(i: number, focusEl = false): Promise<void> {
         idx = i;
         resetCascade();
+        liveScenario = null;
+        liveState = "idle";
+        liveError = "";
+        resetProve();
         if (focusEl) {
             await tick();
             radios[i]?.focus();
@@ -204,6 +260,99 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
             e.preventDefault();
             void select((idx - 1 + n) % n, true);
+        }
+    }
+
+    // "Draft it live": fetch a real model draft, then replay it through the oracle.
+    async function draftLive(): Promise<void> {
+        if (!recordedScenario) {
+            return;
+        }
+        resetCascade();
+        liveState = "drafting";
+        liveError = "";
+        liveScenario = null;
+        try {
+            const res = await client.oracleDraftLive(recordedScenario.id);
+            if (!res.ok || !res.scenario) {
+                liveError = res.reason ?? "Live draft unavailable.";
+                liveState = "error";
+                return;
+            }
+            liveScenario = res.scenario;
+            liveState = "idle";
+            await tick(); // let `beats`/`activeScenario` recompute before replaying
+            run();
+        } catch (e) {
+            liveError = String(e);
+            liveState = "error";
+        }
+    }
+
+    // "Your turn": append a picked move and re-check the whole derivation live.
+    function resetProve(): void {
+        builtMoves = [];
+        proveResult = null;
+        proveBusy = false;
+        proveError = "";
+    }
+
+    async function pickMove(opt: OracleTheaterMove): Promise<void> {
+        if (!recordedScenario || proveBusy || proved || lastStepBlocked) {
+            return;
+        }
+        const next = [
+            ...builtMoves,
+            { premise_index: opt.premise_index, contrapositive: opt.contrapositive },
+        ];
+        proveBusy = true;
+        proveError = "";
+        try {
+            const res = await client.proveStep(recordedScenario.id, next);
+            if (!res.ok) {
+                proveError = res.reason ?? "Could not check that move.";
+                return;
+            }
+            builtMoves = next;
+            proveResult = res;
+            announceProve();
+        } catch (e) {
+            proveError = String(e);
+        } finally {
+            proveBusy = false;
+        }
+    }
+
+    async function undoMove(): Promise<void> {
+        if (!recordedScenario || !builtMoves.length || proveBusy) {
+            return;
+        }
+        const next = builtMoves.slice(0, -1);
+        builtMoves = next;
+        if (!next.length) {
+            proveResult = null;
+            return;
+        }
+        proveBusy = true;
+        try {
+            proveResult = await client.proveStep(recordedScenario.id, next);
+        } catch (e) {
+            proveError = String(e);
+        } finally {
+            proveBusy = false;
+        }
+    }
+
+    function announceProve(): void {
+        const last = proveSteps[proveSteps.length - 1];
+        if (!last) {
+            liveMsg = "";
+        } else if (proved) {
+            liveMsg = `Proved. ${proveResult?.goal ?? ""}`;
+        } else if (last.blocked) {
+            liveMsg = `Blocked. ${last.reason ?? ""}`;
+        } else {
+            liveMsg = `Verified: ${last.claim}. Entails.`;
         }
     }
 
@@ -251,9 +400,10 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         <span class="eyebrow">VERIFIED AI</span>
         <h2 id="opt-title">Watch the AI get overruled</h2>
         <p class="dek">
-            A recorded model draft, checked <strong>live</strong> — one step at a time —
-            by the same decision procedure our tests run. The words are a recording;
-            the verdicts are computed right now. No API key.
+            A conditional-chain proof, checked <strong>live</strong> — one step at a time —
+            by the same decision procedure our tests run. Watch a recorded draft get
+            vetoed, <strong>build the proof yourself</strong>, or have the real model draft
+            it. The verdicts are computed right now; a bad step can't reach the screen.
         </p>
 
         {#if data && data.scenarios.length}
@@ -275,9 +425,37 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
                 {/each}
             </div>
 
-            <button class="run" type="button" on:click={run} disabled={running}>
-                {runLabel}
-            </button>
+            <div class="modes" role="group" aria-label="Mode">
+                <button
+                    type="button"
+                    class="mode"
+                    class:on={view === "recorded"}
+                    aria-pressed={view === "recorded"}
+                    on:click={() => setView("recorded")}
+                >
+                    Watch
+                </button>
+                <button
+                    type="button"
+                    class="mode"
+                    class:on={view === "prove"}
+                    aria-pressed={view === "prove"}
+                    on:click={() => setView("prove")}
+                >
+                    Your turn
+                </button>
+                {#if data.live_available}
+                    <button
+                        type="button"
+                        class="mode"
+                        class:on={view === "live"}
+                        aria-pressed={view === "live"}
+                        on:click={() => setView("live")}
+                    >
+                        Draft it live
+                    </button>
+                {/if}
+            </div>
         {/if}
     </div>
 
@@ -288,75 +466,204 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
             <p class="muted">{error}</p>
             <button class="run" type="button" on:click={load}>Try again</button>
         </div>
-    {:else if current}
+    {:else if frameScenario}
         <div class="stage" class:vetoed={state === "vetoed"}>
             <div class="frame">
                 <div class="block">
                     <span class="lbl">Premises</span>
                     <ul class="premises">
-                        {#each current.premises as p (p)}
+                        {#each frameScenario.premises as p (p)}
                             <li class="mono">{p}</li>
                         {/each}
                     </ul>
                 </div>
                 <div class="goalrow">
                     <span class="lbl">Prove</span>
-                    <span class="mono goal">{current.goal}</span>
+                    <span class="mono goal">{frameScenario.goal}</span>
                 </div>
             </div>
 
-            {#if started}
+            {#if view === "prove"}
+                <!-- YOUR TURN: assemble the proof; every pick is oracle-checked. -->
                 <div class="draftbar">
-                    <span class="aichip">AI draft</span>
-                    <span class="prov">{chipLabel}</span>
+                    <span class="aichip you">Your proof</span>
+                    <span class="prov">every move checked by the oracle</span>
                 </div>
 
-                <ol class="steps">
-                    {#each beats as b, i (i)}
-                        {#if i < revealed}
-                            {#if b.type === "draft"}
-                                <li
-                                    class="step"
-                                    class:blocked={b.step.blocked}
-                                >
-                                    <div class="row">
-                                        <span class="claim mono">{b.step.claim}</span>
-                                        {#if b.step.blocked}
-                                            <span class="pill bad">✗ does not follow — blocked</span>
-                                        {:else}
-                                            <span class="pill ok">✓ entails</span>
-                                        {/if}
-                                    </div>
-                                    <span class="cite mono">{b.step.cited}</span>
-                                    {#if b.step.blocked && b.step.reason}
-                                        <p class="reason">{b.step.reason}</p>
+                {#if proveSteps.length}
+                    <ol class="steps">
+                        {#each proveSteps as s (s.n)}
+                            <li class="step" class:blocked={s.blocked}>
+                                <div class="row">
+                                    <span class="claim mono">{s.claim}</span>
+                                    {#if s.blocked}
+                                        <span class="pill bad">✗ blocked</span>
+                                    {:else}
+                                        <span class="pill ok">✓ entails</span>
                                     {/if}
-                                </li>
-                            {:else}
-                                <li class="step fix">
-                                    <div class="row">
-                                        <span class="oraclechip">oracle</span>
-                                        <span class="claim mono">{b.corrected.claim}</span>
-                                        <span class="pill ok">✓ proven</span>
+                                </div>
+                                <span class="cite mono">{s.cited}</span>
+                                {#if s.blocked && s.reason}
+                                    <p class="reason">{s.reason}</p>
+                                {/if}
+                                {#if s.blocked && s.world && s.world.length}
+                                    <div class="world">
+                                        <span class="world-lbl">
+                                            Counterexample — a world where every premise holds
+                                            but the step fails:
+                                        </span>
+                                        <ul>
+                                            {#each s.world as line (line)}
+                                                <li class="mono">{line}</li>
+                                            {/each}
+                                        </ul>
                                     </div>
-                                    <span class="cite mono">{b.corrected.cited}</span>
-                                </li>
-                            {/if}
-                        {/if}
-                    {/each}
-                </ol>
-
-                {#if reduceMotion && revealed < beats.length}
-                    <button class="stepper" type="button" on:click={step}>
-                        Step through ▸
-                    </button>
+                                {/if}
+                            </li>
+                        {/each}
+                    </ol>
                 {/if}
 
-                {#if state === "receipt"}
+                {#if proved}
                     <div class="receipt">
                         <ProvenanceBadge tier="proven" label="Proven live" />
-                        <p class="rnote">{current.receipt.note}</p>
+                        <p class="rnote">
+                            You derived {frameScenario.goal} — every step re-checked by the
+                            material-entailment oracle.
+                        </p>
                     </div>
+                {:else}
+                    <p class="frontier-hint">
+                        {#if lastStepBlocked}
+                            That step is blocked — <strong>undo</strong> and try another.
+                        {:else}
+                            Next step from <span class="mono">{currentFrontier}</span>:
+                        {/if}
+                    </p>
+                    <div class="moves" role="group" aria-label="Pick the next premise">
+                        {#each recordedScenario?.options ?? [] as opt (`${opt.premise_index}:${opt.contrapositive}`)}
+                            <button
+                                type="button"
+                                class="move"
+                                disabled={proveBusy || lastStepBlocked}
+                                on:click={() => pickMove(opt)}
+                            >
+                                {opt.text}
+                            </button>
+                        {/each}
+                    </div>
+                {/if}
+
+                {#if proveError}<p class="muted err-note">{proveError}</p>{/if}
+                {#if builtMoves.length}
+                    <div class="builder-actions">
+                        <button
+                            class="stepper"
+                            type="button"
+                            on:click={undoMove}
+                            disabled={proveBusy}>&#8624; Undo</button
+                        >
+                        <button
+                            class="stepper"
+                            type="button"
+                            on:click={resetProve}
+                            disabled={proveBusy}>Reset</button
+                        >
+                    </div>
+                {/if}
+            {:else if view === "live" && !liveScenario}
+                <!-- DRAFT IT LIVE: not yet drafted. -->
+                <button
+                    class="run"
+                    type="button"
+                    on:click={draftLive}
+                    disabled={liveState === "drafting"}
+                >
+                    {liveState === "drafting" ? "Drafting a proof…" : "Draft it live ▶"}
+                </button>
+                {#if liveState === "error"}
+                    <p class="muted err-note">{liveError}</p>
+                {/if}
+            {:else}
+                <!-- WATCH (recorded) or a completed live draft: the replay. -->
+                <button
+                    class="run"
+                    type="button"
+                    on:click={view === "live" ? draftLive : run}
+                    disabled={running || liveState === "drafting"}
+                >
+                    {#if view === "live"}
+                        {running ? "Running…" : "Draft again ▶"}
+                    {:else}
+                        {runLabel}
+                    {/if}
+                </button>
+
+                {#if started}
+                    <div class="draftbar">
+                        <span class="aichip">AI draft</span>
+                        <span class="prov">{chipLabel}</span>
+                    </div>
+
+                    <ol class="steps">
+                        {#each beats as b, i (i)}
+                            {#if i < revealed}
+                                {#if b.type === "draft"}
+                                    <li class="step" class:blocked={b.step.blocked}>
+                                        <div class="row">
+                                            <span class="claim mono">{b.step.claim}</span>
+                                            {#if b.step.blocked}
+                                                <span class="pill bad"
+                                                    >✗ does not follow — blocked</span
+                                                >
+                                            {:else}
+                                                <span class="pill ok">✓ entails</span>
+                                            {/if}
+                                        </div>
+                                        <span class="cite mono">{b.step.cited}</span>
+                                        {#if b.step.blocked && b.step.reason}
+                                            <p class="reason">{b.step.reason}</p>
+                                        {/if}
+                                        {#if b.step.blocked && b.step.world && b.step.world.length}
+                                            <div class="world">
+                                                <span class="world-lbl">
+                                                    Counterexample — a world where every premise
+                                                    holds but the step fails:
+                                                </span>
+                                                <ul>
+                                                    {#each b.step.world as line (line)}
+                                                        <li class="mono">{line}</li>
+                                                    {/each}
+                                                </ul>
+                                            </div>
+                                        {/if}
+                                    </li>
+                                {:else}
+                                    <li class="step fix">
+                                        <div class="row">
+                                            <span class="oraclechip">oracle</span>
+                                            <span class="claim mono">{b.corrected.claim}</span>
+                                            <span class="pill ok">✓ proven</span>
+                                        </div>
+                                        <span class="cite mono">{b.corrected.cited}</span>
+                                    </li>
+                                {/if}
+                            {/if}
+                        {/each}
+                    </ol>
+
+                    {#if reduceMotion && revealed < beats.length}
+                        <button class="stepper" type="button" on:click={step}>
+                            Step through &#9656;
+                        </button>
+                    {/if}
+
+                    {#if state === "receipt"}
+                        <div class="receipt">
+                            <ProvenanceBadge tier="proven" label="Proven live" />
+                            <p class="rnote">{activeScenario?.receipt.note}</p>
+                        </div>
+                    {/if}
                 {/if}
             {/if}
         </div>
@@ -446,6 +753,46 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         box-shadow: var(--lsat-ring);
     }
 
+    /* Mode switch (Watch / Your turn / Draft it live) — a segmented control that
+     * reads as the primary "how do you want to engage" choice. */
+    .modes {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.15rem;
+        padding: 0.25rem;
+        background: var(--lsat-inset);
+        border: 1px solid var(--lsat-border-subtle);
+        border-radius: var(--lsat-radius-pill);
+        width: fit-content;
+    }
+    .mode {
+        padding: 0.35rem 0.85rem;
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 650;
+        color: var(--lsat-fg-subtle);
+        background: transparent;
+        border: none;
+        border-radius: var(--lsat-radius-pill);
+        cursor: pointer;
+        transition:
+            color var(--lsat-transition) var(--lsat-ease),
+            background var(--lsat-transition) var(--lsat-ease);
+    }
+    .mode:hover {
+        color: var(--lsat-fg);
+    }
+    .mode.on {
+        color: #fff;
+        background: var(--lsat-proven);
+        box-shadow: var(--lsat-glow);
+    }
+    .mode:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
+
     .run {
         align-self: flex-start;
         min-height: 44px;
@@ -479,6 +826,11 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         margin: 0;
         color: var(--lsat-fg-subtle);
     }
+    .err-note {
+        margin-top: 0.4rem;
+        font-size: 0.82rem;
+        color: var(--lsat-bad);
+    }
 
     .stage {
         display: flex;
@@ -493,7 +845,6 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         padding: 0.75rem 0.85rem;
         border-radius: var(--lsat-radius-sm);
         background: var(--lsat-inset);
-        background-image: var(--lsat-graph);
     }
     .lbl {
         display: block;
@@ -544,6 +895,12 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         background: color-mix(in srgb, var(--lsat-accent-2) 14%, transparent);
         border: 1px solid color-mix(in srgb, var(--lsat-accent-2) 42%, transparent);
         border-radius: var(--lsat-radius-pill);
+    }
+    /* The learner's own proof reads in the brand accent, not the AI violet. */
+    .aichip.you {
+        color: color-mix(in srgb, var(--lsat-accent) 74%, var(--lsat-fg));
+        background: var(--lsat-accent-soft);
+        border-color: color-mix(in srgb, var(--lsat-accent) 42%, transparent);
     }
     .prov {
         font-family: var(--lsat-mono);
@@ -637,6 +994,84 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         color: color-mix(in srgb, var(--lsat-bad) 55%, var(--lsat-fg));
     }
 
+    /* The counterexample "world": a concrete countermodel the oracle produced —
+     * premises all TRUE, the claimed step FALSE. The convincing "here's why". */
+    .world {
+        margin-top: 0.15rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: var(--lsat-radius-sm);
+        background: color-mix(in srgb, var(--lsat-bad) 8%, var(--lsat-surface));
+        border: 1px dashed color-mix(in srgb, var(--lsat-bad) 38%, transparent);
+    }
+    .world-lbl {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 650;
+        color: color-mix(in srgb, var(--lsat-bad) 52%, var(--lsat-fg));
+    }
+    .world ul {
+        margin: 0.35rem 0 0;
+        padding-left: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+    }
+    .world li {
+        font-size: 0.82rem;
+        line-height: 1.4;
+        color: var(--lsat-fg);
+    }
+
+    /* "Your turn" builder: the closed set of premise-edge moves. */
+    .frontier-hint {
+        margin: 0.1rem 0 0;
+        font-size: 0.82rem;
+        color: var(--lsat-fg-subtle);
+    }
+    .frontier-hint strong {
+        color: var(--lsat-bad);
+        font-weight: 700;
+    }
+    .moves {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .move {
+        text-align: left;
+        padding: 0.5rem 0.7rem;
+        font: inherit;
+        font-size: 0.9rem;
+        color: var(--lsat-fg);
+        background: var(--lsat-surface);
+        border: 1px solid var(--lsat-border);
+        border-radius: var(--lsat-radius-sm);
+        cursor: pointer;
+        transition:
+            border-color var(--lsat-transition) var(--lsat-ease),
+            background var(--lsat-transition) var(--lsat-ease),
+            transform var(--lsat-transition) var(--lsat-ease);
+    }
+    .move:hover:not(:disabled) {
+        border-color: var(--lsat-accent);
+        background: var(--lsat-accent-tint);
+    }
+    .move:active:not(:disabled) {
+        transform: scale(0.99);
+    }
+    .move:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+    .move:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
+    .builder-actions {
+        display: flex;
+        gap: 0.4rem;
+    }
+
     .stepper {
         align-self: flex-start;
         min-height: 40px;
@@ -648,6 +1083,10 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         border: 1px solid var(--lsat-border);
         border-radius: var(--lsat-radius-pill);
         cursor: pointer;
+    }
+    .stepper:disabled {
+        opacity: 0.5;
+        cursor: default;
     }
     .stepper:focus-visible {
         outline: none;
@@ -711,6 +1150,9 @@ offers a "Step through ▸" control, with an aria-live region mirroring each bea
         .pill.bad,
         .receipt {
             animation: none;
+        }
+        .move:active:not(:disabled) {
+            transform: none;
         }
     }
 </style>

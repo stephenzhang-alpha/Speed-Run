@@ -28,7 +28,10 @@ import type {
     SectionQuestionAttempt,
     EvilTwinDrill,
     EvilTwinResult,
+    LiveScenarioResult,
     OracleTheater,
+    OracleTheaterMove,
+    ProveStepResult,
     StemPolarityDrill,
     StemPolarityResult,
     StudyItemData,
@@ -275,6 +278,29 @@ export function assumptionDrill(): Promise<AssumptionDrill> {
 // continuation is substituted. Read-only; no submit counterpart.
 export function oracleTheater(): Promise<OracleTheater> {
     return post<OracleTheater>("lsatOracleTheater");
+}
+
+// Interactive "Prove It": submit a learner-built ordered move list for a theater
+// scenario; the oracle returns per-step verdicts (+ a concrete counterexample
+// "world" on an entailment failure) and whether the goal was proved. Read-only,
+// no LLM -- the same decision procedure the recorded theater and the tests use.
+export function proveStep(
+    scenarioId: string,
+    moves: Pick<OracleTheaterMove, "premise_index" | "contrapositive">[],
+): Promise<ProveStepResult> {
+    return post<ProveStepResult>("lsatProveStep", {
+        scenario_id: scenarioId,
+        moves,
+    });
+}
+
+// "Draft it live": ask the real model (when a key is present) to draft the moves
+// for a theater scenario, replayed through the SAME oracle; degrades to the
+// recorded scenario when AI is off/unavailable/garbled.
+export function oracleDraftLive(scenarioId: string): Promise<LiveScenarioResult> {
+    return post<LiveScenarioResult>("lsatOracleDraftLive", {
+        scenario_id: scenarioId,
+    });
 }
 
 export function submitAssumption(

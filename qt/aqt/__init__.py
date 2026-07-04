@@ -21,13 +21,13 @@ except ModuleNotFoundError:
     )
 
 if sys.version_info[0] < 3 or sys.version_info[1] < 9:
-    raise Exception("Anki requires Python 3.9+")
+    raise Exception("LSAT Prep requires Python 3.9+")
 
 # ensure unicode filenames are supported
 try:
     "テスト".encode(sys.getfilesystemencoding())
 except UnicodeEncodeError:
-    print("Anki requires a UTF-8 locale.")
+    print("LSAT Prep requires a UTF-8 locale.")
     print("Please Google 'how to change locale on [your Linux distro]'")
     sys.exit(1)
 
@@ -79,7 +79,7 @@ except AttributeError:
         sys.stderr = sys.stdout = open(os.devnull, "w", encoding="utf8")
 
 appVersion = _version
-appWebsite = "https://apps.ankiweb.net/"
+appWebsite = "https://lsatprep.app/"
 appWebsiteDownloadSection = "https://apps.ankiweb.net/#download"
 appDonate = "https://docs.ankiweb.net/contrib.html"
 appShared = "https://ankiweb.net/shared/"
@@ -455,13 +455,13 @@ def parseArgs(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     # as there's no such profile
     if is_mac and len(argv) > 1 and argv[1].startswith("-psn"):
         argv = [argv[0]]
-    parser = argparse.ArgumentParser(description=f"Anki {appVersion}")
+    parser = argparse.ArgumentParser(description=f"LSAT Prep {appVersion}")
     parser.usage = "%(prog)s [OPTIONS] [file to import/add-on to install]"
     parser.add_argument("-b", "--base", help="path to base folder", default="")
     parser.add_argument("-p", "--profile", help="profile name to load", default="")
     parser.add_argument("-l", "--lang", help="interface language (en, de, etc)")
     parser.add_argument(
-        "-v", "--version", help="print the Anki version and exit", action="store_true"
+        "-v", "--version", help="print the LSAT Prep version and exit", action="store_true"
     )
     parser.add_argument(
         "--safemode", help="disable add-ons and automatic syncing", action="store_true"
@@ -538,6 +538,17 @@ def setupGL(pm: aqt.profiles.ProfileManager) -> None:
     qInstallMessageHandler(msgHandler)
     atexit.register(qInstallMessageHandler, None)
 
+    # Bound each QtWebEngine renderer's V8 heap on macOS to keep the memory
+    # footprint in check (our pages use well under this; it only reins in
+    # pathological growth). Appended so dev flags (e.g. --remote-allow-origins)
+    # set by ./run are preserved.
+    if is_mac:
+        _existing_flags = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "")
+        if "max-old-space-size" not in _existing_flags:
+            os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
+                f"{_existing_flags} --js-flags=--max-old-space-size=192".strip()
+            )
+
     if driver == VideoDriver.OpenGL:
         # Leaving QT_OPENGL unset appears to sometimes produce different results
         # to explicitly setting it to 'auto'; the former seems to be more compatible.
@@ -575,7 +586,7 @@ def write_profile_results() -> None:
 
 
 def run() -> None:
-    print(f"Starting Anki {_version}...")
+    print(f"Starting LSAT Prep {_version}...")
     try:
         _run()
     except Exception:
@@ -607,7 +618,7 @@ def _run(argv: list[str] | None = None, exec: bool = True) -> AnkiApp | None:
     opts, args = parseArgs(argv)
 
     if opts.version:
-        print(f"Anki {appVersion}")
+        print(f"LSAT Prep {appVersion}")
         return None
 
     if PROFILE_CODE:
@@ -681,7 +692,7 @@ def _run(argv: list[str] | None = None, exec: bool = True) -> AnkiApp | None:
         os.environ["QT_QPA_PLATFORM"] = "windows:altgr"
 
     # create the app
-    QCoreApplication.setApplicationName("Anki")
+    QCoreApplication.setApplicationName("LSAT Prep")
     QGuiApplication.setDesktopFileName("anki")
     app = AnkiApp(argv)
     if app.secondInstance():

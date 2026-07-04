@@ -64,7 +64,11 @@ fn open_or_create_collection_db(path: &Path) -> Result<Connection> {
 
     db.pragma_update(None, "locking_mode", "exclusive")?;
     db.pragma_update(None, "page_size", 4096)?;
-    db.pragma_update(None, "cache_size", -40 * 1024)?;
+    // Page cache per open collection. Halved from 40 MiB to 20 MiB to lower the
+    // resident footprint; a clean bench A/B showed latency is unchanged (search /
+    // points-at-stake / dashboard-build all within noise), and 20 MiB is still a
+    // generous cache for typical decks.
+    db.pragma_update(None, "cache_size", -20 * 1024)?;
     db.pragma_update(None, "legacy_file_format", false)?;
     db.pragma_update(None, "journal_mode", "wal")?;
     // Android has no /tmp folder, and fails in the default config.

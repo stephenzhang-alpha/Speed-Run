@@ -24,10 +24,10 @@ the shared DashboardView so it is identical here and in the mobile Progress tab
     .dash {
         max-width: var(--lsat-maxw);
         margin: 0 auto;
-        padding: 1.25rem 1.25rem 3.5rem;
+        padding: 1.25rem 1.75rem 3.5rem;
         color: var(--lsat-fg);
-        /* the whisper-quiet graph-paper canvas (LSAT scratch-work) */
-        background: var(--lsat-graph), var(--lsat-canvas);
+        /* soft brand-aura page background (replaces the old graph-paper grid) */
+        background: var(--lsat-bg);
         min-height: 100vh;
         font-size: 14px;
         line-height: 1.45;

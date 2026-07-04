@@ -44,7 +44,7 @@ def dashboard_json(col: Collection) -> bytes:
 
 
 class LsatDashboardDialog(QDialog):
-    "Anki for LSAT dashboard: three honestly-bounded scores + coverage map."
+    "LSAT Prep dashboard: three honestly-bounded scores + coverage map."
 
     TITLE = "lsatDashboard"
     silentlyClose = True
@@ -59,7 +59,7 @@ class LsatDashboardDialog(QDialog):
         self.setMinimumWidth(600)
         self.setMinimumHeight(500)
         disable_help_button(self)
-        restoreGeom(self, self.TITLE, default_size=(900, 800))
+        restoreGeom(self, self.TITLE, default_size=(1200, 900))
         self.setWindowTitle("LSAT Dashboard")
 
         self.web = AnkiWebView(kind=AnkiWebViewKind.LSAT_DASHBOARD)

@@ -54,7 +54,7 @@ CANNOT_BE_TRUE = "cannot_be_true"
 COULD_BE_EITHER = "could_be_either"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Statement:
     """A categorical/quantifier statement ``<quant> <subject> are <predicate>``.
 

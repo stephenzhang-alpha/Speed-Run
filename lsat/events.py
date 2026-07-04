@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import sys
 import time
 import uuid
 from collections import defaultdict
@@ -284,7 +285,7 @@ def append_event(
 # -- read + fold --------------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PerformanceEvent:
     note_id: int
     item_id: str
@@ -374,21 +375,38 @@ def _read_events_uncached(col: Collection) -> list[PerformanceEvent]:
     if col.models.by_name(LSAT_PERFORMANCE_EVENT) is None:
         return []
     events: list[PerformanceEvent] = []
+    # Intern the highly-repetitive fields: across thousands of events the item ids,
+    # skill tags, device id, phase, confidence and classify grade take only a
+    # handful of distinct values, so interning collapses them to one shared string
+    # object each (large retained-memory win on a heavy event log). `hlc` is
+    # near-unique per event, so it is deliberately not interned.
+    intern = sys.intern
+    # De-duplicate the per-event tag-set container: across a log most events repeat
+    # the same handful of skill-tag sets, so caching one shared list per distinct
+    # set avoids thousands of redundant small list objects (on top of interning the
+    # tag strings themselves). Safe because PerformanceEvent is frozen and every
+    # consumer treats node_ids as read-only (verified: only iteration / len / list()).
+    tagset_cache: dict[tuple[str, ...], list[str]] = {}
     for nid in col.find_notes(f'note:"{LSAT_PERFORMANCE_EVENT}"'):
         note = col.get_note(nid)
+        tag_key = tuple(intern(t) for t in note["skill_tags"].split())
+        node_ids = tagset_cache.get(tag_key)
+        if node_ids is None:
+            node_ids = list(tag_key)
+            tagset_cache[tag_key] = node_ids
         events.append(
             PerformanceEvent(
                 note_id=int(nid),
-                item_id=note["item_id"],
-                node_ids=note["skill_tags"].split(),
+                item_id=intern(note["item_id"]),
+                node_ids=node_ids,
                 correct=note["correct"].strip() == "1",
                 response_ms=_safe_int(note["response_ms"]),
                 hlc=note["answered_at_hlc"],
-                device_id=note["device_id"],
-                chosen=_field(note, "chosen").strip().upper(),
-                confidence=_field(note, "confidence").strip().lower(),
-                phase=(_field(note, "phase", "timed").strip().lower() or "timed"),
-                identified=_field(note, "identified").strip(),
+                device_id=intern(note["device_id"]),
+                chosen=intern(_field(note, "chosen").strip().upper()),
+                confidence=intern(_field(note, "confidence").strip().lower()),
+                phase=intern(_field(note, "phase", "timed").strip().lower() or "timed"),
+                identified=intern(_field(note, "identified").strip()),
             )
         )
     events.sort(key=lambda e: _hlc_key(e.hlc))

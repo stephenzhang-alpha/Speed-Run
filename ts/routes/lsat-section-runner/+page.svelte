@@ -347,7 +347,7 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         display: flex;
         flex-direction: column;
         min-height: 100dvh;
-        background: var(--lsat-canvas);
+        background: var(--lsat-bg);
         color: var(--lsat-fg);
         font-size: 15px;
     }

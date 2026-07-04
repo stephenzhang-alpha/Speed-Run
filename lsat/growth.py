@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import random
 import zlib
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ _NEXT_STEP = {
 _DEFAULT_NEXT_STEP = "A short focused set on this skill, then blind-review the misses"
 
 
-def _mean(xs: list[float]) -> float:
+def _mean(xs: Sequence[float]) -> float:
     return sum(xs) / len(xs) if xs else 0.0
 
 

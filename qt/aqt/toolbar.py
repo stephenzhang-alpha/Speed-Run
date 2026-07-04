@@ -294,6 +294,7 @@ class Toolbar:
             body,
             css=["css/toolbar.css"],
             js=["js/vendor/jquery.min.js", "js/toolbar.js"],
+            head=self._lsat_head,
             context=web_context,
         )
         self.web.adjustHeightToFit()
@@ -456,12 +457,82 @@ class Toolbar:
     # HTML & CSS
     ######################################################################
 
-    _body = """
+    # LSAT Prep brand lockup (turnstile mark + wordmark) sits at the far left of
+    # the toolbar's left tray. It is decorative only: no id, no href, no pycmd,
+    # so it cannot affect navigation, and it lives in a separate grid column from
+    # the (still centered) nav links, so layout is unchanged.
+    _lsat_brand = (
+        '<span class="lsat-brand" aria-hidden="true">'
+        '<svg class="lsat-mark" width="15" height="15" viewBox="0 0 24 24"'
+        ' fill="none" stroke="currentColor" stroke-width="2"'
+        ' stroke-linecap="round" stroke-linejoin="round">'
+        '<path d="M8 4 V20 M8 12 H18"/></svg>'
+        '<span class="lsat-word">LSAT&nbsp;Prep</span>'
+        "</span>"
+    )
+
+    _body = (
+        """
 <div class="header">
-  <div class="left-tray">{left_tray_content}</div>
+  <div class="left-tray">"""
+        + _lsat_brand
+        + """{left_tray_content}</div>
   <div class="toolbar">{toolbar_content}</div>
   <div class="right-tray">{right_tray_content}</div>
 </div>
+"""
+    )
+
+    # LSAT Prep desktop chrome accent. Injected via stdHtml(head=...) so it lands
+    # after the bundled toolbar.css and only layers brand color/hover/sync tints
+    # on top of Anki's own theme vars (which flip for light/dark). Purely visual:
+    # no link ids, handlers, or structural layout are touched here.
+    _lsat_head = """
+<style>
+:root { --lsat-accent: #4f46e5; --lsat-accent-2: #7c3aed; }
+:root.night-mode { --lsat-accent: #7c86ff; --lsat-accent-2: #a78bfa; }
+
+.lsat-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  color: var(--lsat-accent);
+  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.lsat-brand .lsat-mark { flex: none; display: block; }
+.lsat-brand .lsat-word {
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+body.fancy .lsat-brand { padding-left: 16px; }
+
+/* indigo accent for the hover / pressed link state */
+.hitem:hover,
+.hitem:active { color: var(--lsat-accent) !important; }
+body.fancy .hitem:hover {
+  border-color: color-mix(in srgb, var(--lsat-accent) 45%, transparent) !important;
+}
+body.fancy .hitem:active {
+  background: color-mix(in srgb, var(--lsat-accent) 12%, transparent) !important;
+}
+
+/* brand the "changes pending" sync label + tint the spinner indigo */
+.normal-sync { color: var(--lsat-accent) !important; }
+#sync-spinner.spin {
+  filter: brightness(0) saturate(100%) invert(26%) sepia(91%) saturate(2360%)
+    hue-rotate(239deg) brightness(95%) contrast(92%);
+}
+:root.night-mode #sync-spinner.spin {
+  filter: brightness(0) saturate(100%) invert(26%) sepia(91%) saturate(2360%)
+    hue-rotate(239deg) brightness(125%) contrast(90%);
+}
+</style>
 """
 
 

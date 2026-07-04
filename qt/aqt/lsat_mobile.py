@@ -1,6 +1,6 @@
 # Copyright: Ankitects Pty Ltd and contributors
 # License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
-"""Anki for LSAT: "Study on your phone" pairing.
+"""LSAT Prep: "Study on your phone" pairing.
 
 The mobile PWA (SvelteKit ``lsat-mobile`` route + the ``lsat*`` HTTP endpoints)
 is served by this desktop app's own mediasrv. This module builds the pairing
@@ -94,7 +94,7 @@ class LsatMobilePairDialog(QDialog):
             )
         else:
             steps = QLabel(
-                "Phone access is <b>off</b>. Quit Anki and relaunch it with "
+                "Phone access is <b>off</b>. Quit LSAT Prep and relaunch it with "
                 "<code>ANKI_API_HOST=0.0.0.0</code> set, then reopen this dialog. "
                 "The link below only works once the app is bound to your network."
             )
@@ -120,7 +120,7 @@ class LsatMobilePairDialog(QDialog):
 
         warn = QLabel(
             "Only pair devices you trust on a network you trust: anyone with this "
-            "link can reach your collection while Anki is running."
+            "link can reach your collection while LSAT Prep is running."
         )
         warn.setWordWrap(True)
         warn.setStyleSheet("color: palette(mid);")

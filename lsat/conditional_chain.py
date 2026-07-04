@@ -33,7 +33,7 @@ DOES_NOT_FOLLOW = "does_not_follow"
 VERDICTS = (MUST_FOLLOW, DOES_NOT_FOLLOW)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Lit:
     """A literal: a term id, possibly negated."""
 
@@ -44,7 +44,7 @@ class Lit:
         return Lit(self.term, not self.neg)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Implication:
     ante: Lit
     cons: Lit
@@ -102,13 +102,13 @@ def _lit_true(lit: Lit, assign: dict[int, bool]) -> bool:
     return (not v) if lit.neg else v
 
 
-def entails(implications: list[Implication], candidate: Implication) -> bool:
-    """EXACT material entailment (the authoritative 'must follow' grader): premises
-    ⊨ (ante -> cons)? True iff every assignment that satisfies all premises (each
-    ``a->b`` as a material conditional) also satisfies ``(not ante) or cons`` -- i.e.
-    there is no counterexample with the candidate's antecedent true and consequent
-    false. Complete: it captures the tautological-consequent and vacuous cases that
-    reachability misses."""
+def _first_counterexample(
+    implications: list[Implication], candidate: Implication
+) -> dict[int, bool] | None:
+    """The shared enumeration behind :func:`entails` and :func:`counterexample`:
+    return the FIRST assignment that satisfies every premise while making the
+    candidate's antecedent true and its consequent false (a genuine countermodel),
+    or ``None`` when no such assignment exists (i.e. the candidate is entailed)."""
     terms = _terms(implications, candidate)
     for bits in product((False, True), repeat=len(terms)):
         assign = dict(zip(terms, bits))
@@ -118,8 +118,42 @@ def entails(implications: list[Implication], candidate: Implication) -> bool:
         ):
             continue  # not a model of the premises
         if _lit_true(candidate.ante, assign) and not _lit_true(candidate.cons, assign):
-            return False  # counterexample: premises hold, ante true, cons false
-    return True
+            return assign  # counterexample: premises hold, ante true, cons false
+    return None
+
+
+def entails(implications: list[Implication], candidate: Implication) -> bool:
+    """EXACT material entailment (the authoritative 'must follow' grader): premises
+    ⊨ (ante -> cons)? True iff every assignment that satisfies all premises (each
+    ``a->b`` as a material conditional) also satisfies ``(not ante) or cons`` -- i.e.
+    there is no counterexample with the candidate's antecedent true and consequent
+    false. Complete: it captures the tautological-consequent and vacuous cases that
+    reachability misses."""
+    return _first_counterexample(implications, candidate) is None
+
+
+def counterexample(
+    implications: list[Implication], candidate: Implication
+) -> dict[int, bool] | None:
+    """A concrete countermodel witnessing that ``candidate`` does NOT follow: a
+    truth assignment (term id -> bool) satisfying every premise with the
+    candidate's antecedent true and its consequent false. Returns ``None`` when the
+    candidate is entailed (no such world exists). This is the same enumeration
+    :func:`entails` runs, surfacing the witnessing world instead of just ``False`` --
+    the uniquely convincing "here is a world where your premises all hold but your
+    conclusion fails"."""
+    return _first_counterexample(implications, candidate)
+
+
+def render_world(assignment: dict[int, bool], props: list[str]) -> list[str]:
+    """Render a countermodel :func:`counterexample` returned to prose lines, one per
+    term in id order (e.g. ``"the alarm sounds = TRUE"``). A term outside ``props``
+    falls back to ``p<id>``. JSON-safe (plain strings)."""
+    lines: list[str] = []
+    for term in sorted(assignment):
+        name = props[term] if 0 <= term < len(props) else f"p{term}"
+        lines.append(f"{name} = {'TRUE' if assignment[term] else 'FALSE'}")
+    return lines
 
 
 # -- curated drill chains (structured; verdicts proven by the oracle) ---------
@@ -334,6 +368,26 @@ def _selftest() -> bool:
         f"reachability is sound vs exact over 500 random chains ({unsound} over-claims)",
         unsound == 0,
     )
+
+    # 3b. counterexample() agrees with entails() and returns a REAL countermodel:
+    # for a does-not-follow candidate the witnessing world satisfies every premise
+    # yet makes the candidate false; for a must-follow candidate it is None.
+    for i, it in enumerate(CHAIN_ITEMS):
+        cx = counterexample(it["chain"], it["candidate"])
+        entailed = entails(it["chain"], it["candidate"])
+        check(f"chain[{i}] counterexample is None iff entailed", (cx is None) == entailed)
+        if cx is not None:
+            premises_hold = all(
+                (not _lit_true(imp.ante, cx)) or _lit_true(imp.cons, cx)
+                for imp in it["chain"]
+            )
+            cand = it["candidate"]
+            falsifies = _lit_true(cand.ante, cx) and not _lit_true(cand.cons, cx)
+            check(f"chain[{i}] countermodel satisfies premises + falsifies candidate",
+                  premises_hold and falsifies)
+            world = render_world(cx, it["props"])
+            check(f"chain[{i}] render_world: one line per assigned term",
+                  len(world) == len(cx) and all(" = " in ln for ln in world))
 
     # 4. grading: correct, wrong, fail-closed
     g = grade_chain("chain-0", MUST_FOLLOW)

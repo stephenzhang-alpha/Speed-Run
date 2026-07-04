@@ -130,7 +130,7 @@ def time_leak(col: Collection, *, now_ms: int | None = None) -> dict[str, Any]:
     measurable = mean_lo > 0.0
 
     names = _skill_names()
-    skills = []
+    skills: list[dict[str, Any]] = []
     for node_id, secs_list in sorted(skill_reclaim.items()):
         total = sum(secs_list)
         skills.append(

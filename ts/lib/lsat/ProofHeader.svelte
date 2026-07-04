@@ -36,7 +36,12 @@ Android. Honest even when abstaining (0 is shown, not hidden).
     <svg class="watermark" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M8 4 V20 M8 12 H18" />
     </svg>
-    <p class="kicker">Anki for LSAT</p>
+    <div class="brand">
+        <span class="brandmark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 4 V20 M8 12 H18" /></svg>
+        </span>
+        <span class="kicker">LSAT&nbsp;Prep</span>
+    </div>
     <div class="proof">
         <ul class="premises">
             {#each premises as p (p)}<li>{p}</li>{/each}
@@ -46,7 +51,10 @@ Android. Honest even when abstaining (0 is shown, not hidden).
         </span>
         <p class="claim">{claim}</p>
     </div>
-    <p class="honesty">We only show a number when the evidence earns it.</p>
+    <p class="honesty">
+        <span class="dot" aria-hidden="true"></span>
+        We only show a number when the evidence earns it.
+    </p>
 </header>
 
 <style lang="scss">
@@ -55,40 +63,65 @@ Android. Honest even when abstaining (0 is shown, not hidden).
         isolation: isolate;
         overflow: hidden;
         margin-bottom: 1.6rem;
-        padding: clamp(1.3rem, 1rem + 2.4vw, 2.2rem);
+        padding: clamp(1.4rem, 1rem + 2.6vw, 2.4rem);
         border-radius: var(--lsat-radius);
-        background: var(--lsat-surface);
-        box-shadow: var(--lsat-elev-evidence);
+        /* a whisper of the brand accent in the top-right, over the surface -
+         * presence without spending the "proven" gradient. */
+        background:
+            radial-gradient(130% 150% at 100% 0%, var(--lsat-accent-soft) 0%, transparent 55%),
+            var(--lsat-surface);
+        border: 1px solid var(--lsat-border-subtle);
+        box-shadow: var(--lsat-shadow);
         animation: hero-in 480ms var(--lsat-ease) both;
     }
     .watermark {
         position: absolute;
         z-index: -1;
         top: 50%;
-        right: -2%;
+        right: -4%;
         transform: translateY(-50%);
-        width: clamp(110px, 22vw, 200px);
-        height: clamp(110px, 22vw, 200px);
+        width: clamp(150px, 26vw, 260px);
+        height: clamp(150px, 26vw, 260px);
         fill: none;
-        stroke: var(--lsat-fg);
-        stroke-width: 1.4;
+        stroke: var(--lsat-accent);
+        stroke-width: 1.2;
         stroke-linecap: round;
-        opacity: 0.04;
+        opacity: 0.08;
+    }
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1.2rem;
+    }
+    .brandmark {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: var(--lsat-radius-sm);
+        background: var(--lsat-hero);
+        box-shadow: var(--lsat-glow);
+    }
+    .brandmark svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: var(--lsat-ink-on-accent);
+        stroke-width: 1.8;
+        stroke-linecap: round;
     }
     .kicker {
-        margin: 0 0 0.9rem;
-        font-family: var(--lsat-mono);
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--lsat-fg-faint);
+        font-weight: 750;
+        font-size: 1.05rem;
+        letter-spacing: -0.015em;
+        color: var(--lsat-fg);
     }
     .proof {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 0.7rem 0.9rem;
+        gap: 0.7rem 1rem;
     }
     .premises {
         list-style: none;
@@ -96,40 +129,52 @@ Android. Honest even when abstaining (0 is shown, not hidden).
         padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 0.35rem;
+        gap: 0.4rem;
     }
     .premises li {
         font-family: var(--lsat-mono);
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         font-variant-numeric: tabular-nums slashed-zero;
         color: var(--lsat-fg-subtle);
-        padding: 0.18rem 0.6rem;
+        padding: 0.28rem 0.7rem;
         border-radius: var(--lsat-radius-sm);
         background: var(--lsat-inset);
+        border: 1px solid var(--lsat-border-subtle);
         width: fit-content;
     }
     .turnstile svg {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
         fill: none;
         stroke: var(--lsat-accent);
-        stroke-width: 2;
+        stroke-width: 2.2;
         stroke-linecap: round;
     }
     .claim {
-        flex: 1 1 16rem;
+        flex: 1 1 15rem;
         margin: 0;
-        font-size: clamp(1.15rem, 0.9rem + 1.4vw, 1.7rem);
-        font-weight: 700;
-        line-height: 1.18;
-        letter-spacing: -0.02em;
+        font-size: clamp(1.25rem, 1rem + 1.5vw, 1.85rem);
+        font-weight: 750;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
         color: var(--lsat-fg);
     }
     .honesty {
-        margin: 1rem 0 0;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin: 1.2rem 0 0;
         font-family: var(--lsat-mono);
         font-size: 0.72rem;
         color: var(--lsat-fg-faint);
+    }
+    .honesty .dot {
+        flex: 0 0 auto;
+        width: 6px;
+        height: 6px;
+        border-radius: var(--lsat-radius-pill);
+        background: var(--lsat-good);
+        box-shadow: 0 0 0 3px var(--lsat-good-soft);
     }
 
     @keyframes hero-in {

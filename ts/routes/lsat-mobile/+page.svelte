@@ -155,14 +155,16 @@ the desktop dashboard and the same HTTP-backed study flow.
 
 <div class="app">
     <header class="bar">
-        <div class="identity">
-            <span class="mark" aria-hidden="true">
-                <!-- the turnstile ⊢ : the "PROVEN" brand mark -->
-                <svg viewBox="0 0 24 24"><path d="M8 4 V20 M8 12 H18" /></svg>
-            </span>
-            <span class="brand">LSAT&nbsp;Prep</span>
+        <div class="bar-inner">
+            <div class="identity">
+                <span class="mark" aria-hidden="true">
+                    <!-- the turnstile ⊢ : the "PROVEN" brand mark -->
+                    <svg viewBox="0 0 24 24"><path d="M8 4 V20 M8 12 H18" /></svg>
+                </span>
+                <span class="brand">LSAT&nbsp;Prep</span>
+            </div>
+            <span class="mode">{headerLabel}</span>
         </div>
-        <span class="mode">{headerLabel}</span>
     </header>
 
     <main>
@@ -239,6 +241,7 @@ the desktop dashboard and the same HTTP-backed study flow.
     </main>
 
     <nav class="tabs">
+        <div class="tabs-inner">
         <button class:active={tab === "study"} on:click={() => (tab = "study")}>
             <svg viewBox="0 0 24 24" aria-hidden="true"
                 ><path
@@ -267,6 +270,7 @@ the desktop dashboard and the same HTTP-backed study flow.
             >
             <span>Progress</span>
         </button>
+        </div>
     </nav>
 </div>
 
@@ -280,9 +284,9 @@ the desktop dashboard and the same HTTP-backed study flow.
         display: flex;
         flex-direction: column;
         height: 100dvh;
-        /* graph-paper canvas — matches the desktop dashboard so the "PROVEN"
-         * surface is identical on Mac and Android. */
-        background: var(--lsat-graph), var(--lsat-canvas);
+        /* soft brand-aura background — matches the desktop dashboard so the
+         * "PROVEN" surface is identical on Mac and Android. */
+        background: var(--lsat-bg);
         color: var(--lsat-fg);
         font-size: 15px;
     }
@@ -290,13 +294,19 @@ the desktop dashboard and the same HTTP-backed study flow.
         position: sticky;
         top: 0;
         z-index: 5;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         padding: calc(env(safe-area-inset-top, 0px) + 0.75rem) 1rem 0.75rem;
         background: var(--lsat-surface);
         border-bottom: 1px solid var(--lsat-border-subtle);
         box-shadow: var(--lsat-shadow);
+    }
+    .bar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
     }
     .identity {
         display: flex;
@@ -340,9 +350,14 @@ the desktop dashboard and the same HTTP-backed study flow.
     }
     main {
         flex: 1 1 auto;
+        /* Centre the content column so the phone layout does not stretch on
+         * wide viewports (tablet / Android landscape / desktop preview). */
+        align-self: center;
+        width: 100%;
+        max-width: 960px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 0.9rem 0.9rem 1.4rem;
+        padding: 1.1rem 1rem 1.6rem;
     }
     .phasebar {
         position: relative;
@@ -471,10 +486,15 @@ the desktop dashboard and the same HTTP-backed study flow.
         word-break: break-word;
     }
     .tabs {
-        display: flex;
         border-top: 1px solid var(--lsat-border-subtle);
         background: var(--lsat-surface);
         padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tabs-inner {
+        display: flex;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
     }
     .tabs button {
         position: relative;

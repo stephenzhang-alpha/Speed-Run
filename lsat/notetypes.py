@@ -100,11 +100,70 @@ SECTION_FIELDS = [
     "device_id",
 ]
 
-_CARD_QFMT = "{{front}}"
+# The LSAT Card (reusable-judgment drill) shares the LSAT Prep visual identity
+# with the Item card. The shared CSS lives on the question side so ``{{FrontSide}}``
+# carries it to the answer; the answer wrapper (``.lsat-card-back``) reuses the
+# same tokens but omits the brand mark so it appears once per card.
+_CARD_QFMT = r"""<div class="lsat-card">
+<div class="lsat-card-front">{{front}}</div>
+</div>
+<style>
+.lsat-card, .lsat-card-back {
+  --lsat-accent:#4f46e5; --lsat-accent-2:#7c3aed; --lsat-ink-on-accent:#f5f6ff;
+  --lsat-hero:linear-gradient(135deg,#4f46e5,#7c3aed);
+  --lsat-surface:#ffffff; --lsat-inset:#eef1f7;
+  --lsat-fg:#101526; --lsat-fg-subtle:#4a5468;
+  --lsat-border:rgba(16,24,48,.10); --lsat-border-subtle:rgba(16,24,48,.06);
+  --lsat-radius:18px; --lsat-radius-sm:11px;
+  --lsat-shadow:0 1px 2px rgba(16,24,48,.04), 0 6px 18px -6px rgba(16,24,48,.10);
+  --lsat-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",sans-serif;
+  --lsat-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  max-width: 720px; margin: 0 auto; text-align: left; line-height: 1.55;
+  font-family: var(--lsat-font); color: var(--lsat-fg); -webkit-font-smoothing: antialiased;
+}
+@media (prefers-color-scheme: dark) {
+  .lsat-card, .lsat-card-back {
+    --lsat-accent:#7c86ff; --lsat-accent-2:#a78bfa; --lsat-ink-on-accent:#0d1017;
+    --lsat-hero:linear-gradient(135deg,#7c86ff,#a78bfa);
+    --lsat-surface:#161b26; --lsat-inset:#1c2331; --lsat-fg:#e8ebf2; --lsat-fg-subtle:#aab2c2;
+    --lsat-border:rgba(255,255,255,.12); --lsat-border-subtle:rgba(255,255,255,.07);
+    --lsat-shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
+  }
+}
+.night-mode .lsat-card, .night-mode .lsat-card-back,
+.nightMode .lsat-card, .nightMode .lsat-card-back,
+.night_mode .lsat-card, .night_mode .lsat-card-back {
+  --lsat-accent:#7c86ff; --lsat-accent-2:#a78bfa; --lsat-ink-on-accent:#0d1017;
+  --lsat-hero:linear-gradient(135deg,#7c86ff,#a78bfa);
+  --lsat-surface:#161b26; --lsat-inset:#1c2331; --lsat-fg:#e8ebf2; --lsat-fg-subtle:#aab2c2;
+  --lsat-border:rgba(255,255,255,.12); --lsat-border-subtle:rgba(255,255,255,.07);
+  --lsat-shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
+}
+.lsat-card::before {
+  content:"\22A2"; display: flex; align-items: center; justify-content: center;
+  width: 2.1em; height: 2.1em; margin: 0 0 .85rem; border-radius: var(--lsat-radius-sm);
+  background: var(--lsat-hero); color: var(--lsat-ink-on-accent);
+  font-family: var(--lsat-mono); font-weight: 700; line-height: 1; box-shadow: var(--lsat-shadow);
+}
+.lsat-card-front { font-size: 1.12em; line-height: 1.6; background: var(--lsat-surface);
+  border: 1px solid var(--lsat-border); border-radius: var(--lsat-radius);
+  box-shadow: var(--lsat-shadow); padding: 1.1rem 1.2rem; }
+.lsat-card-back { margin-top: 1.1rem; }
+.lsat-card-answer { font-size: 1.1em; font-weight: 700; background: var(--lsat-surface);
+  border: 1px solid var(--lsat-border); border-left: 3px solid var(--lsat-accent);
+  border-radius: var(--lsat-radius-sm); box-shadow: var(--lsat-shadow); padding: .9rem 1.05rem; }
+.lsat-explanation { margin-top: .75rem; font-size: .96em; line-height: 1.55;
+  color: var(--lsat-fg-subtle); background: var(--lsat-inset);
+  border: 1px solid var(--lsat-border-subtle); border-radius: var(--lsat-radius-sm);
+  padding: .85rem 1rem; }
+@media (prefers-reduced-motion: reduce) { .lsat-card *, .lsat-card ::before { transition: none !important; } }
+</style>"""
 _CARD_AFMT = (
     "{{FrontSide}}\n\n<hr id=answer>\n\n"
-    "<b>{{back}}</b>\n\n"
-    '<div class="lsat-explanation">{{explanation}}</div>'
+    '<div class="lsat-card-back">\n'
+    '<div class="lsat-card-answer">{{back}}</div>\n'
+    '{{#explanation}}<div class="lsat-explanation">{{explanation}}</div>{{/explanation}}\n'
+    "</div>"
 )
 
 # The Item question is identification-first (SPOV 1 / A2): for LR items the
@@ -137,53 +196,138 @@ _ITEM_QFMT_TEMPLATE = r"""<div class="lsat-item">
 <div class="lsat-trap" id="lsat-trap" hidden></div>
 </div>
 <style>
-.lsat-item { --lsat-accent:#2f6fed; --lsat-good:#1a8a3a; --lsat-bad:#c0392b;
-  --lsat-line:rgba(128,128,128,.32); --lsat-soft:rgba(128,128,128,.08);
-  max-width: 760px; margin: 0 auto; text-align: left; }
-@media (prefers-color-scheme: dark) {
-  .lsat-item { --lsat-accent:#6f9bff; --lsat-good:#37b364; --lsat-bad:#e2685d;
-    --lsat-line:rgba(200,200,200,.28); --lsat-soft:rgba(255,255,255,.05); }
+/* LSAT Prep desktop reviewer card. Tokens mirror ts/lib/lsat/theme.scss so the
+   in-app flashcard reads as the same premium product as the web UI. */
+.lsat-item {
+  --lsat-accent:#4f46e5; --lsat-accent-strong:#4338ca; --lsat-accent-2:#7c3aed;
+  --lsat-ink-on-accent:#f5f6ff;
+  --lsat-hero:linear-gradient(135deg,#4f46e5,#7c3aed);
+  --lsat-surface:#ffffff; --lsat-inset:#eef1f7;
+  --lsat-fg:#101526; --lsat-fg-subtle:#4a5468; --lsat-fg-faint:#667085;
+  --lsat-border:rgba(16,24,48,.10); --lsat-border-subtle:rgba(16,24,48,.06);
+  --lsat-good:#0f9d6a; --lsat-bad:#e0483d;
+  --lsat-good-soft:rgba(15,157,106,.12); --lsat-good-line:rgba(15,157,106,.45);
+  --lsat-bad-soft:rgba(224,72,61,.12); --lsat-bad-line:rgba(224,72,61,.42);
+  --lsat-radius:18px; --lsat-radius-sm:11px;
+  --lsat-shadow:0 1px 2px rgba(16,24,48,.04), 0 6px 18px -6px rgba(16,24,48,.10);
+  --lsat-ring:0 0 0 3px rgba(79,70,229,.28);
+  --lsat-t:180ms; --lsat-ease:cubic-bezier(.22,1,.36,1);
+  --lsat-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",sans-serif;
+  --lsat-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  max-width: 760px; margin: 0 auto; text-align: left; line-height: 1.55;
+  font-family: var(--lsat-font); color: var(--lsat-fg);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
-.lsat-stem { white-space: pre-wrap; font-size: 1.06em; line-height: 1.55; }
-.lsat-choices { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.1rem; }
-.lsat-choice { display: flex; align-items: flex-start; gap: .65rem; text-align: left;
-  min-height: 48px; padding: .7rem .85rem; border: 1px solid var(--lsat-line);
-  border-radius: 12px; background: var(--lsat-soft); color: inherit; font: inherit;
-  cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .05s ease; }
+/* Anki desktop toggles a class for night mode (prefers-color-scheme follows the
+   OS, not the app theme), so drive dark via the class AND keep a media fallback
+   for standalone/mobile contexts. Palette mirrors theme.scss's dark ramp. */
+@media (prefers-color-scheme: dark) {
+  .lsat-item {
+    --lsat-accent:#7c86ff; --lsat-accent-strong:#949bff; --lsat-accent-2:#a78bfa;
+    --lsat-ink-on-accent:#0d1017;
+    --lsat-hero:linear-gradient(135deg,#7c86ff,#a78bfa);
+    --lsat-surface:#161b26; --lsat-inset:#1c2331;
+    --lsat-fg:#e8ebf2; --lsat-fg-subtle:#aab2c2; --lsat-fg-faint:#8b93a5;
+    --lsat-border:rgba(255,255,255,.12); --lsat-border-subtle:rgba(255,255,255,.07);
+    --lsat-good:#34d399; --lsat-bad:#f87171;
+    --lsat-good-soft:rgba(52,211,153,.15); --lsat-good-line:rgba(52,211,153,.5);
+    --lsat-bad-soft:rgba(248,113,113,.15); --lsat-bad-line:rgba(248,113,113,.5);
+    --lsat-shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
+    --lsat-ring:0 0 0 3px rgba(124,134,255,.35);
+  }
+}
+.night-mode .lsat-item, .nightMode .lsat-item, .night_mode .lsat-item {
+  --lsat-accent:#7c86ff; --lsat-accent-strong:#949bff; --lsat-accent-2:#a78bfa;
+  --lsat-ink-on-accent:#0d1017;
+  --lsat-hero:linear-gradient(135deg,#7c86ff,#a78bfa);
+  --lsat-surface:#161b26; --lsat-inset:#1c2331;
+  --lsat-fg:#e8ebf2; --lsat-fg-subtle:#aab2c2; --lsat-fg-faint:#8b93a5;
+  --lsat-border:rgba(255,255,255,.12); --lsat-border-subtle:rgba(255,255,255,.07);
+  --lsat-good:#34d399; --lsat-bad:#f87171;
+  --lsat-good-soft:rgba(52,211,153,.15); --lsat-good-line:rgba(52,211,153,.5);
+  --lsat-bad-soft:rgba(248,113,113,.15); --lsat-bad-line:rgba(248,113,113,.5);
+  --lsat-shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -8px rgba(0,0,0,.6);
+  --lsat-ring:0 0 0 3px rgba(124,134,255,.35);
+}
+/* brand mark — the turnstile, the one signature-gradient "proven" moment */
+.lsat-item::before {
+  content:"\22A2"; display: flex; align-items: center; justify-content: center;
+  width: 2.1em; height: 2.1em; margin: 0 0 .85rem; border-radius: var(--lsat-radius-sm);
+  background: var(--lsat-hero); color: var(--lsat-ink-on-accent);
+  font-family: var(--lsat-mono); font-weight: 700; font-size: 1em; line-height: 1;
+  box-shadow: var(--lsat-shadow);
+}
+/* question stem — a clean reading surface */
+.lsat-stem {
+  white-space: pre-wrap; font-size: 1.08em; line-height: 1.6; color: var(--lsat-fg);
+  background: var(--lsat-surface); border: 1px solid var(--lsat-border);
+  border-radius: var(--lsat-radius); box-shadow: var(--lsat-shadow);
+  padding: 1.1rem 1.2rem;
+}
+/* answer choices — well-spaced tappable rows with a circled (mono) letter */
+.lsat-choices { display: flex; flex-direction: column; gap: .55rem; margin-top: 1.15rem; }
+.lsat-choice { display: flex; align-items: flex-start; gap: .7rem; text-align: left;
+  width: 100%; min-height: 52px; padding: .8rem .95rem; border: 1px solid var(--lsat-border);
+  border-radius: var(--lsat-radius-sm); background: var(--lsat-surface); color: var(--lsat-fg);
+  font: inherit; font-size: 1em; line-height: 1.5; cursor: pointer; box-shadow: var(--lsat-shadow);
+  transition: border-color var(--lsat-t) var(--lsat-ease),
+    box-shadow var(--lsat-t) var(--lsat-ease),
+    background var(--lsat-t) var(--lsat-ease), transform .06s ease; }
 .lsat-choice:hover:not(.disabled) { border-color: var(--lsat-accent); }
 .lsat-choice:active:not(.disabled) { transform: translateY(1px); }
-.lsat-choice.disabled { cursor: default; }
-.lsat-choice.chosen { border-color: var(--lsat-accent); border-width: 2px; }
-.lsat-choice.right { border-color: var(--lsat-good); background: rgba(26,138,58,.14); }
-.lsat-choice.wrong { border-color: var(--lsat-bad); background: rgba(192,57,43,.14); }
+.lsat-choice:focus-visible { outline: none; border-color: var(--lsat-accent); box-shadow: var(--lsat-ring); }
+.lsat-choice.disabled { cursor: default; box-shadow: none; }
+.lsat-choice.chosen { border-color: var(--lsat-accent); box-shadow: 0 0 0 1px var(--lsat-accent); }
+.lsat-choice.right { border-color: var(--lsat-good-line); background: var(--lsat-good-soft); box-shadow: none; }
+.lsat-choice.wrong { border-color: var(--lsat-bad-line); background: var(--lsat-bad-soft); box-shadow: none; }
+/* credited answer gets a calm turnstile mark — never a punishing X on a miss */
+.lsat-choice.right::after { content:"\22A2"; margin-left: auto; align-self: center;
+  padding-left: .6rem; font-family: var(--lsat-mono); font-weight: 700; color: var(--lsat-good); }
 .lsat-letter { display: inline-flex; align-items: center; justify-content: center;
-  width: 1.7em; height: 1.7em; flex: 0 0 auto; border-radius: 50%; font-weight: 700;
-  font-size: .85em; background: var(--lsat-accent); color: #fff; }
+  width: 1.85em; height: 1.85em; flex: 0 0 auto; margin-top: .02em; border-radius: 50%;
+  font-family: var(--lsat-mono); font-weight: 700; font-size: .82em;
+  background: var(--lsat-inset); color: var(--lsat-accent); border: 1px solid var(--lsat-border-subtle);
+  transition: background var(--lsat-t) var(--lsat-ease), color var(--lsat-t) var(--lsat-ease); }
+.lsat-choice.chosen .lsat-letter { background: var(--lsat-accent); color: var(--lsat-ink-on-accent); border-color: transparent; }
+.lsat-choice.right .lsat-letter { background: var(--lsat-good); color: #fff; border-color: transparent; }
+.lsat-choice.wrong .lsat-letter { background: var(--lsat-bad); color: #fff; border-color: transparent; }
+/* confidence + trap taps — pills */
 .lsat-confidence, .lsat-trap { display: flex; align-items: center; gap: .45rem;
-  margin-top: .9rem; flex-wrap: wrap; }
-.lsat-conf-label { opacity: .7; margin-right: .15rem; }
-.lsat-conf-btn { min-height: 38px; padding: .4rem .8rem; border: 1px solid var(--lsat-line);
-  border-radius: 999px; background: transparent; color: inherit; font: inherit;
-  font-weight: 600; cursor: pointer; transition: border-color .18s ease; }
-.lsat-conf-btn:hover:not(:disabled) { border-color: var(--lsat-accent); }
-.lsat-conf-btn:disabled { opacity: .5; cursor: default; }
-.lsat-conf-skip { opacity: .6; border-style: dashed; font-weight: 500; }
-.lsat-trap-feedback { flex-basis: 100%; margin-top: .3rem; opacity: .9; }
-.lsat-classify { margin-top: 1rem; }
-.lsat-classify-chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .5rem; }
-.lsat-classify-feedback { margin-top: .5rem; font-weight: 600; }
+  margin-top: 1.05rem; flex-wrap: wrap; }
+.lsat-conf-label { color: var(--lsat-fg-faint); font-size: .92em; margin-right: .2rem; }
+.lsat-conf-btn { min-height: 40px; padding: .45rem .9rem; border: 1px solid var(--lsat-border);
+  border-radius: 999px; background: var(--lsat-surface); color: var(--lsat-fg); font: inherit;
+  font-weight: 600; font-size: .95em; cursor: pointer; box-shadow: var(--lsat-shadow);
+  transition: border-color var(--lsat-t) var(--lsat-ease), color var(--lsat-t) var(--lsat-ease),
+    background var(--lsat-t) var(--lsat-ease); }
+.lsat-conf-btn:hover:not(:disabled) { border-color: var(--lsat-accent); color: var(--lsat-accent); }
+.lsat-conf-btn:focus-visible { outline: none; border-color: var(--lsat-accent); box-shadow: var(--lsat-ring); }
+.lsat-conf-btn:disabled { opacity: .5; cursor: default; box-shadow: none; }
+.lsat-conf-skip { opacity: .7; border-style: dashed; font-weight: 500; background: transparent; box-shadow: none; }
+.lsat-trap-feedback { flex-basis: 100%; margin-top: .4rem; color: var(--lsat-fg-subtle); font-size: .95em; }
+/* identification-first classify stage */
+.lsat-classify { margin-top: 1.15rem; }
+.lsat-classify-chips { display: flex; gap: .45rem; flex-wrap: wrap; margin-top: .55rem; }
+.lsat-classify-feedback { margin-top: .6rem; font-weight: 600; font-size: .95em; }
 .lsat-classify-feedback.right { color: var(--lsat-good); }
 .lsat-classify-feedback.wrong { color: var(--lsat-bad); }
-.lsat-contrast { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; margin-top: .9rem; }
+/* elaborated contrast card (shown on a miss) */
+.lsat-contrast { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: 1.05rem; }
 @media (max-width: 540px) { .lsat-contrast { grid-template-columns: 1fr; } }
-.lsat-ct-col { display: flex; flex-direction: column; gap: .3rem; padding: .6rem .7rem;
-  border: 1px solid var(--lsat-line); border-radius: 10px; font-size: .92em; line-height: 1.4; }
-.lsat-ct-col.credited { border-color: var(--lsat-good); background: rgba(26,138,58,.10); }
-.lsat-ct-col.trap { border-color: var(--lsat-bad); background: rgba(192,57,43,.10); }
-.lsat-ct-hd { font-weight: 700; font-size: .72em; text-transform: uppercase;
-  letter-spacing: .02em; opacity: .7; }
-.lsat-ct-col p { margin: 0; }
-.lsat-ct-tip { font-size: .82em; font-style: italic; opacity: .7; }
+.lsat-ct-col { display: flex; flex-direction: column; gap: .35rem; padding: .75rem .85rem;
+  border: 1px solid var(--lsat-border); border-radius: var(--lsat-radius-sm);
+  background: var(--lsat-surface); box-shadow: var(--lsat-shadow); font-size: .93em; line-height: 1.45; }
+.lsat-ct-col.credited { border-color: var(--lsat-good-line); background: var(--lsat-good-soft); }
+.lsat-ct-col.trap { border-color: var(--lsat-bad-line); background: var(--lsat-bad-soft); }
+.lsat-ct-hd { font-weight: 700; font-size: .7em; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--lsat-fg-faint); }
+.lsat-ct-col.credited .lsat-ct-hd { color: var(--lsat-good); }
+.lsat-ct-col.trap .lsat-ct-hd { color: var(--lsat-bad); }
+.lsat-ct-col p { margin: 0; color: var(--lsat-fg); }
+.lsat-ct-tip { font-size: .85em; font-style: italic; color: var(--lsat-fg-subtle); }
+@media (prefers-reduced-motion: reduce) {
+  .lsat-item *, .lsat-item ::before, .lsat-item ::after { transition: none !important; }
+}
 </style>
 <script>
 (function () {
@@ -361,9 +505,23 @@ _ITEM_QFMT_TEMPLATE = r"""<div class="lsat-item">
 _ITEM_AFMT = (
     "{{FrontSide}}\n\n<hr id=answer>\n\n"
     '<div class="lsat-correct">Correct answer: <b>{{correct}}</b></div>\n'
-    "<style>.lsat-correct { max-width: 760px; margin: .6rem auto 0; padding: .55rem .8rem;"
-    " border-radius: 10px; background: rgba(26,138,58,.14); color: inherit;"
-    " border: 1px solid rgba(26,138,58,.5); font-weight: 600; }</style>\n"
+    "<style>\n"
+    ".lsat-correct { --c-good:#0f9d6a; --c-good-soft:rgba(15,157,106,.12);"
+    " --c-good-line:rgba(15,157,106,.45); --c-fg:#101526;"
+    ' --c-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;'
+    " display: block; max-width: 760px; margin: .7rem auto 0; padding: .65rem .9rem;"
+    " border-radius: 11px; background: var(--c-good-soft); border: 1px solid var(--c-good-line);"
+    " color: var(--c-fg); font-weight: 600;"
+    ' font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif; }\n'
+    '.lsat-correct::before { content:"\\22A2"; margin-right: .45rem;'
+    " font-family: var(--c-mono); font-weight: 700; color: var(--c-good); }\n"
+    ".lsat-correct b { font-family: var(--c-mono); color: var(--c-good); }\n"
+    "@media (prefers-color-scheme: dark) { .lsat-correct { --c-good:#34d399;"
+    " --c-good-soft:rgba(52,211,153,.15); --c-good-line:rgba(52,211,153,.5); --c-fg:#e8ebf2; } }\n"
+    ".night-mode .lsat-correct, .nightMode .lsat-correct, .night_mode .lsat-correct {"
+    " --c-good:#34d399; --c-good-soft:rgba(52,211,153,.15); --c-good-line:rgba(52,211,153,.5);"
+    " --c-fg:#e8ebf2; }\n"
+    "</style>\n"
     "<script>(function () {\n"
     "  // Answer side: skip the classify gate (reveal choices, hide the stage)\n"
     "  // and disable every control so nothing logs a second event.\n"

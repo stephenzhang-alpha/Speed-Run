@@ -120,6 +120,12 @@ _HANDLERS: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {
         response_ms=body.get("response_ms", 0),
     ),
     "lsatOracleTheater": lambda col, body: api.oracle_theater(col),
+    "lsatProveStep": lambda col, body: api.prove_step(
+        col, scenario_id=body.get("scenario_id", ""), moves=body.get("moves")
+    ),
+    "lsatOracleDraftLive": lambda col, body: api.oracle_draft_live(
+        col, scenario_id=body.get("scenario_id", "")
+    ),
     "lsatEvilTwinDrill": lambda col, body: api.evil_twin_drill(col),
     "lsatSubmitEvilTwin": lambda col, body: api.submit_evil_twin(
         col,
@@ -138,7 +144,13 @@ assert not _missing, f"lsat/server/app.py missing handlers for: {sorted(_missing
 # Read-only endpoints: a failure is a real 500. Submit endpoints mirror the
 # desktop adapters and return {"error": ...} with 200 (the client shows it).
 _READ_ENDPOINTS = frozenset(
-    {"lsatDashboardData", "lsatNextItem", "lsatOracleTheater"}
+    {
+        "lsatDashboardData",
+        "lsatNextItem",
+        "lsatOracleTheater",
+        "lsatProveStep",
+        "lsatOracleDraftLive",
+    }
 )
 
 # Generated-backend RPCs the SvelteKit SPA calls at boot that we forward to the

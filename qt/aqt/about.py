@@ -65,8 +65,15 @@ def show(mw: aqt.AnkiQt) -> QDialog:
 
     # WebView contents
     ######################################################################
-    abouttext = "<center><img src='/_anki/imgs/anki-logo-thin.png'></center>"
-    lede = tr.about_anki_is_a_friendly_intelligent_spaced().replace("Anki", "Anki®")
+    abouttext = (
+        "<center><img src='/_anki/imgs/anki-logo-thin.png' width='76' height='76'"
+        " style='border-radius:18px'></center>"
+    )
+    abouttext += (
+        "<center style='font-size:20px;font-weight:700;letter-spacing:-0.01em;"
+        "margin-top:10px'>LSAT&nbsp;Prep</center>"
+    )
+    lede = tr.about_anki_is_a_friendly_intelligent_spaced()
     abouttext += f"<p>{lede}"
     abouttext += f"<p>{tr.about_anki_is_licensed_under_the_agpl3()}"
     abouttext += f"<p>{tr.about_version(val=version_with_build())}<br>"

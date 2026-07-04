@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH ANKI 1 "August 11, 2007"
+.TH "LSAT PREP" 1 "July 3, 2026"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,27 +16,22 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-anki \- flexible, intelligent flashcard program
+lsat-prep \- professional LSAT preparation software
 .SH DESCRIPTION
-\fBAnki\fP is a program designed to help you remember facts (such as words and
-phrases in a foreign language) as easily, quickly and efficiently as possible.
-To do this, it tracks how well you remember each fact, and uses that
-information to optimally schedule review times. With a minimal amount of
-effort, you can greatly increase the amount of material you remember, making
-study more productive, and more fun.
+\fBLSAT Prep\fP is a focused study system for the Law School Admission Test.
+It combines evidence-earned scores that never overstate what you have proven,
+oracle-verified formal-logic drills, spaced-repetition review, and diagnostics
+that show exactly how you get questions wrong \- so every study minute is spent
+on the material that will move your score.
 
-Anki is based on a theory called \fIspaced repetition\fP. In simple terms, it means
-that each time you review some material, you should wait longer than last time
-before reviewing it again. This maximizes the time spent studying difficult
-material and minimizes the time spent reviewing things you already know. The
-concept is simple, but the vast majority of memory trainers and flashcard
-programs out there either avoid the concept all together, or implement
-inflexible and suboptimal methods that were originally designed for pen and
-paper.
+LSAT Prep is built on a spaced-repetition engine: each time you review some
+material, you wait longer than last time before reviewing it again. This
+maximizes the time spent on difficult material and minimizes time spent on
+things you already know.
 
 .SH OPTIONS
-.B \-b ~/.anki
-Use ~/.anki instead of ~/Anki as Anki's base folder
+.B \-b <dir>
+Use <dir> as the base folder instead of the default
 
 .B \-p ProfileName
 Load a specific profile
@@ -44,10 +39,7 @@ Load a specific profile
 .B \-l <lang>
 Start the program in a specific language (de=German, en=English, etc)
 .SH SEE ALSO
-Anki home page: <http://ankisrs.net/>
+LSAT Prep home page: <https://lsatprep.app/>
 .SH AUTHOR
-Anki was written by Damien Elmes <anki@ichi2.net>.
-.PP
-This manual page was written by Nicholas Breen <nbreen@ofb.net>,
-for the Debian project (but may be used by others), and has been
-updated for Anki 2 by Damien Elmes.
+LSAT Prep is built on the open-source Anki spaced-repetition engine
+(\fIhttps://apps.ankiweb.net\fP), licensed under the GNU AGPL v3.

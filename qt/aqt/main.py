@@ -174,6 +174,11 @@ class AnkiQt(QMainWindow):
     pm: ProfileManagerType
     web: MainWebView
     bottomWeb: BottomWebView
+    mainLayout: QVBoxLayout
+    # Anki for LSAT: the dashboard home webview -- created lazily and destroyed on
+    # leave (see _ensure_lsat_web). Declared here so its type is known in the helper
+    # methods that precede setupMainWindow in this file.
+    lsatWeb: AnkiWebView | None
 
     def __init__(
         self,
@@ -490,7 +495,7 @@ class AnkiQt(QMainWindow):
             self.progress.finish()
             problems = future.result()
             if not problems:
-                showInfo("Profiles can now be opened with an older version of Anki.")
+                showInfo("Profiles can now be opened with an older version of LSAT Prep.")
             else:
                 showWarning(
                     "The following profiles could not be downgraded: {}".format(
@@ -512,7 +517,7 @@ class AnkiQt(QMainWindow):
         restoreGeom(self, "mainWindow")
         restoreState(self, "mainWindow")
         # titlebar
-        self.setWindowTitle(f"{self.pm.name} - Anki")
+        self.setWindowTitle(f"{self.pm.name} — LSAT Prep")
         # show and raise window for osx
         self.show()
         self.activateWindow()
@@ -645,7 +650,7 @@ class AnkiQt(QMainWindow):
         except Exception as e:
             if "FileTooNew" in str(e):
                 showWarning(
-                    "This profile requires a newer version of Anki to open. Did you forget to use the Downgrade button prior to switching Anki versions?"
+                    "This profile requires a newer version of LSAT Prep to open. Did you forget to use the Downgrade button prior to switching LSAT Prep versions?"
                 )
             else:
                 showWarning(
@@ -780,19 +785,103 @@ class AnkiQt(QMainWindow):
             self.bottomWeb.adjustHeightToFit()
         gui_hooks.state_did_change(state, oldState)
 
+    def _ensure_lsat_web(self) -> AnkiWebView:
+        # Lazily build the LSAT dashboard webview and insert it just after the MAIN
+        # webview in the layout. Created on demand (not in setupMainWindow) so a
+        # session that never opens the dashboard never pays for its Chromium render
+        # process, and so it can be freed on leave (see `_destroy_lsat_web`).
+        if self.lsatWeb is None:
+            self.lsatWeb = AnkiWebView(kind=AnkiWebViewKind.LSAT_DASHBOARD)
+            self.lsatWeb.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
+            self.lsatWeb.setMinimumWidth(400)
+            self.mainLayout.insertWidget(
+                self.mainLayout.indexOf(self.web) + 1, self.lsatWeb
+            )
+        return self.lsatWeb
+
+    def _destroy_lsat_web(self) -> None:
+        # Tear the dashboard webview down so its render process is reclaimed while
+        # the user studies/browses. `cleanup()` deletes the page; deleteLater frees
+        # the widget. Recreated by `_ensure_lsat_web` on the next home entry.
+        web = self.lsatWeb
+        if web is not None:
+            self.lsatWeb = None
+            web.hide()
+            self.mainLayout.removeWidget(web)
+            web.cleanup()
+            web.deleteLater()
+
     def _lsatHomeState(self, oldState: MainWindowState) -> None:
         # Anki for LSAT: the LSAT dashboard IS the home screen -- it replaces the
-        # deck list in the main window. The SvelteKit page fetches its data from the
-        # `lsatDashboardData` mediasrv endpoint (same page as the old dialog). Deck
-        # management is reachable from the top toolbar's "Decks" link or the "d" key.
+        # deck list in the main window. It renders in the dedicated `lsatWeb`
+        # (LSAT_DASHBOARD kind, api-access granted) rather than the MAIN webview,
+        # which is denied backend access and would raise "Unexpected API access"
+        # when the SvelteKit page calls the backend at boot. Deck management stays
+        # reachable from the toolbar's "Decks" link or the "d" key. The webview is
+        # created on demand here and freed on leave to keep memory down.
         self.toolbar.redraw()
-        self.web.load_sveltekit_page("lsat-dashboard")
+        web = self._ensure_lsat_web()
+        self.web.hide()
+        web.show()
+        web.load_sveltekit_page("lsat-dashboard")
+        # On-brand hint strip: a single small centered pill using Anki's theme
+        # vars (so it tracks light/dark) plus the LSAT Prep indigo accent and the
+        # turnstile mark. Purely cosmetic; the guidance text is unchanged.
         self.bottomWeb.stdHtml(
-            "<center style='padding:6px;font-size:12px;opacity:.7'>"
-            "LSAT home &mdash; press <b>D</b> for your decks, or use the toolbar above."
-            "</center>",
+            """
+<style>
+:root { --lsat-accent: #4f46e5; }
+:root.night-mode { --lsat-accent: #7c86ff; }
+.lsat-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px auto;
+  padding: 4px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lsat-accent) 7%, transparent);
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.5;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.lsat-hint .lsat-mark { flex: none; display: block; color: var(--lsat-accent); }
+.lsat-hint b { font-weight: 700; }
+.lsat-hint .sep { opacity: 0.4; }
+.lsat-hint .muted { opacity: 0.72; }
+.lsat-hint .key {
+  font-family: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  font-weight: 700;
+  color: var(--lsat-accent);
+  border: 1px solid color-mix(in srgb, var(--lsat-accent) 35%, transparent);
+  border-radius: 5px;
+  padding: 0 5px;
+  margin: 0 1px;
+}
+</style>
+<center>
+  <span class="lsat-hint">
+    <svg class="lsat-mark" width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round"><path d="M8 4 V20 M8 12 H18"/></svg>
+    <span><b>LSAT&nbsp;Prep</b>&nbsp;home</span>
+    <span class="sep">&middot;</span>
+    <span class="muted">press <span class="key">D</span> for your decks, or use the toolbar above</span>
+  </span>
+</center>
+""",
             context=self,
         )
+
+    def _lsatHomeCleanup(self, newState: MainWindowState) -> None:
+        # Leaving the LSAT home: hand the main area back to the MAIN webview so the
+        # deck browser / overview / reviewer render normally, and DESTROY the
+        # dashboard webview so its Chromium render process is freed while the user
+        # studies/browses (recreated on the next home entry).
+        self.web.show()
+        self._destroy_lsat_web()
 
     def _deckBrowserState(self, oldState: MainWindowState) -> None:
         self.deckBrowser.show()
@@ -977,6 +1066,14 @@ title="{}" {}>{}</button>""".format(
         self.toolbar = Toolbar(self, tweb)
         # main area
         self.web = MainWebView(self)
+        # Anki for LSAT: the dashboard HOME screen renders in a dedicated
+        # LSAT_DASHBOARD-kind webview (the api-access profile the standalone
+        # dashboard dialog uses) because the MAIN webview renders untrusted card JS
+        # and is (correctly) denied backend access ("Unexpected API access"). To
+        # keep memory down it is created LAZILY on first entry to `lsatHome` and
+        # DESTROYED on leave (see `_ensure_lsat_web` / `_lsatHomeCleanup`), so its
+        # Chromium render process only exists while the dashboard is on screen.
+        self.lsatWeb = None
         # bottom area
         sweb = self.bottomWeb = BottomWebView(self)
         sweb.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
@@ -1423,10 +1520,9 @@ title="{}" {}>{}</button>""".format(
         consolidation queue and the dashboard days-to-exam read this."""
         import time as _time
 
+        import lsat.exam_schedule as es
         from aqt.qt import QInputDialog
         from aqt.utils import tooltip
-
-        import lsat.exam_schedule as es
 
         current = es.get_exam_date(self.col)
         prefill = ""
@@ -1458,10 +1554,9 @@ title="{}" {}>{}</button>""".format(
     def onLsatSetStudyPlan(self) -> None:
         """Set/clear the If-Then study plan (DECISION-round2 #4). Deliberately a
         single implementation-intention sentence -- no streaks, no shaming."""
+        import lsat.adherence as ad
         from aqt.qt import QInputDialog
         from aqt.utils import tooltip
-
-        import lsat.adherence as ad
 
         existing = ad.get_plan(self.col)
         cue, ok = QInputDialog.getText(
@@ -1534,7 +1629,7 @@ title="{}" {}>{}</button>""".format(
     ##########################################################################
 
     def handleImport(self, path: str) -> None:
-        "Importing triggered via file double-click, or dragging file onto Anki icon."
+        "Importing triggered via file double-click, or dragging file onto LSAT Prep icon."
         from aqt.import_export.importing import import_file
 
         if not os.path.exists(path):
@@ -1699,7 +1794,7 @@ title="{}" {}>{}</button>""".format(
         m.actionFullScreen.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
 
     def updateTitleBar(self) -> None:
-        self.setWindowTitle("Anki")
+        self.setWindowTitle("LSAT Prep")
 
     # View
     ##########################################################################

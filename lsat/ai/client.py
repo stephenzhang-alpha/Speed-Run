@@ -218,3 +218,20 @@ class ClaudeClient:
             )
         except anthropic.APIError as exc:
             raise LLMUnavailable(str(exc)) from exc
+
+
+def make_client() -> LLMClient | None:
+    """The live-client factory. Returns a real :class:`ClaudeClient` when an
+    ``ANTHROPIC_API_KEY`` is present, else ``None`` (the deterministic/AI-off path).
+
+    Never raises: callers pass the result straight into the oracle-gated drafters
+    (``lsat.worked_example.draft_and_verify`` / ``live_scenario``), which treat
+    ``None`` as "AI off". A present key with a missing SDK still yields a client --
+    the SDK import is attempted lazily in :meth:`ClaudeClient.complete`, which then
+    degrades to :class:`LLMUnavailable` and thus a deterministic fallback. So the
+    key merely enables an *attempt*; the oracle still decides correctness."""
+    import os
+
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return ClaudeClient()
+    return None

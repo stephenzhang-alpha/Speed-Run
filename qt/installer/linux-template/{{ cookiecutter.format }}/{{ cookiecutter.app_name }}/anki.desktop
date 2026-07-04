@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=Anki
-Comment=An intelligent spaced-repetition memory training program
-GenericName=Flashcards
+Name=LSAT Prep
+Comment=Professional LSAT preparation software
+GenericName=LSAT preparation
 Exec=anki %f
 TryExec=anki
 Icon=anki

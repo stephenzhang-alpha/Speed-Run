@@ -694,6 +694,10 @@ export interface OracleTheaterStep {
     verified: boolean;
     blocked: boolean;
     reason: string | null; // the oracle's verbatim veto, present iff blocked
+    // A concrete countermodel (every premise TRUE, the claim FALSE), one line per
+    // term -- present only when a blocked step genuinely fails entailment (a purely
+    // structural break has none).
+    world?: string[] | null;
 }
 
 export interface OracleTheaterCorrectedStep {
@@ -701,12 +705,25 @@ export interface OracleTheaterCorrectedStep {
     cited: string;
 }
 
+// One legal move in the interactive builder: apply a premise directly or as its
+// contrapositive. The choice set is closed (only real premise edges), so a picked
+// move can never fabricate a premise -- the oracle still decides if it advances.
+export interface OracleTheaterMove {
+    premise_index: number;
+    contrapositive: boolean;
+    text: string;
+}
+
 export interface OracleTheaterScenario {
     id: string;
     title: string;
     premises: string[];
     goal: string;
-    mode: "recorded"; // the draft is a committed recording, replayed offline
+    start: string; // the rendered antecedent the derivation must start from
+    options: OracleTheaterMove[]; // the closed set of moves the learner can pick
+    mode: "recorded" | "live"; // a committed recording, or a live model draft
+    provenance: "recorded" | "live";
+    model_used?: string | null; // the API-resolved model id (live drafts only)
     steps: OracleTheaterStep[];
     corrected: OracleTheaterCorrectedStep[];
     receipt: { verified_steps: number; note: string };
@@ -714,7 +731,32 @@ export interface OracleTheaterScenario {
 
 export interface OracleTheater {
     scenarios: OracleTheaterScenario[];
-    // "live" when a model key is present, else "recorded"; the VERDICTS are
-    // computed live by the oracle either way (only the draft's provenance differs).
-    mode: "live" | "recorded";
+    // The built-in scenarios are ALWAYS the recorded drafts; the VERDICTS are
+    // computed live by the oracle. `live_available` reports whether a model key is
+    // present, so the client can offer the on-demand "Draft it live" action.
+    mode: "recorded";
+    live_available: boolean;
+}
+
+// Interactive "Prove It": the oracle's verdict on a learner-built move list.
+export interface ProveStepResult {
+    ok: boolean;
+    reason?: string; // set when ok=false (unknown scenario / malformed input)
+    id?: string;
+    goal?: string;
+    start?: string;
+    frontier?: string; // the literal the next valid move must start from
+    proved?: boolean; // true iff the moves reached the goal with every step verified
+    steps?: OracleTheaterStep[];
+    counterexample?: string[] | null;
+}
+
+// "Draft it live": the model's actual draft, replayed through the same oracle.
+export interface LiveScenarioResult {
+    ok: boolean;
+    reason?: string; // set when ok=false (unknown scenario)
+    provenance?: "recorded" | "live";
+    model_used?: string | null;
+    fallback_reason?: string; // why it degraded to the recorded scenario
+    scenario?: OracleTheaterScenario;
 }

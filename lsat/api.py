@@ -48,6 +48,8 @@ ENDPOINTS = (
     "lsatWorkedExampleDrill",
     "lsatSubmitWorkedStep",
     "lsatOracleTheater",
+    "lsatProveStep",
+    "lsatOracleDraftLive",
     "lsatEvilTwinDrill",
     "lsatSubmitEvilTwin",
 )
@@ -408,15 +410,43 @@ def oracle_theater(col: Collection) -> dict[str, Any]:
     """The Oracle Proof Theater payload: curated scenarios whose recorded AI draft
     is checked LIVE, step by step, by the material-entailment oracle (the same one
     the tests exercise) -- one planted hallucination is blocked and the oracle's
-    provable continuation is substituted. Read-only. ``mode`` reflects whether a
-    real model key is present (``live``) or the draft is a replayed recording
-    (``recorded``); the VERDICTS are computed live either way."""
+    provable continuation is substituted. Read-only.
+
+    The built-in scenarios are ALWAYS the recorded drafts (``mode:"recorded"``);
+    ``live_available`` reports whether a model key is present so the client can
+    offer the on-demand "Draft it live" action (:func:`oracle_draft_live`). We no
+    longer label a recording "live" just because a key exists -- the honest
+    distinction a "can't lie to you" product needs."""
     from lsat.worked_example import theater_scenarios
 
     return {
         "scenarios": theater_scenarios(),
-        "mode": "live" if os.environ.get("ANTHROPIC_API_KEY") else "recorded",
+        "mode": "recorded",
+        "live_available": bool(os.environ.get("ANTHROPIC_API_KEY")),
     }
+
+
+def prove_step(col: Collection, *, scenario_id: Any, moves: Any = None) -> dict[str, Any]:
+    """Interactive "Prove It": oracle-check a learner-built ordered move list for a
+    theater scenario (read-only, no col mutation, no LLM). Returns per-step
+    ``verified/blocked/reason`` (+ a counterexample world on an entailment failure)
+    and whether the goal was proved. Fail-closed on unknown id / malformed input."""
+    from lsat.worked_example import check_moves
+
+    return check_moves(scenario_id, moves if moves is not None else [])
+
+
+def oracle_draft_live(col: Collection, *, scenario_id: Any) -> dict[str, Any]:
+    """"Draft it live": with a model key present, ask the real model to draft the
+    ordered moves for a theater scenario, then replay them through the SAME oracle
+    the recorded draft uses -- a hallucinated step is blocked (with a counterexample)
+    and the oracle proves the rest. Degrades to the recorded scenario when AI is
+    off / unavailable / garbled. Read-only; the model only proposes, the oracle
+    decides. Fail-closed on an unknown id."""
+    from lsat.ai.client import make_client
+    from lsat.worked_example import live_scenario
+
+    return live_scenario(scenario_id, client=make_client())
 
 
 # -- oracle-proven "skill or luck?" discrimination twins (research follow-on) --

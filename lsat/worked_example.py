@@ -56,7 +56,9 @@ from lsat.conditional_chain import (
     MUST_FOLLOW,
     Implication,
     Lit,
+    counterexample,
     entails,
+    render_world,
 )
 
 # A "move" the drafter/learner may choose: apply premise ``impl_index`` either
@@ -714,7 +716,7 @@ def _cited_text(imp: Implication, contra: bool, props: list[str]) -> str:
 
 
 def _block_reason(
-    defn: dict[str, Any],
+    fallacy: str,
     frontier: Lit,
     imp: Implication,
     props: list[str],
@@ -724,7 +726,9 @@ def _block_reason(
 ) -> str:
     """The oracle's human-readable veto, composed from the LIVE-computed failure:
     which check failed (frontier connection and/or entailment) is not stored -- it
-    is read off the same booleans that set ``verified``."""
+    is read off the same booleans that set ``verified``. ``fallacy`` is a short
+    label for the class of error (from the recorded scenario, or a neutral default
+    for a learner-built / live-drafted step)."""
     frontier_s = _render_lit(frontier, props)
     cited_s = _render_imp(imp, props)
     a_s = _render_lit(imp.ante, props)
@@ -735,33 +739,96 @@ def _block_reason(
     if not cumulative_ok:
         parts.append(f"the oracle cannot prove {ante_s} ⊢ {b_s}")
     detail = ", so ".join(parts) if parts else "the step does not verify"
-    return f"{defn['fallacy']} — {detail}."
+    return f"{fallacy} — {detail}."
 
 
-def _build_theater_scenario(defn: dict[str, Any]) -> dict[str, Any]:
-    """Replay one recorded draft and CHECK IT LIVE against the oracle, returning a
-    JSON-safe scenario dict. Verdicts (verified/blocked) and the corrected
-    continuation are computed here at call time -- never read from ``defn``."""
+def _theater_def(scenario_id: str) -> dict[str, Any] | None:
+    """The recorded scenario definition with this id, or ``None`` (fail-closed)."""
+    for d in _THEATER_DEFS:
+        if d["id"] == scenario_id:
+            return d
+    return None
+
+
+def _parse_theater_move(mv: Any, n_chain: int) -> tuple[int, bool] | None:
+    """Validate one proposed move ``{premise_index, contrapositive}``. Returns
+    ``(index, is_contrapositive)`` or ``None`` on any malformed / out-of-range
+    input (so the caller can block it fail-closed)."""
+    if not isinstance(mv, dict):
+        return None
+    try:
+        idx = int(mv["premise_index"])
+        contra = bool(mv.get("contrapositive", False))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (0 <= idx < n_chain):
+        return None
+    return idx, contra
+
+
+def theater_move_options(defn: dict[str, Any]) -> list[dict[str, Any]]:
+    """Every legal move the learner can pick in the interactive builder: each
+    premise applied directly AND as its contrapositive, rendered to prose. The
+    choice set is closed (only real premise edges), so a picked move can never
+    fabricate a premise -- the oracle still decides whether it advances the proof."""
     chain: list[Implication] = defn["chain"]
-    candidate: Implication = defn["candidate"]
     props: list[str] = defn["props"]
-    # Correct-by-construction guard: only stage a genuinely provable candidate.
-    if not build_worked_example(chain, candidate).get("available"):
-        raise AssertionError(f"theater scenario {defn['id']} candidate is not provable")
+    options: list[dict[str, Any]] = []
+    for i, imp in enumerate(chain):
+        options.append(
+            {"premise_index": i, "contrapositive": False, "text": _render_imp(imp, props)}
+        )
+        options.append(
+            {
+                "premise_index": i,
+                "contrapositive": True,
+                "text": _render_imp(imp.contrapositive(), props),
+            }
+        )
+    return options
 
+
+def _walk_moves(
+    chain: list[Implication],
+    candidate: Implication,
+    props: list[str],
+    moves: Any,
+    *,
+    fallacy: str,
+) -> dict[str, Any]:
+    """Walk an ordered move list from the candidate's antecedent, checking each
+    move against the SAME three conditions :func:`verify_worked_example` enforces
+    (a real premise edge, applied from the running frontier, whose cumulative claim
+    is entailed). Stops fail-closed at the first bad step. Returns JSON-safe
+    ``{steps, blocked_frontier, proved, world}`` where ``world`` is a rendered
+    counterexample for an entailment-failing block (else ``None``)."""
     edge_set = set(_provenance_edges(chain))
     ante = candidate.ante
     ante_s = _render_lit(ante, props)
     frontier = ante
     steps: list[dict[str, Any]] = []
     blocked_frontier: Lit | None = None
-
-    for i, mv in enumerate(defn["moves"]):
-        idx = int(mv["premise_index"])
-        contra = bool(mv["contrapositive"])
+    world: list[str] | None = None
+    proved = False
+    for i, mv in enumerate(moves):
+        parsed = _parse_theater_move(mv, len(chain))
+        if parsed is None:
+            steps.append(
+                {
+                    "n": i + 1,
+                    "claim": "",
+                    "cited": "",
+                    "verified": False,
+                    "blocked": True,
+                    "reason": f"{fallacy} — malformed or unknown move.",
+                    "world": None,
+                }
+            )
+            blocked_frontier = frontier
+            break
+        idx, contra = parsed
         imp = chain[idx].contrapositive() if contra else chain[idx]
         a, b = imp.ante, imp.cons
-        # The SAME three conditions verify_worked_example enforces per step, live:
         real_edge = (a, b, idx, contra) in edge_set
         starts_here = a == frontier
         cumulative_ok = entails(chain, Implication(ante, b))
@@ -777,10 +844,21 @@ def _build_theater_scenario(defn: dict[str, Any]) -> dict[str, Any]:
                     "verified": True,
                     "blocked": False,
                     "reason": None,
+                    "world": None,
                 }
             )
             frontier = b
+            if frontier == candidate.cons:
+                proved = True
+                break  # goal reached -- a complete proof
         else:
+            # A concrete countermodel is the uniquely convincing veto, but only
+            # exists when the cumulative claim genuinely does not follow (a purely
+            # structural break -- right fact, wrong place -- has no countermodel).
+            if not cumulative_ok:
+                cx = counterexample(chain, Implication(ante, b))
+                if cx is not None:
+                    world = render_world(cx, props)
             steps.append(
                 {
                     "n": i + 1,
@@ -789,15 +867,46 @@ def _build_theater_scenario(defn: dict[str, Any]) -> dict[str, Any]:
                     "verified": False,
                     "blocked": True,
                     "reason": _block_reason(
-                        defn, frontier, imp, props, starts_here, cumulative_ok, ante_s
+                        fallacy, frontier, imp, props, starts_here, cumulative_ok, ante_s
                     ),
+                    "world": world,
                 }
             )
             blocked_frontier = frontier
             break  # fail-closed: the oracle stops the draft at the first bad step
+    return {
+        "steps": steps,
+        "blocked_frontier": blocked_frontier,
+        "proved": proved,
+        "world": world,
+        # the literal the NEXT valid move must start from (unchanged by a block,
+        # so an undo returns here); == the goal consequent once proved.
+        "frontier": _render_lit(frontier, props),
+    }
 
-    # The oracle proves the continuation from the blocked frontier to the goal
-    # (source flips to a deterministic_fallback, exactly like draft_and_verify).
+
+def _assemble_scenario(
+    defn: dict[str, Any],
+    moves: Any,
+    *,
+    mode: str,
+    provenance: str,
+    model_used: str | None = None,
+) -> dict[str, Any]:
+    """Build a JSON-safe scenario payload from a move list: walk it live against the
+    oracle, then (if the draft was blocked) append the continuation the oracle can
+    prove from the blocked frontier. Shared by the recorded theater, the live
+    model draft, and interactive replays -- verdicts are always computed here."""
+    chain: list[Implication] = defn["chain"]
+    candidate: Implication = defn["candidate"]
+    props: list[str] = defn["props"]
+    ante_s = _render_lit(candidate.ante, props)
+    walk = _walk_moves(
+        chain, candidate, props, moves, fallacy=defn.get("fallacy", "Does not follow")
+    )
+    steps = walk["steps"]
+    blocked_frontier = walk["blocked_frontier"]
+
     corrected: list[dict[str, Any]] = []
     if blocked_frontier is not None:
         cont = build_worked_example(chain, Implication(blocked_frontier, candidate.cons))
@@ -816,23 +925,125 @@ def _build_theater_scenario(defn: dict[str, Any]) -> dict[str, Any]:
                 )
 
     verified_steps = sum(1 for s in steps if s["verified"])
-    return {
+    blocked_any = any(s["blocked"] for s in steps)
+    plural = "" if verified_steps == 1 else "s"
+    if blocked_any:
+        note = (
+            f"{verified_steps} step{plural} re-derived live by the material-entailment "
+            "oracle; the next step was blocked and the oracle proved the rest."
+        )
+    else:
+        note = (
+            f"all {verified_steps} step{plural} re-derived live by the "
+            "material-entailment oracle — the draft is proven."
+        )
+    scenario = {
         "id": defn["id"],
         "title": defn["title"],
         "premises": [_render_imp(p, props) for p in chain],
         "goal": _render_imp(candidate, props),
-        "mode": "recorded",
+        "start": ante_s,
+        "options": theater_move_options(defn),
+        "mode": mode,
+        "provenance": provenance,
         "steps": steps,
         "corrected": corrected,
-        "receipt": {
-            "verified_steps": verified_steps,
-            "note": (
-                f"{verified_steps} step"
-                f"{'' if verified_steps == 1 else 's'} re-derived live by the "
-                "material-entailment oracle; the AI's next step was blocked and the "
-                "oracle proved the rest."
-            ),
-        },
+        "receipt": {"verified_steps": verified_steps, "note": note},
+    }
+    if model_used is not None:
+        scenario["model_used"] = model_used
+    return scenario
+
+
+def _build_theater_scenario(defn: dict[str, Any]) -> dict[str, Any]:
+    """Replay one RECORDED draft and CHECK IT LIVE against the oracle, returning a
+    JSON-safe scenario dict. Verdicts (verified/blocked), the counterexample world,
+    and the corrected continuation are all computed at call time -- never read from
+    ``defn``."""
+    chain: list[Implication] = defn["chain"]
+    candidate: Implication = defn["candidate"]
+    # Correct-by-construction guard: only stage a genuinely provable candidate.
+    if not build_worked_example(chain, candidate).get("available"):
+        raise AssertionError(f"theater scenario {defn['id']} candidate is not provable")
+    return _assemble_scenario(
+        defn, defn["moves"], mode="recorded", provenance="recorded"
+    )
+
+
+def check_moves(scenario_id: Any, moves: Any) -> dict[str, Any]:
+    """Interactive "Prove It": run a learner-proposed ordered move list against the
+    oracle for a theater scenario, exactly as the recorded draft is checked. Returns
+    ``{ok, id, goal, start, proved, steps, counterexample}`` -- per-step
+    ``verified/blocked/reason`` plus a rendered counterexample world on an
+    entailment failure, and whether the moves reached the goal. Read-only,
+    deterministic, fail-closed on an unknown id or malformed input."""
+    defn = _theater_def(str(scenario_id))
+    if defn is None:
+        return {"ok": False, "reason": "unknown scenario"}
+    if not isinstance(moves, list):
+        return {"ok": False, "reason": "malformed moves"}
+    chain: list[Implication] = defn["chain"]
+    candidate: Implication = defn["candidate"]
+    props: list[str] = defn["props"]
+    walk = _walk_moves(chain, candidate, props, moves, fallacy="Not a valid step")
+    return {
+        "ok": True,
+        "id": defn["id"],
+        "goal": _render_imp(candidate, props),
+        "start": _render_lit(candidate.ante, props),
+        "frontier": walk["frontier"],
+        "proved": walk["proved"],
+        "steps": walk["steps"],
+        "counterexample": walk["world"],
+    }
+
+
+def live_scenario(
+    scenario_id: Any, *, client: LLMClient | None = None
+) -> dict[str, Any]:
+    """"Draft it live": ask the model to draft the ordered moves for a theater
+    scenario, then replay them through the SAME oracle checker the recorded draft
+    uses (a hallucinated step is blocked with the oracle's reason + a counterexample,
+    then the oracle proves the rest). Degrades to the recorded scenario when AI is
+    off / unavailable / garbled -- never raises for those expected cases. Returns
+    ``{ok, provenance, model_used?, scenario}``; fail-closed on an unknown id."""
+    defn = _theater_def(str(scenario_id))
+    if defn is None:
+        return {"ok": False, "reason": "unknown scenario"}
+    if client is None:
+        return {"ok": True, "provenance": "recorded", "scenario": _build_theater_scenario(defn)}
+    try:
+        raw = client.complete(
+            _DRAFT_SYSTEM, _draft_user(defn["chain"], defn["candidate"], defn["props"])
+        )
+    except LLMUnavailable:
+        return {
+            "ok": True,
+            "provenance": "recorded",
+            "fallback_reason": "llm_unavailable",
+            "scenario": _build_theater_scenario(defn),
+        }
+    reconstructed = _reconstruct_steps(defn["chain"], _parse_moves(raw))
+    if reconstructed is None:
+        return {
+            "ok": True,
+            "provenance": "recorded",
+            "fallback_reason": "unparseable_moves",
+            "scenario": _build_theater_scenario(defn),
+        }
+    live_moves = [
+        {"premise_index": s["impl_index"], "contrapositive": s["contrapositive"]}
+        for s in reconstructed
+    ]
+    model_used = getattr(client, "model_used", None)
+    scenario = _assemble_scenario(
+        defn, live_moves, mode="live", provenance="live", model_used=model_used
+    )
+    return {
+        "ok": True,
+        "provenance": "live",
+        "model_used": model_used,
+        "scenario": scenario,
     }
 
 
@@ -1202,6 +1413,122 @@ def _selftest() -> bool:  # noqa: C901 - a thorough gate is worth the length
     check(
         "theater: entails() itself vetoes at least one hallucination (not just structure)",
         entails_did_block >= 1,
+    )
+
+    # 9. INTERACTIVE ("Prove It") + LIVE ("Draft it live") surfaces -- every verdict
+    #    still flows through the same oracle the recorded theater uses.
+    sc_def = _THEATER_DEFS[0]
+    chain_t, cand_t = sc_def["chain"], sc_def["candidate"]
+    gt_steps = build_worked_example(chain_t, cand_t)["steps"]
+    correct_moves = [
+        {"premise_index": s["impl_index"], "contrapositive": s["contrapositive"]}
+        for s in gt_steps
+    ]
+    cm_ok = check_moves(sc_def["id"], correct_moves)
+    check(
+        "check_moves: a correct derivation proves the goal",
+        cm_ok.get("proved") is True and all(s["verified"] for s in cm_ok["steps"]),
+    )
+    cm_bad = check_moves(
+        sc_def["id"],
+        [
+            {"premise_index": m["premise_index"], "contrapositive": m["contrapositive"]}
+            for m in sc_def["moves"]
+        ],
+    )
+    check(
+        "check_moves: the recorded hallucination is vetoed (not proved)",
+        cm_bad.get("proved") is False and any(s["blocked"] for s in cm_bad["steps"]),
+    )
+    check(
+        "check_moves: JSON-safe",
+        bool(_json.dumps(cm_ok)) and bool(_json.dumps(cm_bad)),
+    )
+    check(
+        "check_moves: fail-closed on unknown scenario",
+        check_moves("nope", []).get("ok") is False,
+    )
+    check(
+        "check_moves: fail-closed on non-list moves",
+        check_moves(sc_def["id"], "notalist").get("ok") is False,
+    )
+    # the red-herring scenario's hallucination fails ENTAILMENT, so a concrete
+    # counterexample world is surfaced (a purely structural break has none).
+    rh = _THEATER_DEFS[2]
+    cm_rh = check_moves(
+        rh["id"],
+        [
+            {"premise_index": m["premise_index"], "contrapositive": m["contrapositive"]}
+            for m in rh["moves"]
+        ],
+    )
+    check(
+        "check_moves: counterexample world on an entailment-failing step",
+        isinstance(cm_rh.get("counterexample"), list)
+        and len(cm_rh["counterexample"]) >= 1,
+    )
+    # the served scenario now carries the interactive builder's move options + start
+    theater0 = theater_scenarios()[0]
+    check(
+        "theater scenario exposes start + closed move options + provenance",
+        bool(theater0.get("start"))
+        and len(theater0.get("options", [])) == 2 * len(chain_t)
+        and theater0.get("provenance") == "recorded",
+    )
+
+    class GoodDraft:
+        model_used = "claude-sonnet-5-test"
+
+        def complete(self, system: str, user: str, *, temperature: float = 0.0) -> str:
+            return json.dumps(
+                [
+                    {"premise": s["impl_index"], "contrapositive": s["contrapositive"]}
+                    for s in gt_steps
+                ]
+            )
+
+    class BadDraft:
+        model_used = "claude-sonnet-5-test"
+
+        def complete(self, system: str, user: str, *, temperature: float = 0.0) -> str:
+            # a plausible-but-wrong draft: jump straight to the last premise
+            return json.dumps([{"premise": len(chain_t) - 1, "contrapositive": False}])
+
+    class DownDraft:
+        def complete(self, system: str, user: str, *, temperature: float = 0.0) -> str:
+            raise LLMUnavailable("offline")
+
+    off_live = live_scenario(sc_def["id"], client=None)
+    check(
+        "live_scenario: AI-off returns the recorded scenario",
+        off_live.get("ok") and off_live.get("provenance") == "recorded",
+    )
+    good_live = live_scenario(sc_def["id"], client=GoodDraft())
+    check(
+        "live_scenario: a valid live draft is proven (provenance live + model stamped)",
+        good_live.get("provenance") == "live"
+        and all(s["verified"] for s in good_live["scenario"]["steps"])
+        and good_live.get("model_used") == "claude-sonnet-5-test",
+    )
+    bad_live = live_scenario(sc_def["id"], client=BadDraft())
+    check(
+        "live_scenario: a bad live draft is vetoed + oracle proves the continuation",
+        bad_live.get("provenance") == "live"
+        and any(s["blocked"] for s in bad_live["scenario"]["steps"])
+        and len(bad_live["scenario"]["corrected"]) >= 1,
+    )
+    down_live = live_scenario(sc_def["id"], client=DownDraft())
+    check(
+        "live_scenario: LLM-down degrades to the recorded scenario",
+        down_live.get("provenance") == "recorded",
+    )
+    check(
+        "live_scenario: fail-closed on unknown scenario",
+        live_scenario("nope", client=GoodDraft()).get("ok") is False,
+    )
+    check(
+        "live_scenario: JSON-safe",
+        bool(_json.dumps(good_live)) and bool(_json.dumps(bad_live)),
     )
 
     passed = sum(1 for _, ok in checks if ok)

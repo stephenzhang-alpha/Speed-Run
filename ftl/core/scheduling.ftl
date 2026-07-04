@@ -93,7 +93,7 @@ scheduling-custom-study = custom study
 
 ## Scheduler upgrade
 
-scheduling-update-soon = Anki 2.1 comes with a new scheduler, which fixes a number of issues that previous Anki versions had. Updating to it is recommended.
+scheduling-update-soon = LSAT Prep 2.1 comes with a new scheduler, which fixes a number of issues that previous LSAT Prep versions had. Updating to it is recommended.
 scheduling-update-done = Scheduler updated successfully.
 scheduling-update-button = Update
 scheduling-update-later-button = Later

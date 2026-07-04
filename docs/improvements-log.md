@@ -38,6 +38,211 @@ Observations feeding the improvement plan:
 
 <!-- newest first; each entry: date, requirement ref, what/why, verification -->
 
+### 2026-07-03 — Reduce the desktop memory footprint on macOS
+
+**Requirement (new directive).** "Reduce the memory footprint of the software. Reduce
+memory usage on my MacBook." Measured the REAL running desktop app on the Mac (not just
+the backend bench): summed process-tree RSS (main + QtWebEngine helper processes) and
+counted Chromium render processes via the QtWebEngine remote-debugging endpoint. Finding:
+RAM is dominated by **QtWebEngine/Chromium**, and the always-resident LSAT dashboard
+webview (`lsatWeb`) forced a **persistent extra render process** that stayed alive for the
+whole session — even while the user was studying/browsing and the dashboard was off-screen.
+
+**Changes (biggest lever first).**
+1. **Free the dashboard render process** (`qt/aqt/main.py`). `lsatWeb` was created eagerly
+   at window init and only *hidden* on leaving home (never freed). Now it is **created
+   lazily** on first entry to the `lsatHome` state (`_ensure_lsat_web`, inserted after the
+   MAIN webview) and **destroyed on leave** (`_destroy_lsat_web` in `_lsatHomeCleanup`:
+   `cleanup()` -> `removeWidget` -> `deleteLater`), then recreated on the next home entry.
+   Because it is the only *resident* api-access webview (deck-options/editor/stats dialogs
+   are transient), destroying it lets Chromium reclaim its render process whenever the user
+   is not on the dashboard. The api-access dashboard design and the home hint strip are
+   unchanged. **Measured: off the dashboard the app now runs 3 render processes instead of
+   4** (the `lsat-dashboard` target disappears; renderer subtotal ~282 MB -> ~184 MB in one
+   session), reclaimed for all study/review/browse time. No crash on destroy/recreate.
+2. **Cap per-renderer V8 heap on macOS** (`qt/aqt/__init__.py`): append
+   `--js-flags=--max-old-space-size=192` to `QTWEBENGINE_CHROMIUM_FLAGS` (preserving dev
+   flags). A growth safeguard, not a steady-state cut. Verified applied to renderers and
+   the dashboard/reviewer still render correctly.
+3. **De-duplicate the event log's `node_ids` container** (`lsat/events.py`): events sharing
+   a skill-tag set now share one interned list object (a `{tuple: list}` cache) instead of
+   one list per event, on top of the existing string interning. Synthetic 50k-event A/B:
+   container memory **4.18 MB -> 0.45 MB (~89%)**; verified on a real collection (24 events
+   -> 4 shared objects, contents identical). Read-only usage confirmed across all ~10 folds.
+4. **Halve the SQLite page cache** 40 MiB -> 20 MiB (`rslib/src/storage/sqlite.rs`). A clean
+   bench A/B showed **latency is unchanged** (search 13/14 ms, points-at-stake 277/279 ms,
+   dashboard-build 170/172 ms p50 — all within run noise), so the cut is safe; 20 MiB is
+   still generous. Frees ~20 MiB of page cache per open collection (below the bench RSS
+   noise floor, but real).
+
+**Verification.** Render-process count 4 -> 3 off-Home (deterministic; the noisy signal is
+total RSS, since the main process load varies 104-193 MB across launches from the live
+collection). `make bench` **BENCH_OK** with the smaller cache (dashboard_build 170 ms p50 <
+500 ms budget; get_card 0.01 ms; 20x kill-mid-write -> 0 corruption). `cargo test -p anki
+storage` 11/11. `make eval` **GATE OK** (event-dedup + cache changes don't move any gate).
+Events dedup + 50k A/B as above; `py_compile` clean on all edited Python. Backend rebuilt
+via `./ninja pylib` (offline-OK; no JS registry needed) so the Rust change is live.
+
+**Honest caveats.** Total process RSS on a Chromium app is a noisy OS high-water mark, so
+the headline win is the *reclaimed render process* (a structural, deterministic reduction
+during study), not a single before/after RSS number. The SQLite ~20 MiB and the V8 heap cap
+are secondary, conservative, all-users changes kept only because they were measured
+non-regressing.
+
+### 2026-07-03 — De-brand from Anki + cohesive "LSAT Prep" UI/UX redesign
+
+**Requirement (new directive).** "Remove all references to Anki, changing my software
+into a professional LSAT software. I need better UI/UX — give your full effort in
+producing the best UI/UX in your ability; the current UI/UX is [poor]." Confirmed scope
+with the user: product name **LSAT Prep**; rebrand depth **user-facing only** (keep the
+internal `anki`/`aqt` packages, the `anki.*` proto namespace, `/_anki/` URLs, and the
+`.apkg`/`.colpkg`/`.anki2` formats so add-ons + Anki-ecosystem file interop survive);
+UI ambition **all-in, evolving** the existing ⊢/"PROVEN" identity (not a fresh aesthetic).
+
+**A. Rebrand (user-facing "Anki" -> "LSAT Prep").**
+- **Brand assets** built around the turnstile ⊢: a new app/window icon
+  (`qt/aqt/data/qt/icons/anki.png`), About logo (`…/web/imgs/anki-logo-thin.png`),
+  favicon (PNG-in-ICO, since no ImageMagick/PIL — hand-wrapped), Linux menu icon, and an
+  installer source (`qt/installer/app/resources/lsatprep.png`). Filenames kept where
+  code references them (internal), content swapped.
+- **Installer identity** (`qt/installer/app/pyproject.toml`): `project_name`/`formal_name`
+  -> "LSAT Prep", `bundle` -> `com.lsat`, app key + launcher package renamed
+  `anki` -> `prep` (bundle id `com.lsat.prep`, matching the Android app), descriptions +
+  doc-type names rebranded; AGPL license + `.apkg`/`.colpkg` support retained. Linux
+  `.desktop`/`.xml`/man page display strings rebranded.
+- **Window titles + app constants** (`qt/aqt/__init__.py`, `main.py`, and the ~8
+  hardcoded `setWindowTitle("Anki")` in errors/clayout/deckoptions/sound/ankihub, plus 3
+  `.ui` forms): title bar now `{profile} — LSAT Prep`; CLI/help/version strings and the
+  Qt `applicationName` rebranded. Functional service URLs (AnkiWeb sync/updates/shared
+  decks) left intact; only `appWebsite` (About "visit website") repointed.
+- **About dialog + menus** (`about.py`, `ftl/qt/about.ftl`, `qt-accel.ftl`): logo +
+  wordmark, LSAT-focused lede, "About LSAT Prep", dropped the `Anki®` replace; the AGPL
+  line now reads "built on the open-source Anki engine" (attribution preserved).
+- **In-app strings**: a word-boundary bulk pass rebranded ~80 product-name `Anki` values
+  across `ftl/qt` + `ftl/core` and ~20 Qt message/title strings (`utils.py` dialog-title
+  defaults, mediasrv "Unexpected API access", fatal-error text, etc.), while
+  **deliberately preserving** `AnkiWeb`/`AnkiDroid` (functional service/app names) and
+  `.apkg`/`.anki2` (interchange formats). Web `ProofHeader` kicker "Anki for LSAT" ->
+  "LSAT Prep". Only remaining `Anki` in ftl are deprecated-string comments + the one
+  attribution line; only AGPL `Copyright: Ankitects` headers remain in source (kept).
+
+**B. UI/UX redesign (evolving PROVEN).** Diagnosed from live baseline screenshots that
+the rough feel came from (1) a dominant graph-paper grid that read as a wireframe,
+(2) the mobile PWA stretching full-width on wide viewports, and (3) a sparse hero.
+- **Design system** (`ts/lib/lsat/theme.scss`, the single token source): pinned a premium
+  brand palette (indigo `#4f46e5` -> violet `#7c3aed`) that no longer inherits Anki's
+  arbitrary accent, so branding is consistent everywhere; kept surfaces/text inheriting
+  the host theme for automatic in-app light/dark, with hand-tuned light **and** dark
+  fallbacks (`prefers-color-scheme`) for the standalone PWA; **softened the graph paper
+  from ~26% to ~8% accent-tinted ink** (a whisper, not a grid); refined elevation, radii,
+  type scale, and the mono/hatch/rail "PROVEN" motifs.
+- **Hero** (`ProofHeader.svelte`): rebuilt with a gradient ⊢ brand chip + wordmark, a
+  premises ⊢ claim proof-line, an accent wash + larger watermark, and a green honesty
+  dot — real presence vs the old floaty text.
+- **Containment** (`lsat-mobile/+page.svelte`): the phone layout is now a centered
+  max-width column (was full-bleed on wide screens), with the header + bottom tab bar
+  inner content aligned to the same column.
+- **Desktop chrome** (subagent, `main.py` + `toolbar.py`): rebranded the `lsatHome`
+  bottom-bar hint and gave the toolbar a subtle LSAT Prep identity — navigation
+  ids/handlers unchanged.
+- **Desktop flashcard** (subagent, `lsat/notetypes.py` `_ITEM_QFMT_TEMPLATE`, +202/-44):
+  restyled the self-contained reviewer card to the new identity (light + `.night_mode`);
+  the `pycmd` grading, DOM ids, and choice-parsing JS left byte-for-byte behavioural.
+- The shared Svelte components (StudyItem, DrillPicker, NextAction, ScoreCard/IntervalBand,
+  insight panels, OracleProofTheater) are token-driven, so the refined tokens propagate;
+  the same bundle serves desktop, the mobile PWA, and the Android Capacitor wrapper.
+
+**Verification.** `svelte-check` **0 errors / 0 warnings**; `eslint` exit 0; real
+`vite build` passes; `py_compile` OK on every edited Python file + the renamed installer
+launcher; **`make eval` GATE OK** (all hard gates green — the notetype restyle didn't
+touch the backend); notetype `pycmd` hooks (5) + toolbar link ids/handlers confirmed
+intact; the built web bundle synced to `out/qt/_aqt/data/web/sveltekit` for
+desktop/Android parity. Verified live in the browser against a seeded collection: the
+empty-state first-run **and** a populated dashboard (Performance score inking in over a
+confidence-interval band; Misconceptions / Calibration / Rush panels lit) render cleanly,
+centered, and on-brand. Pre-existing `ruff` import-sort lints in `main.py` (present in
+HEAD, outside this diff) were left untouched per the standing warning that reordering
+those lazy imports can reintroduce a circular import.
+
+### 2026-07-03 — Fix "Unexpected API access" on the LSAT dashboard home screen
+
+**Requirement (new directive).** "I see 'Unexpected API access. Please report this
+message on the Anki forums.' when I open my LSAT software. Change the home screen to
+the LSAT dashboard and correct the error."
+
+**Root cause.** The earlier home-screen change rendered the dashboard SvelteKit page
+into the **MAIN** window webview (`self.web`). By design, the MAIN webview renders
+untrusted card JS and is therefore **denied backend API access** (it is absent from
+the api-access allowlist in `qt/aqt/webview.py`, so its profile never injects the
+`Authorization: Bearer <key>` header). When the dashboard page POSTs to
+`/_anki/lsatDashboardData`, Anki's `_check_dynamic_request_permissions`
+(`qt/aqt/mediasrv.py`) runs: `_have_api_access()` is False and the endpoint is not in
+the reviewer/previewer whitelist, so it shows *"Unexpected API access…"* and 403s —
+*before* the endpoint's own `pairing_authorized` even runs. (The standalone dashboard
+*dialog* never hit this because it uses the api-access `LSAT_DASHBOARD` webview kind.)
+
+**Fix (`qt/aqt/main.py`).** Render the home dashboard in a **dedicated
+`LSAT_DASHBOARD`-kind webview** (`self.lsatWeb`) — the same api-access profile the
+dialog uses — instead of the MAIN webview:
+- create `self.lsatWeb = AnkiWebView(kind=AnkiWebViewKind.LSAT_DASHBOARD)` in the
+  main layout, hidden by default;
+- `_lsatHomeState` now hides `self.web`, shows `self.lsatWeb`, and loads the page
+  there; a new `_lsatHomeCleanup` restores `self.web` on leaving (so deck browser /
+  overview / reviewer render normally on MAIN);
+- the MAIN webview stays **non-api-access** (no security regression — untrusted card
+  JS never gains backend access), which is why granting MAIN access was rejected.
+
+Because `lsatWeb`'s profile injects `Bearer {_APIKEY}`, `_have_api_access()` returns
+True and the request passes the mediasrv guard exactly as the working dialog does —
+so the dashboard (and its boot RPCs like `i18nResources`) loads without the error.
+
+**Verification.** `main.py` py_compiles; wiring consistent (create → layout →
+`_lsatHomeState` show+load → `_lsatHomeCleanup` restore); `LSAT_DASHBOARD` confirmed
+in the api-access allowlist (`webview.py`); the served `lsat-dashboard` bundle is
+present; traced the full mediasrv guard (`_check_dynamic_request_permissions` →
+`_have_api_access`) to confirm an api-access webview passes where MAIN was rejected.
+The home screen is the LSAT dashboard and no longer raises "Unexpected API access."
+
+### 2026-07-03 — Reduce runtime memory (event log + oracle value types)
+
+**Requirement (new directive).** "Reduce the memory consumption of running the
+software while preserving all core functionalities."
+
+**Method.** Measured first with `make bench` (50k-deck; reports peak RSS + peak
+Python allocation via tracemalloc) and a tracemalloc profile of `dashboard_build`.
+Findings: `dashboard_build`'s peak is *transient* DB-query processing (freed after
+build — retained payload is tiny), and the bench synthesizes 0 events, so its
+number can't reflect the real hotspot. The dominant *retained* LSAT-layer heap
+structure for an active user is the parsed **event log** — `read_events` (and the
+single-parse `events_cache` window `build()` already uses) materialize one
+`PerformanceEvent` per graded answer (thousands to 50k+).
+
+**Change (safe, zero-behaviour).**
+- `PerformanceEvent` (`lsat/events.py`) → `@dataclass(frozen=True, slots=True)`:
+  removes the per-instance `__dict__` overhead on the 50k-scale event list.
+- `_read_events_uncached` now `sys.intern`s the highly-repetitive fields (item id,
+  skill tags, device id, phase, confidence, chosen, classify grade) — across a log
+  these take a handful of distinct values, so they collapse to one shared string
+  object each (`hlc` is near-unique, so deliberately not interned).
+- Slotted the bulk-instantiated oracle value types too — `Statement`
+  (`quantifier.py`), `Lit` + `Implication` (`conditional_chain.py`) — cutting the
+  transient peak during worked-example / evil-twin / proof-theater generation.
+
+**Result (deterministic A/B on a realistic 50k-event log):** retained event log
+**24.20 MB → 19.07 MB = 5.13 MB / 21% smaller** (484 → 381 B/event). Scales with
+log size; larger for lower-cardinality (typical) logs.
+
+**Functionality preserved (verified).** `make eval` **GATE OK** (the oracle gates
+lean hard on the slotted types: worked_example 0/20 planted + 0/3014 fuzz,
+evil_twin 0 mislabels, quantifier/conditional_chain unchanged); module self-tests
+QUANTIFIER_OK / CHAIN_OK / WORKED_OK / EVIL_TWIN_OK; slotted frozen types remain
+hashable (dict/set/lru_cache keys) — verified; `read_events` on 6k events + full
+`dashboard_build` on 1.5k events (5 insight panels) work end-to-end; `ruff` clean.
+(The bench's peak RSS is a noisy OS high-water mark — 173/254/287 MB across runs —
+while the deterministic tracemalloc Python peak held steady at 37.8 MB, confirming
+no regression; the event-path win doesn't appear there because the bench logs 0
+events.)
+
 ### 2026-07-03 — Carry the redesign to Android + unify the icon language
 
 **Requirement (new directive).** "Make the UI/UX creative and unique. Make sure all

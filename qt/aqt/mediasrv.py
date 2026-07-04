@@ -729,14 +729,14 @@ def lsat_dashboard_data() -> Response | bytes:
     return dashboard_json(aqt.mw.col)
 
 
-def lsat_next_item() -> bytes:
+def lsat_next_item() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next item to study.
     from aqt.lsat_web import next_item
 
     return next_item()
 
 
-def lsat_submit_answer() -> bytes:
+def lsat_submit_answer() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade + log a chosen answer over HTTP (the
     # pycmd-free equivalent of the reviewer hook; reuses lsat.grading).
     from aqt.lsat_web import submit_answer
@@ -744,56 +744,56 @@ def lsat_submit_answer() -> bytes:
     return submit_answer()
 
 
-def lsat_submit_trap() -> bytes:
+def lsat_submit_trap() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a "which trap?" tap over HTTP.
     from aqt.lsat_web import submit_trap
 
     return submit_trap()
 
 
-def lsat_submit_classify() -> bytes:
+def lsat_submit_classify() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade the identification-first stage.
     from aqt.lsat_web import submit_classify
 
     return submit_classify()
 
 
-def lsat_conditional_drill() -> bytes:
+def lsat_conditional_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Conditional Translation Drill (#19).
     from aqt.lsat_web import conditional_drill
 
     return conditional_drill()
 
 
-def lsat_submit_conditional() -> bytes:
+def lsat_submit_conditional() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a conditional-translation attempt (#19).
     from aqt.lsat_web import submit_conditional
 
     return submit_conditional()
 
 
-def lsat_chain_drill() -> bytes:
+def lsat_chain_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Conditional-Chain Drill (r4 #22).
     from aqt.lsat_web import chain_drill
 
     return chain_drill()
 
 
-def lsat_submit_chain() -> bytes:
+def lsat_submit_chain() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a conditional-chain judgment (r4 #22).
     from aqt.lsat_web import submit_chain
 
     return submit_chain()
 
 
-def lsat_worked_example_drill() -> bytes:
+def lsat_worked_example_drill() -> Response | bytes:
     # Anki for LSAT: the next Oracle-Verified Faded Worked Example (research #1).
     from aqt.lsat_web import worked_example_drill
 
     return worked_example_drill()
 
 
-def lsat_submit_worked_step() -> bytes:
+def lsat_submit_worked_step() -> Response | bytes:
     # Anki for LSAT: oracle-grade a faded-worked-example move (research #1).
     from aqt.lsat_web import submit_worked_step
 
@@ -808,84 +808,98 @@ def lsat_oracle_theater() -> Response | bytes:
     return oracle_theater()
 
 
-def lsat_evil_twin_drill() -> bytes:
+def lsat_prove_step() -> Response | bytes:
+    # Anki for LSAT: interactive "Prove It" -- oracle-check a learner-built move list.
+    from aqt.lsat_web import prove_step
+
+    return prove_step()
+
+
+def lsat_oracle_draft_live() -> Response | bytes:
+    # Anki for LSAT: "Draft it live" -- a real model drafts, the oracle checks it live.
+    from aqt.lsat_web import oracle_draft_live
+
+    return oracle_draft_live()
+
+
+def lsat_evil_twin_drill() -> Response | bytes:
     # Anki for LSAT: the next oracle-proven "Skill or Luck?" evil twin.
     from aqt.lsat_web import evil_twin_drill
 
     return evil_twin_drill()
 
 
-def lsat_submit_evil_twin() -> bytes:
+def lsat_submit_evil_twin() -> Response | bytes:
     # Anki for LSAT: oracle-grade a verdict on an evil twin.
     from aqt.lsat_web import submit_evil_twin
 
     return submit_evil_twin()
 
 
-def lsat_quantifier_validity_drill() -> bytes:
+def lsat_quantifier_validity_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Quantifier Validity Drill (r3 #1).
     from aqt.lsat_web import quantifier_validity_drill
 
     return quantifier_validity_drill()
 
 
-def lsat_submit_quantifier_validity() -> bytes:
+def lsat_submit_quantifier_validity() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a quantifier-validity judgment (r3 #1).
     from aqt.lsat_web import submit_quantifier_validity
 
     return submit_quantifier_validity()
 
 
-def lsat_quantifier_negation_drill() -> bytes:
+def lsat_quantifier_negation_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Quantifier Negation Drill (r3 #1).
     from aqt.lsat_web import quantifier_negation_drill
 
     return quantifier_negation_drill()
 
 
-def lsat_submit_quantifier_negation() -> bytes:
+def lsat_submit_quantifier_negation() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a quantifier-negation choice (r3 #1).
     from aqt.lsat_web import submit_quantifier_negation
 
     return submit_quantifier_negation()
 
 
-def lsat_stem_polarity_drill() -> bytes:
+def lsat_stem_polarity_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Stem-Polarity Micro-Drill (r4 #13).
     from aqt.lsat_web import stem_polarity_drill
 
     return stem_polarity_drill()
 
 
-def lsat_submit_stem_polarity() -> bytes:
+def lsat_submit_stem_polarity() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a stem-polarity call (r4 #13).
     from aqt.lsat_web import submit_stem_polarity
 
     return submit_stem_polarity()
 
 
-def lsat_assumption_drill() -> bytes:
+def lsat_assumption_drill() -> Response | bytes:
     # Anki for LSAT (mobile PWA): the next Necessary/Sufficient drill (r4 #5).
     from aqt.lsat_web import assumption_drill
 
     return assumption_drill()
 
 
-def lsat_submit_assumption() -> bytes:
+def lsat_submit_assumption() -> Response | bytes:
     # Anki for LSAT (mobile PWA): grade a four-cell assumption sort (r4 #5).
     from aqt.lsat_web import submit_assumption
 
     return submit_assumption()
 
 
-def lsat_section_items() -> bytes:
+def lsat_section_items() -> Response | bytes:
     # Anki for LSAT (mobile PWA): a batch of distinct items for a timed section (r4 #17).
     from aqt.lsat_web import section_items
 
     return section_items()
 
 
-def lsat_submit_section_attempt() -> bytes:
+def lsat_submit_section_attempt() -> Response | bytes:
     # Anki for LSAT (mobile PWA): persist a timed-section attempt (r4 #17).
     from aqt.lsat_web import submit_section_attempt
 
@@ -930,6 +944,8 @@ post_handler_list = [
     lsat_worked_example_drill,
     lsat_submit_worked_step,
     lsat_oracle_theater,
+    lsat_prove_step,
+    lsat_oracle_draft_live,
     lsat_evil_twin_drill,
     lsat_submit_evil_twin,
 ]
@@ -1026,7 +1042,7 @@ def _check_dynamic_request_permissions():
 
     def warn() -> None:
         show_warning(
-            "Unexpected API access. Please report this message on the Anki forums."
+            "Unexpected API access. Please report this message on the LSAT Prep forums."
         )
 
     # check content type header to ensure this isn't an opaque request from another origin
