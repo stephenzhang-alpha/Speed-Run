@@ -11,7 +11,7 @@ ConditionalDrill / QuantifierDrill / StemPolarityDrill's states, double-submit
 guard, and styling.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     import Card from "./Card.svelte";
     import * as client from "./client";
@@ -23,8 +23,8 @@ guard, and styling.
     let state: State = "loading";
     let result: AssumptionResult | null = null;
     let picked = "";
-    let error = "";
     let shownAt = 0;
+    let nextBtn: HTMLButtonElement | undefined;
 
     // Human label for each fixed cell key. Submit sends the raw key (e.g.
     // "necessary_only"); the label is only for display.
@@ -43,7 +43,6 @@ guard, and styling.
         state = "loading";
         result = null;
         picked = "";
-        error = "";
         try {
             const d = await client.assumptionDrill();
             if (d.done || !d.item_id) {
@@ -55,7 +54,7 @@ guard, and styling.
             shownAt = Date.now();
             state = "asking";
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -72,8 +71,10 @@ guard, and styling.
                 chosen,
                 Date.now() - shownAt,
             );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -87,7 +88,7 @@ guard, and styling.
     <Card title="No drills right now"><p class="muted">Check back later.</p></Card>
 {:else if state === "error"}
     <Card title="Couldn't load a drill">
-        <p class="muted">{error}</p>
+        <p class="muted">Couldn't reach the server. Try again.</p>
         <button class="next" on:click={load}>Try again</button>
     </Card>
 {:else if drill}
@@ -108,14 +109,16 @@ guard, and styling.
             <span class="lbl">Candidate assumption</span>
             <span class="txt">{drill.candidate}</span>
         </div>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !result}>
             {#each drill.options as opt (opt)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === opt}
                     class:right={result?.graded && opt === result.cell}
-                    class:wrong={result?.graded && picked === opt && opt !== result.cell}
+                    class:wrong={result?.graded &&
+                        picked === opt &&
+                        opt !== result.cell}
                     disabled={state !== "asking"}
                     on:click={() => pick(opt)}
                 >
@@ -124,9 +127,13 @@ guard, and styling.
             {/each}
         </div>
 
+        {#if state === "answered" && !result}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && result}
             {#if result.graded}
-                <p class="verdict" class:ok={result.correct}>
+                <p class="verdict" class:ok={result.correct} aria-live="polite">
                     {result.correct
                         ? "Correct — that's the right sort."
                         : `Not quite — it's "${meta(result.cell ?? "").label}".`}
@@ -144,7 +151,7 @@ guard, and styling.
             {:else}
                 <p class="muted">{result.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next drill</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>Next drill</button>
         {/if}
     </Card>
 {/if}
@@ -153,6 +160,11 @@ guard, and styling.
     .muted {
         color: var(--lsat-fg-subtle);
         margin: 0;
+    }
+    .checking {
+        margin: 0.6rem 0 0;
+        font-size: 0.85rem;
+        color: var(--lsat-fg-subtle);
     }
     .premises {
         list-style: none;
@@ -239,6 +251,10 @@ guard, and styling.
     .opt:disabled {
         cursor: default;
     }
+    .opt:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     .opt.picked {
         border-width: 2px;
     }
@@ -293,10 +309,14 @@ guard, and styling.
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: white;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 
     @media (prefers-reduced-motion: reduce) {

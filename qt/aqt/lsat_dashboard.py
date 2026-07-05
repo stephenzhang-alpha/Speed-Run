@@ -36,11 +36,16 @@ def _ensure_lsat_on_path() -> None:
 
 
 def dashboard_json(col: Collection) -> bytes:
-    """Build the dashboard payload as JSON bytes (used by the mediasrv endpoint)."""
-    _ensure_lsat_on_path()
-    from lsat.dashboard_data import build
+    """Build the dashboard payload as JSON bytes (used by the mediasrv endpoint).
 
-    return json.dumps(build(col)).encode("utf-8")
+    Delegates to :func:`lsat.api.dashboard` -- the SAME framework-agnostic handler
+    the standalone server (``lsat/server/app.py``) serves for ``lsatDashboardData``
+    -- so the desktop and the Android app compute the dashboard from one code path.
+    """
+    _ensure_lsat_on_path()
+    from lsat import api
+
+    return json.dumps(api.dashboard(col)).encode("utf-8")
 
 
 class LsatDashboardDialog(QDialog):

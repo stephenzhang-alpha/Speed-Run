@@ -342,6 +342,10 @@ _ITEM_QFMT_TEMPLATE = r"""<div class="lsat-item">
 
   function highlight(res) {
     if (!res) return;
+    // An item with no gradeable answer key is abstained server-side (graded:false,
+    // nothing logged); don't mark a choice a false "wrong" -- leave it neutral and
+    // let the normal reviewer controls advance.
+    if (res.graded === false) return;
     var self = container.querySelector('.lsat-choice[data-letter="' + chosenLetter + '"]');
     if (self) self.classList.add(res.correct ? "right" : "wrong");
     if (!res.correct && res.correct_letter) {
@@ -654,10 +658,6 @@ def migrate_item_fields(col: Collection) -> bool:
     """Ensure ``LSAT Item`` carries ``distractor_traps`` (idempotent)."""
     ensure_notetypes(col)
     return bool(migrate_missing_fields(col, LSAT_ITEM, ["distractor_traps"]))
-
-
-# Valid values for the LSAT Card ``primitive_type`` field (SPOV 1 / A1).
-PRIMITIVE_TYPES = ("diction", "logic", "qtype")
 
 
 def migrate_card_fields(col: Collection) -> bool:

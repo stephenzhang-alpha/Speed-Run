@@ -11,7 +11,13 @@ picker still renders cleanly.
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
 
-    type Drill = { id: string; name: string; blurb: string; group: string; icon: string };
+    type Drill = {
+        id: string;
+        name: string;
+        blurb: string;
+        group: string;
+        icon: string;
+    };
 
     export let drills: Drill[];
     export let recency: (id: string) => { label: string; tone: string } = () => ({
@@ -58,7 +64,8 @@ picker still renders cleanly.
                     </span>
                     {#if rec.label}
                         <span class="rec rec--{rec.tone}" aria-hidden="true">
-                            <span class="dot"></span>{rec.label}
+                            <span class="dot"></span>
+                            {rec.label}
                         </span>
                     {/if}
                     <span class="chev" aria-hidden="true">
@@ -122,7 +129,11 @@ picker still renders cleanly.
     }
     .drill:hover {
         box-shadow: var(--lsat-shadow-lift);
-        border-color: color-mix(in srgb, var(--lsat-accent) 40%, var(--lsat-border-subtle));
+        border-color: color-mix(
+            in srgb,
+            var(--lsat-accent) 40%,
+            var(--lsat-border-subtle)
+        );
         transform: translateY(-1px);
     }
     .drill:active {

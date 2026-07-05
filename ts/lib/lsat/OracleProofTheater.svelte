@@ -116,9 +116,7 @@ with an aria-live region mirroring each beat.
         }
         return [
             ...sc.steps.map((step): Beat => ({ type: "draft", step })),
-            ...sc.corrected.map(
-                (corrected): Beat => ({ type: "fix", corrected }),
-            ),
+            ...sc.corrected.map((corrected): Beat => ({ type: "fix", corrected })),
         ];
     }
 
@@ -329,13 +327,19 @@ with an aria-live region mirroring each beat.
         }
         const next = builtMoves.slice(0, -1);
         builtMoves = next;
+        proveError = "";
         if (!next.length) {
             proveResult = null;
             return;
         }
         proveBusy = true;
         try {
-            proveResult = await client.proveStep(recordedScenario.id, next);
+            const res = await client.proveStep(recordedScenario.id, next);
+            if (!res.ok) {
+                proveError = res.reason ?? "Could not check that move.";
+                return;
+            }
+            proveResult = res;
         } catch (e) {
             proveError = String(e);
         } finally {
@@ -400,10 +404,12 @@ with an aria-live region mirroring each beat.
         <span class="eyebrow">VERIFIED AI</span>
         <h2 id="opt-title">Watch the AI get overruled</h2>
         <p class="dek">
-            A conditional-chain proof, checked <strong>live</strong> — one step at a time —
-            by the same decision procedure our tests run. Watch a recorded draft get
-            vetoed, <strong>build the proof yourself</strong>, or have the real model draft
-            it. The verdicts are computed right now; a bad step can't reach the screen.
+            A conditional-chain proof, checked <strong>live</strong>
+            — one step at a time — by the same decision procedure our tests run. Watch a
+            recorded draft get vetoed,
+            <strong>build the proof yourself</strong>
+            , or have the real model draft it. The verdicts are computed right now; a
+            bad step can't reach the screen.
         </p>
 
         {#if data && data.scenarios.length}
@@ -472,7 +478,7 @@ with an aria-live region mirroring each beat.
                 <div class="block">
                     <span class="lbl">Premises</span>
                     <ul class="premises">
-                        {#each frameScenario.premises as p (p)}
+                        {#each frameScenario.premises as p, i (i)}
                             <li class="mono">{p}</li>
                         {/each}
                     </ul>
@@ -509,11 +515,11 @@ with an aria-live region mirroring each beat.
                                 {#if s.blocked && s.world && s.world.length}
                                     <div class="world">
                                         <span class="world-lbl">
-                                            Counterexample — a world where every premise holds
-                                            but the step fails:
+                                            Counterexample — a world where every premise
+                                            holds but the step fails:
                                         </span>
                                         <ul>
-                                            {#each s.world as line (line)}
+                                            {#each s.world as line, i (i)}
                                                 <li class="mono">{line}</li>
                                             {/each}
                                         </ul>
@@ -535,9 +541,11 @@ with an aria-live region mirroring each beat.
                 {:else}
                     <p class="frontier-hint">
                         {#if lastStepBlocked}
-                            That step is blocked — <strong>undo</strong> and try another.
+                            That step is blocked — <strong>undo</strong>
+                             and try another.
                         {:else}
-                            Next step from <span class="mono">{currentFrontier}</span>:
+                            Next step from <span class="mono">{currentFrontier}</span>
+                            :
                         {/if}
                     </p>
                     <div class="moves" role="group" aria-label="Pick the next premise">
@@ -561,14 +569,18 @@ with an aria-live region mirroring each beat.
                             class="stepper"
                             type="button"
                             on:click={undoMove}
-                            disabled={proveBusy}>&#8624; Undo</button
+                            disabled={proveBusy}
                         >
+                            &#8624; Undo
+                        </button>
                         <button
                             class="stepper"
                             type="button"
                             on:click={resetProve}
-                            disabled={proveBusy}>Reset</button
+                            disabled={proveBusy}
                         >
+                            Reset
+                        </button>
                     </div>
                 {/if}
             {:else if view === "live" && !liveScenario}
@@ -611,11 +623,13 @@ with an aria-live region mirroring each beat.
                                 {#if b.type === "draft"}
                                     <li class="step" class:blocked={b.step.blocked}>
                                         <div class="row">
-                                            <span class="claim mono">{b.step.claim}</span>
+                                            <span class="claim mono">
+                                                {b.step.claim}
+                                            </span>
                                             {#if b.step.blocked}
-                                                <span class="pill bad"
-                                                    >✗ does not follow — blocked</span
-                                                >
+                                                <span class="pill bad">
+                                                    ✗ does not follow — blocked
+                                                </span>
                                             {:else}
                                                 <span class="pill ok">✓ entails</span>
                                             {/if}
@@ -627,11 +641,11 @@ with an aria-live region mirroring each beat.
                                         {#if b.step.blocked && b.step.world && b.step.world.length}
                                             <div class="world">
                                                 <span class="world-lbl">
-                                                    Counterexample — a world where every premise
-                                                    holds but the step fails:
+                                                    Counterexample — a world where every
+                                                    premise holds but the step fails:
                                                 </span>
                                                 <ul>
-                                                    {#each b.step.world as line (line)}
+                                                    {#each b.step.world as line, wi (wi)}
                                                         <li class="mono">{line}</li>
                                                     {/each}
                                                 </ul>
@@ -642,10 +656,14 @@ with an aria-live region mirroring each beat.
                                     <li class="step fix">
                                         <div class="row">
                                             <span class="oraclechip">oracle</span>
-                                            <span class="claim mono">{b.corrected.claim}</span>
+                                            <span class="claim mono">
+                                                {b.corrected.claim}
+                                            </span>
                                             <span class="pill ok">✓ proven</span>
                                         </div>
-                                        <span class="cite mono">{b.corrected.cited}</span>
+                                        <span class="cite mono">
+                                            {b.corrected.cited}
+                                        </span>
                                     </li>
                                 {/if}
                             {/if}
@@ -784,7 +802,7 @@ with an aria-live region mirroring each beat.
         color: var(--lsat-fg);
     }
     .mode.on {
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         background: var(--lsat-proven);
         box-shadow: var(--lsat-glow);
     }
@@ -801,7 +819,7 @@ with an aria-live region mirroring each beat.
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-proven);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 700;
         letter-spacing: 0.01em;

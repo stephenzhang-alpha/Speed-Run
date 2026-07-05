@@ -16,7 +16,6 @@ earned, primary action.
     export let count = ""; // e.g. "12 due" / "3 to re-prove"
     export let kind: "retest" | "study" | "start" = "study";
     export let href = "/lsat-mobile";
-    export let browseHref = "/lsat-mobile";
 
     const EYEBROW: Record<string, string> = {
         retest: "Highest-value fix",
@@ -37,12 +36,12 @@ earned, primary action.
     </span>
     <span class="go">
         {#if count}<span class="count">{count}</span>{/if}
-        <span class="cta">Start<span class="arrow" aria-hidden="true">→</span></span>
+        <span class="cta">
+            Start
+            <span class="arrow" aria-hidden="true">→</span>
+        </span>
     </span>
 </a>
-{#if browseHref}
-    <a class="or-choose" href={browseHref}>or choose a drill yourself</a>
-{/if}
 
 <style lang="scss">
     .next-action {
@@ -146,7 +145,7 @@ earned, primary action.
         padding: 0.5rem 1.05rem;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-proven); /* earned/primary — gradient licensed here */
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font-weight: 650;
         font-size: 0.9rem;
         white-space: nowrap;
@@ -156,19 +155,6 @@ earned, primary action.
     }
     .next-action:hover .arrow {
         transform: translateX(3px);
-    }
-    .or-choose {
-        display: inline-block;
-        margin: 0.5rem 0 0 1.35rem;
-        font-size: 0.8rem;
-        color: var(--lsat-fg-subtle);
-        text-decoration: none;
-        border-bottom: 1px dashed var(--lsat-border);
-        padding-bottom: 1px;
-    }
-    .or-choose:hover {
-        color: var(--lsat-accent);
-        border-bottom-color: var(--lsat-accent);
     }
 
     @keyframes rail-in {

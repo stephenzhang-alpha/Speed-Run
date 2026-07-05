@@ -16,8 +16,8 @@ rather than fabricate a number. Sources: `lsat/models/`, `lsat/events.py`,
   function, clamp each to `[0,1]` (a probability), and take the mean. The range
   is a **Wilson score interval** that widens honestly with little data. Recall is
   clamped and non-finite values dropped, so memory % can never exceed its range.
-- **Give-up:** a topic with fewer than **10** reviews shows *"not enough evidence
-  yet,"* never a score.
+- **Give-up:** a topic with fewer than **10** reviews shows _"not enough evidence
+  yet,"_ never a score.
 - **Output:** `memory % (low–high) from N cards`, per topic + an exam-weighted
   overall.
 
@@ -37,7 +37,7 @@ rather than fabricate a number. Sources: `lsat/models/`, `lsat/events.py`,
   **clamped to [0.15, 0.85]**, so sparse or degenerate data can't be
   overconfident. Inputs (PRD §5.2): skill mastery, item difficulty
   (easy/medium/hard ordinal), recent timing, coverage.
-- **Display:** per topic, `p ± interval` (e.g. *62% ± 7% on Weaken*); the width
+- **Display:** per topic, `p ± interval` (e.g. _62% ± 7% on Weaken_); the width
   reflects graded-evidence volume.
 - **Calibration:** `fit_performance_model` reports **k-fold held-out** ECE /
   Brier / log-loss (ability recomputed from training folds, so no event leaks its
@@ -95,8 +95,8 @@ rather than fabricate a number. Sources: `lsat/models/`, `lsat/events.py`,
 ## 6. Interleaving study option
 
 - `lsat/interleaving.py`: an option to **interleave** LR question types
-  (round-robin) vs **block** them; the points-at-stake queue chooses *which*
-  cards, this controls their *order*. The 3-arm ablation (`eval/ablation.py`,
+  (round-robin) vs **block** them; the points-at-stake queue chooses _which_
+  cards, this controls their _order_. The 3-arm ablation (`eval/ablation.py`,
   `make ablation`) measures its effect at equal study time — see the ablation
   output for the primary metric with a bootstrap range.
 

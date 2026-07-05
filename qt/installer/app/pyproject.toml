@@ -83,6 +83,7 @@ supported = false
 
 [tool.briefcase.app.prep.document_type.apkg]
 description = "LSAT Prep deck package"
+url = "https://lsatprep.app"
 extension = "apkg"
 icon = "resources/lsatprep"
 mime_type = "application/x-apkg"
@@ -90,6 +91,7 @@ macOS.CFBundleTypeRole = "Editor"
 
 [tool.briefcase.app.prep.document_type.colpkg]
 description = "LSAT Prep collection package"
+url = "https://lsatprep.app"
 extension = "colpkg"
 icon = "resources/lsatprep"
 mime_type = "application/x-colpkg"
@@ -97,6 +99,7 @@ macOS.CFBundleTypeRole = "Editor"
 
 [tool.briefcase.app.prep.document_type.ankiaddon]
 description = "LSAT Prep add-on package"
+url = "https://lsatprep.app"
 extension = "ankiaddon"
 icon = "resources/lsatprep"
 mime_type = "application/x-ankiaddon"

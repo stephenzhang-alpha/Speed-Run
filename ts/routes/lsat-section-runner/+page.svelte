@@ -16,12 +16,23 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
 
     import Card from "$lib/lsat/Card.svelte";
     import * as client from "$lib/lsat/client";
-    import type { SectionAttemptResult, SectionQuestionAttempt, StudyItemData } from "$lib/lsat/types";
+    import type {
+        SectionAttemptResult,
+        SectionQuestionAttempt,
+        StudyItemData,
+    } from "$lib/lsat/types";
 
     const SECTION_SIZE = 10;
     const SECTION_SECONDS = 10 * 84; // 1:24 per question -- LSAT timed pace.
 
-    type State = "loading" | "notenough" | "running" | "submitting" | "results" | "error";
+    type State =
+        | "loading"
+        | "notenough"
+        | "running"
+        | "submitting"
+        | "results"
+        | "queued"
+        | "error";
 
     // Per-question state. We hold RAW choices only; correctness is the server's
     // job and never lives on the client during the section (no-leak).
@@ -76,7 +87,9 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
                 });
             }
         } catch (e) {
-            error = String(e);
+            console.error("Failed to load timed section items:", e);
+            error =
+                "We couldn't load a timed section just now. Please check your connection and try again.";
             state = "error";
             return;
         }
@@ -120,7 +133,7 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
     }
 
     function goto(i: number): void {
-        if (state !== "running" || i === current) {
+        if (state !== "running" || i < 0 || i >= questions.length || i === current) {
             return;
         }
         flushDwell();
@@ -152,6 +165,10 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         questions = questions;
     }
 
+    // The built trajectory is held so a transient submit failure can RE-POST the same
+    // section (rather than discarding minutes of work and fetching a fresh one).
+    let pendingTrajectory: SectionQuestionAttempt[] | null = null;
+
     async function submit(): Promise<void> {
         // Guard so a manual submit and the timeout can't both fire.
         if (state !== "running") {
@@ -159,8 +176,7 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         }
         stopTimer();
         flushDwell();
-        state = "submitting";
-        const trajectory: SectionQuestionAttempt[] = questions.map((q) => {
+        pendingTrajectory = questions.map((q) => {
             const reached = !!q.finalChoice;
             return {
                 item_id: q.item.item_id,
@@ -173,11 +189,27 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
                 n_changes: q.nChanges,
             };
         });
+        await sendTrajectory();
+    }
+
+    // Send (or re-send) the built trajectory. Kept separate from submit() so the
+    // error card's "Try again" re-POSTs the SAME answers instead of loadItems()
+    // discarding them for a new section.
+    async function sendTrajectory(): Promise<void> {
+        if (!pendingTrajectory) {
+            return;
+        }
+        state = "submitting";
         try {
-            result = await client.submitSectionAttempt(trajectory);
-            state = "results";
+            result = await client.submitSectionAttempt(pendingTrajectory);
+            // Offline: the section was saved to the local queue and will sync + be
+            // graded on reconnect (the ledger refreshes then, not now).
+            state = result.queued ? "queued" : "results";
+            pendingTrajectory = null;
         } catch (e) {
-            error = String(e);
+            console.error("Failed to submit timed section:", e);
+            error =
+                "We couldn't submit your section just now — your answers are kept. Try again.";
             state = "error";
         }
     }
@@ -188,50 +220,75 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
 
 <svelte:head>
     <title>Timed section</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
 </svelte:head>
 
 <div class="runner">
     <header class="bar">
-        <a class="back" href="/lsat-mobile" aria-label="Back to study">
-            <span class="arrow" aria-hidden="true">&larr;</span>
-            <span class="brand">Timed section</span>
-        </a>
-        {#if state === "running" || state === "submitting"}
-            <div class="controls">
-                <!-- no aria-live: a per-second re-announcement floods the SR queue;
-                     the static label conveys the purpose, sighted users see the count. -->
-                <span class="clock" class:urgent aria-label="time remaining {mmss}">
-                    {mmss}
-                </span>
-                <button
-                    class="submit"
-                    type="button"
-                    disabled={state === "submitting"}
-                    on:click={submit}
-                >
-                    {state === "submitting" ? "Submitting…" : "Submit section"}
-                </button>
-            </div>
-        {/if}
+        <div class="bar-inner">
+            <a class="back" href="/lsat-mobile" aria-label="Back to study">
+                <span class="arrow" aria-hidden="true">&larr;</span>
+                <span class="brand">Timed section</span>
+            </a>
+            {#if state === "running" || state === "submitting"}
+                <div class="controls">
+                    <!-- no aria-live: a per-second re-announcement floods the SR queue;
+                         the static label conveys the purpose, sighted users see the count. -->
+                    <span class="clock" class:urgent aria-label="time remaining {mmss}">
+                        {mmss}
+                    </span>
+                    <button
+                        class="submit"
+                        type="button"
+                        disabled={state === "submitting"}
+                        on:click={submit}
+                    >
+                        {state === "submitting" ? "Submitting…" : "Submit section"}
+                    </button>
+                </div>
+            {/if}
+        </div>
     </header>
 
     <main>
         {#if state === "loading"}
             <Card><p class="muted">Loading a timed section&hellip;</p></Card>
+        {:else if state === "submitting"}
+            <Card><p class="muted">Grading your section&hellip;</p></Card>
         {:else if state === "notenough"}
             <Card title="Not enough items to run a section">
                 <p class="muted">
                     A timed section needs at least two distinct questions, and the queue
-                    couldn't hand back enough right now. Study a few more items, then try
-                    again.
+                    couldn't hand back enough right now. Study a few more items, then
+                    try again.
                 </p>
                 <a class="link" href="/lsat-mobile">&larr; Back to study</a>
             </Card>
         {:else if state === "error"}
             <Card title="Couldn't run the section">
                 <p class="muted">{error}</p>
-                <button class="link-btn" type="button" on:click={loadItems}>Try again</button>
+                <!-- Re-POST the SAME answers if a section was in flight; only fetch a
+                     fresh section when the failure was during load (no trajectory). -->
+                <button
+                    class="link-btn"
+                    type="button"
+                    on:click={() =>
+                        pendingTrajectory ? sendTrajectory() : loadItems()}
+                >
+                    Try again
+                </button>
+            </Card>
+        {:else if state === "queued"}
+            <Card title="Section saved offline">
+                <p class="muted" aria-live="polite">
+                    You're offline &mdash; your section is saved on this device and will
+                    sync and be graded automatically when you reconnect. Your
+                    first-instinct ledger updates then.
+                </p>
+                <a class="link-btn" href="/lsat-mobile">Back to study</a>
             </Card>
         {:else if state === "results"}
             {#if result?.ok && ledger}
@@ -276,14 +333,18 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
                         on:click={() => goto(i)}
                     >
                         {i + 1}
-                        {#if q.flagged}<span class="pin" aria-hidden="true">&#9873;</span>{/if}
+                        {#if q.flagged}<span class="pin" aria-hidden="true">
+                                &#9873;
+                            </span>{/if}
                     </button>
                 {/each}
             </div>
 
             <Card>
                 <div class="qhead">
-                    <span class="qnum">Question {current + 1} of {questions.length}</span>
+                    <span class="qnum">
+                        Question {current + 1} of {questions.length}
+                    </span>
                     <button
                         type="button"
                         class="flag"
@@ -317,16 +378,21 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
                     <button
                         type="button"
                         class="step"
-                        disabled={current === 0}
+                        class:atbound={current === 0}
+                        aria-disabled={current === 0}
                         on:click={() => goto(current - 1)}
                     >
-                        <span aria-hidden="true">&larr;</span> Prev
+                        <span aria-hidden="true">&larr;</span>
+                        Prev
                     </button>
-                    <span class="progress">{answeredCount}/{questions.length} answered</span>
+                    <span class="progress">
+                        {answeredCount}/{questions.length} answered
+                    </span>
                     <button
                         type="button"
                         class="step"
-                        disabled={current === questions.length - 1}
+                        class:atbound={current === questions.length - 1}
+                        aria-disabled={current === questions.length - 1}
                         on:click={() => goto(current + 1)}
                     >
                         Next <span aria-hidden="true">&rarr;</span>
@@ -363,6 +429,15 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         background: var(--lsat-surface);
         border-bottom: 1px solid var(--lsat-border-subtle);
         box-shadow: var(--lsat-shadow);
+    }
+    .bar-inner {
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
     }
     .back {
         display: inline-flex;
@@ -412,7 +487,7 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
@@ -431,10 +506,14 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         opacity: 0.65;
         cursor: default;
     }
+    .submit:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     main {
         flex: 1 1 auto;
         width: 100%;
-        max-width: var(--lsat-maxw);
+        max-width: 960px;
         margin: 0 auto;
         padding: 0.9rem 0.9rem 1.6rem;
     }
@@ -474,6 +553,10 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
     }
     .dot:active {
         transform: scale(0.94);
+    }
+    .dot:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     /* Answered dots read as "done" (accent wash) -- NOT correctness (no-leak). */
     .dot.answered {
@@ -536,6 +619,10 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         background: var(--lsat-warn-soft);
         color: var(--lsat-warn);
     }
+    .flag:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
 
     .stem {
         white-space: pre-wrap;
@@ -583,6 +670,10 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
     .choice.chosen {
         border-color: var(--lsat-accent);
         box-shadow: var(--lsat-glow);
+    }
+    .choice:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .letter {
         flex: 0 0 auto;
@@ -637,15 +728,19 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
             border-color var(--lsat-transition) var(--lsat-ease),
             transform var(--lsat-transition) var(--lsat-ease);
     }
-    .step:hover:not(:disabled) {
+    .step:hover:not(.atbound) {
         border-color: var(--lsat-accent);
     }
-    .step:active:not(:disabled) {
+    .step:active:not(.atbound) {
         transform: scale(0.97);
     }
-    .step:disabled {
+    .step.atbound {
         opacity: 0.4;
         cursor: default;
+    }
+    .step:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .progress {
         font-size: 0.78rem;
@@ -721,11 +816,15 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
         box-shadow: var(--lsat-shadow);
+    }
+    .link-btn:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -741,7 +840,7 @@ Ledger, which the results view renders. No per-question right/wrong ever surface
         .submit:active:not(:disabled),
         .dot:active,
         .choice:active,
-        .step:active:not(:disabled) {
+        .step:active:not(.atbound) {
             transform: none;
         }
         .back:hover .arrow {

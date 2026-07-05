@@ -9,7 +9,7 @@ narration where marked `>> you:`.)
 1. **A single "readiness score" is dishonest; a bridge of graded steps is not.**
    The LSAT is scored by equating with a published ~±3 band, so any tighter
    number is a lie by construction. We ship three scores, each with a range, each
-   able to **abstain**, and we grade the *steps of the bridge* (calibration,
+   able to **abstain**, and we grade the _steps of the bridge_ (calibration,
    held-out accuracy, score-mapping) rather than a fabricated final number.
 
 2. **The real change belongs in the engine, not the skin.** A Python/Qt reskin
@@ -36,14 +36,14 @@ narration where marked `>> you:`.)
 
 ## Key decisions & trade-offs
 
-| Decision | Chose | Why / trade-off |
-| --- | --- | --- |
-| Points-at-stake location | Rust backend RPC (read-only) | speed on 50k + FSRS reuse + ships to AnkiDroid; deliberately did **not** touch the shared `QueueBuilder` (keeps rebase easy) |
-| Performance model | Rasch-style logistic (ability as coef-1 offset) | can't invert on sparse data; interpretable + calibratable; vs. a full multi-feature logistic that was unstable |
-| Score → 120–180 | Monte-Carlo + documented equating table, range ≥ ±3 | honest about equating; no fake precision |
-| device_id | local sidecar, **not** synced | a synced id is copied to every device on download → HLC collisions; caught by the sync validation |
-| LLM / embedder | pluggable interface + deterministic offline stand-in | reproducible + offline eval + graceful degradation; real Claude/embedder plug in unchanged |
-| Eval data | seeded synthetic, clearly labeled | no real students yet; proves the metric + gate mechanics, not field performance |
+| Decision                 | Chose                                                | Why / trade-off                                                                                                              |
+| ------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Points-at-stake location | Rust backend RPC (read-only)                         | speed on 50k + FSRS reuse + ships to AnkiDroid; deliberately did **not** touch the shared `QueueBuilder` (keeps rebase easy) |
+| Performance model        | Rasch-style logistic (ability as coef-1 offset)      | can't invert on sparse data; interpretable + calibratable; vs. a full multi-feature logistic that was unstable               |
+| Score → 120–180          | Monte-Carlo + documented equating table, range ≥ ±3  | honest about equating; no fake precision                                                                                     |
+| device_id                | local sidecar, **not** synced                        | a synced id is copied to every device on download → HLC collisions; caught by the sync validation                            |
+| LLM / embedder           | pluggable interface + deterministic offline stand-in | reproducible + offline eval + graceful degradation; real Claude/embedder plug in unchanged                                   |
+| Eval data                | seeded synthetic, clearly labeled                    | no real students yet; proves the metric + gate mechanics, not field performance                                              |
 
 ## Bugs the process caught (evidence > assertion)
 
@@ -57,6 +57,7 @@ narration where marked `>> you:`.)
 
 **Round-2 improvement pass (caught by the multi-agent audit + adversarial
 self-review; see `docs/improvements-log.md`):**
+
 - The B3 ablation was **not equal study time** — the `full` arm got ~1.6 extra
   ability-building events, so it reported an effect even with the feature
   neutralized → fixed to an identical fixed error-review budget (now ties at 0
@@ -80,6 +81,7 @@ self-review; see `docs/improvements-log.md`):**
   `DR − projected_R` heuristic → rewired to the real ranking.
 
 ## Sources & prior art
+
 - Anki (Ankitects) — FSRS scheduler, sync protocol, Rust/Python/Qt/TS layering.
 - FSRS (Free Spaced Repetition Scheduler) — retrievability model we read, not
   reinvent.
@@ -90,6 +92,7 @@ self-review; see `docs/improvements-log.md`):**
 - Okapi **BM25** — the retrieval baseline the embedding method must beat.
 
 ## What I'd do next / still doesn't work
+
 - Replace seeded synthetic eval data with **real graded responses** and re-run
   every gate; the current numbers demonstrate mechanics, not field results.
 - Optimize the two scaling hot-spots from `make bench` (points-at-stake ~230 ms,

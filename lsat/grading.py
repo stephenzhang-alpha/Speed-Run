@@ -101,7 +101,29 @@ def grade_answer(
 
     chosen = (chosen or "").strip().upper()
     correct_letter = (note["correct"] or "").strip().upper()
-    is_correct = bool(chosen) and chosen == correct_letter
+
+    # Fail closed like every sibling grader (submit_conditional / _item_correct_letter
+    # / submit_section_attempt all abstain here). If the item has no usable answer key
+    # (empty/whitespace/nonexistent `correct`) or the submission carries no valid
+    # choice, do NOT grade and do NOT log: otherwise an ungradeable item would append
+    # a permanent, uncorrectable false MISS to the append-only event log and tell the
+    # student their credited answer is "wrong" with a blank correct letter.
+    valid_letters = {c["letter"] for c in parse_choices(note["choices"] or "")}
+    if correct_letter not in valid_letters or chosen not in valid_letters:
+        return {
+            "graded": False,
+            "reason": (
+                "item has no gradeable answer key"
+                if correct_letter not in valid_letters
+                else "no valid choice selected"
+            ),
+            "correct": False,
+            "correct_letter": "",
+            "has_traps": False,
+            "contrast": None,
+        }
+
+    is_correct = chosen == correct_letter
     node_ids = (note["skill_tags"] or "").split()
 
     append_event(
@@ -122,6 +144,7 @@ def grade_answer(
 
         contrast = build_contrast(note, chosen)
     return {
+        "graded": True,
         "correct": is_correct,
         "correct_letter": correct_letter,
         "has_traps": chosen in item_traps(note),

@@ -38,13 +38,22 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
     $: growth = dashboard.growth;
     // score availability (drives the interval band vs the earning-evidence meter)
     $: memAvail = memory.overall.memory != null;
-    $: perfAvail = !!(performance.available && performance.overall && performance.overall.p != null);
+    $: perfAvail = !!(
+        performance.available &&
+        performance.overall &&
+        performance.overall.p != null
+    );
 
     // "DO NEXT" recommendation (feed-forward primacy). The backend's
     // best_next_to_study is the considered pick; fall back to a start prompt on a
     // brand-new profile. (Confident-wrong retest priority is layered in below when
     // the misconception panel reports open items.)
-    type Rec = { kind: "retest" | "study" | "start"; label: string; reason: string; count: string };
+    type Rec = {
+        kind: "retest" | "study" | "start";
+        label: string;
+        reason: string;
+        count: string;
+    };
     function computeRec(
         misAvail: boolean,
         open: number,
@@ -121,7 +130,12 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
 
 <!-- DO NEXT: the primacy slot \u2014 feed-forward before any ego-score. -->
 <section class="do-next">
-    <NextAction kind={rec.kind} label={rec.label} reason={rec.reason} count={rec.count} />
+    <NextAction
+        kind={rec.kind}
+        label={rec.label}
+        reason={rec.reason}
+        count={rec.count}
+    />
 </section>
 
 <!-- VERIFIED AI: the marquee demo \u2014 a recorded model draft checked live. -->
@@ -170,7 +184,9 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         low={readiness.available && readiness.range ? readiness.range[0] : null}
         high={readiness.available && readiness.range ? readiness.range[1] : null}
         widened={!!readiness.range_widened_by_miscalibration}
-        earnedNote={!readiness.available ? `${readiness.missing?.length ?? 0} requirements left` : ""}
+        earnedNote={!readiness.available
+            ? `${readiness.missing?.length ?? 0} requirements left`
+            : ""}
         unlockLabel={!readiness.available ? "unlocks your projected score" : ""}
         note={readiness.available
             ? `confidence: ${readiness.confidence?.[1] ?? ""}`
@@ -179,11 +195,15 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         {#if readiness.available}
             {#if readiness.top_reasons?.length}
                 <ul class="reasons">
-                    {#each readiness.top_reasons as reason (reason)}<li>{reason}</li>{/each}
+                    {#each readiness.top_reasons as reason (reason)}<li>
+                            {reason}
+                        </li>{/each}
                 </ul>
             {/if}
             {#if readiness.best_next_to_study}
-                <p class="next">Best next: <b>{readiness.best_next_to_study.name}</b></p>
+                <p class="next">
+                    Best next: <b>{readiness.best_next_to_study.name}</b>
+                </p>
             {/if}
             {#if readiness.past_projection_track_record?.note}
                 <p class="muted sm">{readiness.past_projection_track_record.note}</p>
@@ -202,8 +222,11 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         <div class="plan-body">
             <p class="plan-if">{adherence.if_then}</p>
             <p class="plan-note">
-                Completed on <b>{adherence.completed_days ?? 0}</b>/{adherence.window_days ?? 14}
-                days{adherence.needs_replan ? " — want to re-plan a cue that fits better?" : "."}
+                Completed on <b>{adherence.completed_days ?? 0}</b>
+                /{adherence.window_days ?? 14}
+                days{adherence.needs_replan
+                    ? " — want to re-plan a cue that fits better?"
+                    : "."}
             </p>
         </div>
     </div>
@@ -218,12 +241,20 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         <div class="runway-body">
             <p class="rd-note">{exam.note}</p>
             <div class="rd-stats">
-                <span><b>{exam.n_below_target ?? 0}</b> below exam-day target</span>
+                <span>
+                    <b>{exam.n_below_target ?? 0}</b>
+                     below exam-day target
+                </span>
                 {#if exam.n_due_after_exam}
-                    <span><b>{exam.n_due_after_exam}</b> not due before the exam</span>
+                    <span>
+                        <b>{exam.n_due_after_exam}</b>
+                         not due before the exam
+                    </span>
                 {/if}
                 {#if exam.desired_retention != null}
-                    <span>target {Math.round((exam.desired_retention ?? 0) * 100)}%</span>
+                    <span>
+                        target {Math.round((exam.desired_retention ?? 0) * 100)}%
+                    </span>
                 {/if}
             </div>
         </div>
@@ -247,8 +278,8 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
     <span class="tick" aria-hidden="true"></span>
     <h2>How you get questions wrong</h2>
     <p class="sec-sub">
-        Signals no other SRS captures. Each panel appears the moment you&rsquo;ve
-        logged enough evidence &mdash; the rest are listed below, not left as blanks.
+        Signals no other SRS captures. Each panel appears the moment you&rsquo;ve logged
+        enough evidence &mdash; the rest are listed below, not left as blanks.
     </p>
 </header>
 {#if anyInsightShown}
@@ -267,24 +298,25 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         {#if insights.fluency?.available}<FluencyBadges panel={insights.fluency} />{/if}
         {#if insights.fatigue?.available}<FatigueCurve panel={insights.fatigue} />{/if}
         {#if insights.rush?.available}<RushErrorsPanel panel={insights.rush} />{/if}
-        {#if insights.time_leak?.available}<TimeLeakPanel panel={insights.time_leak} />{/if}
+        {#if insights.time_leak?.available}<TimeLeakPanel
+                panel={insights.time_leak}
+            />{/if}
     </div>
 {/if}
 {#if lockedInsights.length}
     <div class="locked">
         <span class="locked-ic" aria-hidden="true">
-            <svg viewBox="0 0 24 24"
-                ><rect x="5" y="11" width="14" height="9" rx="2" /><path
-                    d="M8 11V8a4 4 0 0 1 8 0v3"
-                /></svg
-            >
+            <svg viewBox="0 0 24 24">
+                <rect x="5" y="11" width="14" height="9" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+            </svg>
         </span>
         <p>
-            <b
-                >{lockedInsights.length} more diagnostic{lockedInsights.length > 1
+            <b>
+                {lockedInsights.length} more diagnostic{lockedInsights.length > 1
                     ? "s"
-                    : ""} unlock as you study:</b
-            >
+                    : ""} unlock as you study:
+            </b>
             {lockedInsights.map((d) => d.name).join(", ")}. Log timed answers, then a
             blind-review pass, and each appears here on its own the moment it has the
             evidence &mdash; never a fabricated number.
@@ -296,20 +328,26 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
     <span class="tick" aria-hidden="true"></span>
     <h2>Coverage</h2>
     <p class="sec-sub">
-        Question types with enough reviewed cards, plus the primitive taxonomy the deck teaches.
+        Question types with enough reviewed cards, plus the primitive taxonomy the deck
+        teaches.
     </p>
 </header>
 <div class="cov panel">
     <div class="cov-head">
         <div class="cov-metric">
-            <span class="cov-num">{coverage.pct}<span class="cov-unit">%</span></span>
+            <span class="cov-num">
+                {coverage.pct}
+                <span class="cov-unit">%</span>
+            </span>
             <span class="cov-cap">question types covered</span>
         </div>
         <div class="cov-barwrap">
-            <div class="bar"><div class="fill" style="width: {coverage.pct}%"></div></div>
+            <div class="bar">
+                <div class="fill" style="width: {coverage.pct}%"></div>
+            </div>
             <p class="muted">
                 {coverage.covered}/{coverage.total} question types with &ge;{coverage.min_items}
-                reviewed cards ({coverage.pct}%)
+                graded items ({coverage.pct}%)
             </p>
         </div>
     </div>
@@ -335,7 +373,9 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
 <header class="sec">
     <span class="tick" aria-hidden="true"></span>
     <h2>Per-topic memory</h2>
-    <p class="sec-sub">Per-topic recall from FSRS; a row abstains until the topic has enough reviews.</p>
+    <p class="sec-sub">
+        Per-topic recall from FSRS; a row abstains until the topic has enough reviews.
+    </p>
 </header>
 <div class="table-wrap">
     <table>
@@ -353,17 +393,27 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
             {#each memory.topics as t (t.node_id)}
                 <tr class:abstained={!t.enough_evidence}>
                     <td class="topic">{t.name}</td>
-                    <td><span class="kind">{t.kind === "question_type" ? "QT" : "skill"}</span></td>
+                    <td>
+                        <span class="kind">
+                            {t.kind === "question_type" ? "QT" : "skill"}
+                        </span>
+                    </td>
                     <td class="mem">
                         {#if t.enough_evidence}
                             <span class="mem-val">{pct(t.memory)}</span>
-                            <Bar value={t.memory ?? 0} status={scoreStatus(t.memory)} height={5} />
+                            <Bar
+                                value={t.memory ?? 0}
+                                status={scoreStatus(t.memory)}
+                                height={5}
+                            />
                         {:else}
                             <span class="muted">{"\u2014"}</span>
                         {/if}
                     </td>
                     <td class="muted">
-                        {t.enough_evidence ? pctRange(t.low ?? null, t.high ?? null) : (t.note ?? "")}
+                        {t.enough_evidence
+                            ? pctRange(t.low ?? null, t.high ?? null)
+                            : (t.note ?? "")}
                     </td>
                     <td class="num">{t.n_cards ?? 0}</td>
                     <td class="num">{t.n_reviews ?? 0}</td>
@@ -494,7 +544,7 @@ responsive `.grid` collapses to one column on narrow (phone) viewports.
         padding: 0.5rem 0.8rem;
         border-radius: var(--lsat-radius-sm);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         box-shadow: var(--lsat-glow);
     }
     .rd-num {

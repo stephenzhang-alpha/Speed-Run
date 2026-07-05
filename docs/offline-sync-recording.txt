@@ -1,0 +1,23 @@
+[server]  baseline append-only PerformanceEvents: 0
+
+=== ONLINE  -- prefetch a batch of items to review offline ===
+[client]  prefetched 5 items into the local cache (payload carries NO correct answer -> no leak)
+[client]  no-leak check on prefetch payload: OK: no correct-answer field present
+
+=== OFFLINE -- review answers are QUEUED on the device; the server is never contacted ===
+[client]  OFFLINE answered item 1783273124123 (chose A) -> saved to queue (1 pending); no network call
+[client]  OFFLINE answered item 1783273124124 (chose A) -> saved to queue (2 pending); no network call
+[client]  OFFLINE answered item 1783273124126 (chose A) -> saved to queue (3 pending); no network call
+[server]  PerformanceEvents during offline: 0 (expected 0) -> OK: nothing logged while offline
+
+=== RECONNECT -- flush the queue; the server grades + append-only-logs each answer ===
+[client]  synced 1783273124123 -> graded correct=False (server logged it)
+[client]  synced 1783273124124 -> graded correct=True (server logged it)
+[client]  synced 1783273124126 -> graded correct=False (server logged it)
+
+=== LOST-ACK REPLAY -- re-POST the same submissions; the server must dedup (no new events) ===
+[server]  PerformanceEvents after duplicate replay: 3 (expected 3) -> OK: deduped, exactly-once held
+
+=== RESULT ===
+[server]  PerformanceEvents after reconnect: 3 (expected 3); synced 3/3
+DEMO OK: offline review queued 3 answer(s) with the server untouched; reconnect synced 3 -> 3 new append-only event(s); duplicate replay added 0 (deduped); no-leak=ok.

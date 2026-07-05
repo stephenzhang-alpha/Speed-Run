@@ -3,9 +3,9 @@
 """Self-test for the standalone LSAT backend (no network; Flask test client).
 
 Boots ``create_app`` against a seeded temp collection and checks the endpoint
-contract: SPA serving, `/` redirect, token rejection, all five `/_anki/lsat*`
-endpoints, submit-error parity (200 + {"error"}), and that a submitted answer is
-logged. The server delegates to :mod:`lsat.api`, which the desktop mediasrv
+contract: SPA serving, `/` redirect, token rejection, a representative set of
+`/_anki/lsat*` endpoints, submit-error parity (200 + {"error"}), and that a
+submitted answer is logged. The server delegates to :mod:`lsat.api`, which the desktop mediasrv
 front-end (``qt/aqt/lsat_web.py``) also calls -- so passing here is parity with
 the desktop path by construction.
 
@@ -59,12 +59,11 @@ def _selftest() -> bool:
         check("healthz", client.get("/healthz").status_code == 200)
 
         spa = client.get("/lsat-mobile")
-        if app.config.get("LSAT_COL") is not None:
-            # web_root may be absent in a bare checkout; only assert if served.
-            if spa.status_code == 200:
-                check("SPA served", b"<!doctype html>" in spa.data.lower())
-            else:
-                print("  [ ...] SPA route not mounted (no built web bundle); skipped")
+        # web_root may be absent in a bare checkout; only assert if served.
+        if spa.status_code == 200:
+            check("SPA served", b"<!doctype html>" in spa.data.lower())
+        else:
+            print("  [ ...] SPA route not mounted (no built web bundle); skipped")
 
         root = client.get("/", follow_redirects=False)
         if root.status_code in (301, 302):

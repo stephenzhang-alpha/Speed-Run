@@ -87,7 +87,11 @@ abstains until there are enough timed + baseline answers to say anything at all.
             </div>
             <div class="row">
                 <span class="lab">slower</span>
-                <Bar value={overall.nonfast_error_rate ?? 0} status="neutral" height={9} />
+                <Bar
+                    value={overall.nonfast_error_rate ?? 0}
+                    status="neutral"
+                    height={9}
+                />
                 <span class="val">{pct(overall.nonfast_error_rate)}</span>
             </div>
         </div>
@@ -146,7 +150,7 @@ abstains until there are enough timed + baseline answers to say anything at all.
         padding: 0.05rem 0.4rem;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-warn-soft);
-        color: var(--lsat-warn);
+        color: color-mix(in srgb, var(--lsat-warn) 68%, var(--lsat-fg));
         font-size: 0.66rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -203,7 +207,7 @@ abstains until there are enough timed + baseline answers to say anything at all.
         padding: 0.1rem 0.5rem;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-warn-soft);
-        color: var(--lsat-warn);
+        color: color-mix(in srgb, var(--lsat-warn) 68%, var(--lsat-fg));
         font-size: 0.72rem;
         font-weight: 600;
     }

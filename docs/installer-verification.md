@@ -22,7 +22,7 @@ just wheels                       # build the anki/aqt wheels
 ```
 
 (Run the Briefcase steps from the installer tooling in `qt/installer`; on macOS
-the output is a `.dmg`. Signing/notarization is required for a *distributable*
+the output is a `.dmg`. Signing/notarization is required for a _distributable_
 mac build but not for a local clean-VM smoke test.)
 
 ## 2. Clean-machine verification checklist

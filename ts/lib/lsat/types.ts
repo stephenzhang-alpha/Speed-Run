@@ -298,7 +298,13 @@ export interface Coverage {
     total: number;
     min_items: number;
     basis?: string;
-    topics: { node_id: string; name: string; n_cards: number; covered: boolean }[];
+    topics: {
+        node_id: string;
+        name: string;
+        n_graded?: number;
+        n_cards: number;
+        covered: boolean;
+    }[];
     primitives?: PrimitiveCoverage;
 }
 
@@ -419,6 +425,7 @@ export interface StudyItemData {
     skill_tags?: string[];
     done?: boolean; // true when the queue is empty
     remaining?: number;
+    offline?: boolean; // served from the local prefetch cache (no connection)
 }
 
 export type Confidence = "sure" | "likely" | "guess" | "";
@@ -432,6 +439,12 @@ export interface AnswerContrast {
 }
 
 export interface AnswerResult {
+    // true when the answer was saved offline and queued to sync on reconnect; the
+    // grade (correct/correct_letter) then arrives after the queue flushes, not now.
+    queued?: boolean;
+    // false when the item has no gradeable answer key (or no valid choice was sent):
+    // the server abstains and logs nothing, so the client must not render a result.
+    graded?: boolean;
     correct: boolean;
     correct_letter: string;
     has_traps: boolean;
@@ -668,6 +681,9 @@ export interface SectionQuestionAttempt {
 // `{ ok: false, reason }` for an empty / malformed trajectory.
 export interface SectionAttemptResult {
     ok: boolean;
+    // true when the section was saved offline and queued to sync on reconnect (the
+    // ledger then refreshes after the queue flushes, not now).
+    queued?: boolean;
     n_questions?: number;
     ledger?: AnswerChangeLedger;
     reason?: string;

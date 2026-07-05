@@ -57,7 +57,6 @@ class Card:
 @dataclass
 class GenerationResult:
     cards: list[Card]
-    raw_count: int = 0
     dropped_unsupported: int = 0
     parse_failed: bool = False
     degraded: bool = False
@@ -134,6 +133,4 @@ def generate_cards(
                 source_quote=quote,
             )
         )
-    return GenerationResult(
-        cards=cards, raw_count=len(parsed), dropped_unsupported=dropped
-    )
+    return GenerationResult(cards=cards, dropped_unsupported=dropped)

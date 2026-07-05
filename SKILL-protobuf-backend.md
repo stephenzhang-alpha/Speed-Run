@@ -46,6 +46,7 @@ message QueuedCardEntry {
 ```
 
 Protobuf gotchas to respect (these bite in Anki specifically):
+
 - **Naming:** proto `foo_bar` → `fooBar` in TS, and lives under a `foo_bar` namespace in Rust; an `rpc GetX` becomes `get_x` in Python/Rust.
 - **Defaults, not null:** in Python/TS an unset `optional` field returns the type's default (`0`, `""`), not `None`/`undefined`. Use `HasField("name")` / `WhichOneof("bar")` in Python when you must distinguish "unset". In TS, prefer designs that avoid ambiguous defaults (e.g. 1-based indices).
 - **Field numbers > 15** need an extra encoding byte, so give `repeated` fields numbers 1–15; `reserved` fields usually exist to leave room for future `repeated` ones.
@@ -54,10 +55,13 @@ Protobuf gotchas to respect (these bite in Anki specifically):
 ### 2. Rebuild to regenerate code
 
 Run the build so prost/protobuf-es/python regenerate the types (see the `anki-build` skill):
+
 ```bash
 ./run            # or ./ninja
 ```
+
 To explore the generated Rust types and their impls, from `rslib`:
+
 ```bash
 cargo doc --open --document-private-items   # look in the `pb` module
 ```
@@ -80,6 +84,7 @@ impl crate::services::SchedulerService for Collection {
 ```
 
 Rust-side gotchas:
+
 - An enum field `Foo foo = 1;` is an `i32` on the message; use the accessor `message.foo()` to get the typed `Foo` instead of converting by hand.
 - Protobuf doesn't guarantee a oneof is set or an enum is valid, so you'll handle `Option`s. Since other parts of Anki won't send invalid messages, an `InvalidInput` error or `unwrap_or_default()` is usually acceptable.
 - **Read vs write:** a pure query (queue ordering, mastery counts) needs no undo entry. A **mutating** method (e.g. reordering cards, changing intervals) must run inside the collection's transaction/op framework and return `OpChanges`/`OpChangesWithCount` so **undo keeps working** and the collection can't be left half-modified. This is the crux of the brief's "prove undo still works and the collection does not corrupt."
@@ -87,11 +92,13 @@ Rust-side gotchas:
 ### 4. Call it from Python (pylib)
 
 The generated method is on the backend, snake_cased:
+
 ```python
 out = col._backend.get_points_at_stake_queue(deck_id=did, limit=50)
 for entry in out.entries:
     ...
 ```
+
 Because protobuf isn't public API, expose a clean wrapper in `pylib/anki/scheduler/` (e.g. `v3.py`) rather than having callers touch the generated message — and if you return a protobuf object, alias its type so callers don't import a generated `_pb2` module. (Note: some methods take raw bytes, e.g. `self._backend.import_csv_raw(request.SerializeToString())`; that's only for the bytes-style variants.)
 
 ## Tests (the brief requires ≥3 Rust unit tests + 1 Python-calling test)

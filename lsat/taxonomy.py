@@ -235,12 +235,6 @@ class Taxonomy:
 
     # -- lookups ---------------------------------------------------------------
 
-    def section_by_id(self, section_id: str) -> Section:
-        for s in self.sections:
-            if s.id == section_id:
-                return s
-        raise KeyError(f"unknown section: {section_id!r}")
-
     def topic_by_id(self, node_id: str) -> Topic:
         for t in self.topics:
             if t.id == node_id:
@@ -253,15 +247,6 @@ class Taxonomy:
 
     def question_types_for(self, section_id: str) -> list[Topic]:
         return [t for t in self.question_types if t.section == section_id]
-
-    @property
-    def coverage_node_ids(self) -> list[str]:
-        """The coverage denominator: the scored question-type leaves."""
-        return [t.id for t in self.question_types]
-
-    @property
-    def coverage_tags(self) -> list[str]:
-        return [t.tag for t in self.question_types]
 
     def weight_of_node(self, node_id: str) -> float:
         """``exam_weight`` for a question type, else ``study_weight``.

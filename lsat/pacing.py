@@ -661,6 +661,15 @@ def rush_errors(
             f"{worst['rush_excess']:.0%} more wrong than your slower ones -- a "
             f"rush pattern worth a second look at slowing slightly there."
         )
+    elif overall["flag"]:
+        # Aggregate rush with no single skill over the per-skill evidence bar: don't
+        # deny a pattern the confidently-computed overall flag confirms (the panel
+        # keys its warn status on overall.flag). Mirrors paired_choke_index.
+        headline = (
+            f"Overall, your fast answers are {overall['rush_excess']:.0%} more wrong "
+            f"than your slower ones (95% CI {overall['excess_ci_low']:+.0%}.."
+            f"{overall['excess_ci_high']:+.0%}) -- a rush pattern worth slowing slightly."
+        )
     else:
         headline = (
             "No rush pattern right now -- your fast answers aren't more wrong "

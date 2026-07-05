@@ -12,14 +12,15 @@
 
 PYTHON ?= out/pyenv/bin/python
 
-.PHONY: help eval ablation bench taxonomy
+.PHONY: help eval ablation bench taxonomy sync-demo
 
 help:
 	@echo "Anki for LSAT targets:"
-	@echo "  make eval      Run the held-out eval + leakage gate (python -m eval.run)"
-	@echo "  make ablation  Run the pre-registered B3 misconception-queue ablation (python -m eval.ablation)"
-	@echo "  make bench     Run the 50k-deck hot-path benchmark (python -m lsat.bench)"
-	@echo "  make taxonomy  Print a summary of lsat-taxonomy.yaml (smoke test)"
+	@echo "  make eval       Run the held-out eval + leakage gate (python -m eval.run)"
+	@echo "  make ablation   Run the pre-registered B3 misconception-queue ablation (python -m eval.ablation)"
+	@echo "  make bench      Run the 50k-deck hot-path benchmark (python -m lsat.bench)"
+	@echo "  make sync-demo  Show offline review + reconnect sync end-to-end (python -m sync.offline_demo)"
+	@echo "  make taxonomy   Print a summary of lsat-taxonomy.yaml (smoke test)"
 	@echo ""
 	@echo "Override the interpreter with PYTHON=... (must have pyyaml installed)"
 
@@ -31,6 +32,9 @@ ablation:
 
 bench:
 	$(PYTHON) -m lsat.bench
+
+sync-demo:
+	$(PYTHON) -m sync.offline_demo
 
 taxonomy:
 	$(PYTHON) -m lsat.taxonomy

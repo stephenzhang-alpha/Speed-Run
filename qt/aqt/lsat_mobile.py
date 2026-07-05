@@ -34,7 +34,8 @@ from aqt.qt import (
     Qt,
     QVBoxLayout,
 )
-from aqt.utils import disable_help_button, qconnect
+from aqt.utils import disable_help_button, qconnect, restoreGeom, saveGeom
+from aqt.webview import AnkiWebView, AnkiWebViewKind
 
 MOBILE_PAGE = "lsat-mobile"
 
@@ -131,3 +132,51 @@ class LsatMobilePairDialog(QDialog):
 
 def show_pairing_dialog(mw: aqt.main.AnkiQt) -> None:
     LsatMobilePairDialog(mw).exec()
+
+
+class LsatPracticeDialog(QDialog):
+    """Run the LSAT mobile PWA (Study / Progress / Logic drills / timed sections) in
+    a desktop window.
+
+    The desktop home is the dashboard and the native reviewer; the Logic Drill Suite,
+    the Timed Section Runner, and the Oracle Proof Theater otherwise live only in the
+    ``lsat-mobile`` route (reached by pairing a phone). This opens that exact route in
+    an api-access desktop webview -- so every feature the Android app has is reachable
+    on the MacBook too, from the same shared Svelte components (no duplicated UI). It
+    is served by this app's own mediasrv, so it works offline / on localhost with no
+    pairing token (``AnkiWebViewKind.LSAT_MOBILE`` injects the bearer for ``/_anki/lsat*``)."""
+
+    TITLE = "lsatPractice"
+    silentlyClose = True
+
+    def __init__(self, mw: aqt.main.AnkiQt) -> None:
+        QDialog.__init__(self, mw, Qt.WindowType.Window)
+        self.mw = mw
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        self.mw.garbage_collect_on_dialog_finish(self)
+        self.setMinimumWidth(420)
+        self.setMinimumHeight(560)
+        disable_help_button(self)
+        restoreGeom(self, self.TITLE, default_size=(900, 900))
+        self.setWindowTitle("LSAT Practice")
+
+        self.web = AnkiWebView(kind=AnkiWebViewKind.LSAT_MOBILE)
+        self.web.load_sveltekit_page(MOBILE_PAGE)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.web)
+        self.setLayout(layout)
+        self.show()
+
+    def reject(self) -> None:
+        self.web.cleanup()
+        self.web = None  # type: ignore
+        saveGeom(self, self.TITLE)
+        aqt.dialogs.markClosed("LSATPractice")
+        QDialog.reject(self)
+
+
+def show_practice_dialog(mw: aqt.main.AnkiQt) -> None:
+    aqt.dialogs.open("LSATPractice", mw)

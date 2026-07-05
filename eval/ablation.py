@@ -3,10 +3,11 @@
 """The pre-registered ablation (spec section 8): B3, the misconception queue.
 
 Chosen feature: the **misconception-priority review queue** (SPOV 2 / B3). It
-isolates cleanly as a single scheduler flag (in the app:
-``lsat.events.set_misconception_queue`` -- on = confident-wrong weighting + the
-mandatory spaced re-test; off = errors weighted uniformly), and it is the same
-code path as the queue change, so the effort compounds.
+isolates cleanly as a single scheduler flag (in the app: the
+``lsat:misconception_queue`` config key, read by
+``lsat.events.misconception_queue_enabled`` -- on = confident-wrong weighting +
+the mandatory spaced re-test; off = errors weighted uniformly), and it is the
+same code path as the queue change, so the effort compounds.
 
 PRE-REGISTERED CLAIM (stated before running): *prioritizing high-confidence
 errors raises accuracy on related novel questions at equal study time.* The

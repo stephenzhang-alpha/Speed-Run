@@ -11,9 +11,13 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     <span class="icon" aria-hidden="true">
         {#if correct}
             <!-- a checkmark that draws itself in (transform/opacity-free stroke) -->
-            <svg class="glyph draw" viewBox="0 0 24 24"><path d="M5 13 l4 4 L19 7" /></svg>
+            <svg class="glyph draw" viewBox="0 0 24 24">
+                <path d="M5 13 l4 4 L19 7" />
+            </svg>
         {:else}
-            <svg class="glyph" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17" /></svg>
+            <svg class="glyph" viewBox="0 0 24 24">
+                <path d="M7 7 L17 17 M17 7 L7 17" />
+            </svg>
         {/if}
     </span>
     <span class="msg">
@@ -72,7 +76,7 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
         background: var(--lsat-good);
     }
     .fb.correct .glyph {
-        stroke: #fff;
+        stroke: var(--lsat-ink-on-accent);
     }
     /* Correct: the check draws itself in (one-shot; a small trust signal). */
     .glyph.draw path {

@@ -101,6 +101,7 @@ def submit_answer() -> bytes | flask.Response:
             response_ms=body.get("response_ms", 0),
             phase=body.get("phase", "timed"),
             identified=str(body.get("identified", "") or ""),
+            idempotency_key=str(body.get("_idempotency", "") or ""),
         )
     except Exception as exc:
         return json.dumps({"error": str(exc)}).encode()
@@ -269,7 +270,7 @@ def prove_step() -> bytes | flask.Response:
 
 
 def oracle_draft_live() -> bytes | flask.Response:
-    """"Draft it live": the real model drafts a derivation and the oracle checks it
+    """ "Draft it live": the real model drafts a derivation and the oracle checks it
     LIVE (read-only; degrades to the recorded scenario when AI is off/unavailable)."""
     if not pairing_authorized():
         return _unauthorized()
@@ -431,7 +432,9 @@ def submit_section_attempt() -> bytes | flask.Response:
     body = _body()
     try:
         result = api.submit_section_attempt(
-            aqt.mw.col, trajectory=body.get("trajectory")
+            aqt.mw.col,
+            trajectory=body.get("trajectory"),
+            idempotency_key=str(body.get("_idempotency", "") or ""),
         )
     except Exception as exc:
         return json.dumps({"error": str(exc)}).encode()

@@ -124,32 +124,44 @@
     --lsat-elev-evidence: inset 0 0 0 1px var(--lsat-border-subtle);
 }
 
-/* Dark fallbacks for the STANDALONE PWA only. In the desktop app the host
- * supplies real `--canvas`/`--fg`/… so these `var(..., dark)` fallbacks are
- * never used there; they only kick in when the host vars are absent. */
+/* Dark tokens. The host supplies real `--canvas`/`--fg`/… in the desktop app, so
+ * the `var(..., fallback)` entries only use their fallback when those host vars are
+ * absent (the standalone PWA); but the LSAT-OWNED tokens (accent lift, status
+ * colors, shadows) are not host-driven, so they must flip on dark too. */
+@mixin lsat-dark-vars {
+    color-scheme: dark;
+    --lsat-canvas: var(--canvas, #0d1017);
+    --lsat-surface: var(--canvas-elevated, #161b26);
+    --lsat-surface-2: #1a2130;
+    --lsat-inset: var(--canvas-inset, #1c2331);
+    --lsat-fg: var(--fg, #e8ebf2);
+    --lsat-fg-subtle: var(--fg-subtle, #aab2c2);
+    --lsat-fg-faint: var(--fg-faint, #8b93a5);
+    --lsat-border: var(--border, rgba(255, 255, 255, 0.12));
+    --lsat-border-subtle: var(--border-subtle, rgba(255, 255, 255, 0.07));
+    --lsat-border-strong: rgba(255, 255, 255, 0.2);
+    /* lift the accent a touch for legibility on dark surfaces */
+    --lsat-accent: #7c86ff;
+    --lsat-accent-strong: #949bff;
+    --lsat-accent-2: #a78bfa;
+    --lsat-ink-on-accent: #0d1017;
+    --lsat-accent-tint: color-mix(in srgb, var(--lsat-accent) 12%, var(--lsat-surface));
+    --lsat-good: #34d399;
+    --lsat-warn: #fbbf24;
+    --lsat-bad: #f87171;
+    --lsat-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
+    --lsat-shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 56px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* Two triggers, because the two shells signal dark differently: the standalone PWA
+ * follows the OS scheme, while the desktop Anki app toggles a `.night-mode` class
+ * (NOT the OS scheme). Without the class rule, LSAT-owned tokens (shadows/accent)
+ * stayed at light values when a user forced app-dark on an OS-light machine. */
 @media (prefers-color-scheme: dark) {
     :root {
-        color-scheme: dark;
-        --lsat-canvas: var(--canvas, #0d1017);
-        --lsat-surface: var(--canvas-elevated, #161b26);
-        --lsat-surface-2: #1a2130;
-        --lsat-inset: var(--canvas-inset, #1c2331);
-        --lsat-fg: var(--fg, #e8ebf2);
-        --lsat-fg-subtle: var(--fg-subtle, #aab2c2);
-        --lsat-fg-faint: var(--fg-faint, #8b93a5);
-        --lsat-border: var(--border, rgba(255, 255, 255, 0.12));
-        --lsat-border-subtle: var(--border-subtle, rgba(255, 255, 255, 0.07));
-        --lsat-border-strong: rgba(255, 255, 255, 0.2);
-        /* lift the accent a touch for legibility on dark surfaces */
-        --lsat-accent: #7c86ff;
-        --lsat-accent-strong: #949bff;
-        --lsat-accent-2: #a78bfa;
-        --lsat-ink-on-accent: #0d1017;
-        --lsat-accent-tint: color-mix(in srgb, var(--lsat-accent) 12%, var(--lsat-surface));
-        --lsat-good: #34d399;
-        --lsat-warn: #fbbf24;
-        --lsat-bad: #f87171;
-        --lsat-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
-        --lsat-shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.5), 0 24px 56px -12px rgba(0, 0, 0, 0.7);
+        @include lsat-dark-vars;
     }
+}
+:root.night-mode {
+    @include lsat-dark-vars;
 }

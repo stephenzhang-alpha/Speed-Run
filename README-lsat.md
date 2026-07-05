@@ -1,12 +1,12 @@
 # Anki for LSAT
 
 **Content is free now — the proven truth about your own test is the scarce good.**
-This is the LSAT tool whose AI *can't lie to you*: which points you leak under the
+This is the LSAT tool whose AI _can't lie to you_: which points you leak under the
 clock (a paired timed-vs-untimed **Blind-Review Delta** with a CI, on your own
 answers), which "right" answers were luck (**oracle-verified evil twins**), and
-which misses were confident misconceptions (confidence captured *before* the reveal,
+which misses were confident misconceptions (confidence captured _before_ the reveal,
 feeding a real Rust scheduler queue). Where a decision procedure exists (formal-logic
-LR) every AI answer is *proven*, not guessed — an AI-drafted step that doesn't verify
+LR) every AI answer is _proven_, not guessed — an AI-drafted step that doesn't verify
 is deleted before you see it; everywhere else the AI is held to grounded-gold +
 verbatim citation, and where we can't verify, we **abstain**. That verification
 infrastructure — not the code — is the thing an afternoon with an LLM can't
@@ -53,7 +53,7 @@ Anki files are only lightly touched (LSAT hooks). Where to look:
   `lsat_performance`, `lsat_mobile`, `lsat_web`), plus LSAT hooks in `main.py`,
   `__init__.py`, `mediasrv.py`.
 - **`mobile/`** — the **Android** app: a thin Capacitor WebView that loads the
-  `lsat-mobile` PWA from `lsat/server` (no bundled assets — the served PWA *is* the app).
+  `lsat-mobile` PWA from `lsat/server` (no bundled assets — the served PWA _is_ the app).
 - **`rslib/src/scheduler/points_at_stake.rs`** (+ `mod.rs`, `service/mod.rs`,
   `proto/anki/scheduler.proto`) — the one Rust engine change: a read-only
   points-at-stake queue RPC, shared by desktop + AnkiDroid.
@@ -164,9 +164,9 @@ prominent, demonstrable features** (full spec: [`docs/Speedrun_AI_Features.md`](
    miss (why-credited vs why-this-trap + the minimal edit).
 2. **The Logic Drill Suite** — a mobile Logic tab of instantly-graded micro-drills
    (conditional translation & chains, quantifier validity & negation, stem polarity,
-   necessary-vs-sufficient) whose answer keys are *proven* by a model-checker, not
+   necessary-vs-sufficient) whose answer keys are _proven_ by a model-checker, not
    hand-typed.
-3. **Confidence & Misconception Engine** — capture confidence *before* the reveal,
+3. **Confidence & Misconception Engine** — capture confidence _before_ the reveal,
    surface the confident-wrong "danger zone," and **schedule it first** via the
    points-at-stake **Rust** review queue.
 4. **Timed Section Runner + Execution Diagnostics** — realistic timed practice → your
@@ -180,14 +180,14 @@ below are the detailed build record — grouped by the design-debate round that
 produced each mechanism — and every mechanism folds under one of the five headliners
 above.
 
-| Feature | What it does | Evidence | Code |
-|---|---|---|---|
-| **ZPD Daily Engine (~85%)** | Serves each topic at the difficulty where people learn fastest, not the hardest card in the weakest topic | Metcalfe & Kornell 2005; Wilson 2019 | `lsat/selection.py` |
-| **Distractor-Reasoning Engine** | Maps the trap you actually pick into a personal fingerprint ("extreme-language owns 38% of your Strengthen misses"), a one-tap "which trap got you?", and boosts trap-prone skills in the queue | competitive-MC retrieval g≈0.70 (Adesope 2017); self-explanation g=0.55 (Bisra 2018) | `lsat/error_patterns.py` |
-| **Calibration + Hypercorrection** | A human reliability curve (are you as right as you feel?) + prioritizes confident-but-wrong misses on a spaced schedule | Metcalfe 2017; Butler/Fazio/Marsh 2011 | `lsat/models/calibration.py` |
-| **Blind-Review "Gap Map"** | A timed→untimed second pass that splits "don't know it" (knowledge) from "ran out of time" (pacing), and stops crediting lucky timed guesses as mastery | Kruger & Dunning 1999; Beilock 2004 | `lsat/blind_review.py`, `lsat/pacing.py` |
-| **Fluency Gates** | Retire a skill only when it's accurate *and* fast — the automaticity that cures choking | Beilock 2004; Mettler 2016 | `lsat/models/fluency.py` |
-| **Transfer Meter** | Refuses to call a schema "learned" until you're right on *new surface topics* | Chi 1981; Barnett & Ceci 2002 | `eval/transfer.py` |
+| Feature                           | What it does                                                                                                                                                                                    | Evidence                                                                             | Code                                     |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------- |
+| **ZPD Daily Engine (~85%)**       | Serves each topic at the difficulty where people learn fastest, not the hardest card in the weakest topic                                                                                       | Metcalfe & Kornell 2005; Wilson 2019                                                 | `lsat/selection.py`                      |
+| **Distractor-Reasoning Engine**   | Maps the trap you actually pick into a personal fingerprint ("extreme-language owns 38% of your Strengthen misses"), a one-tap "which trap got you?", and boosts trap-prone skills in the queue | competitive-MC retrieval g≈0.70 (Adesope 2017); self-explanation g=0.55 (Bisra 2018) | `lsat/error_patterns.py`                 |
+| **Calibration + Hypercorrection** | A human reliability curve (are you as right as you feel?) + prioritizes confident-but-wrong misses on a spaced schedule                                                                         | Metcalfe 2017; Butler/Fazio/Marsh 2011                                               | `lsat/models/calibration.py`             |
+| **Blind-Review "Gap Map"**        | A timed→untimed second pass that splits "don't know it" (knowledge) from "ran out of time" (pacing), and stops crediting lucky timed guesses as mastery                                         | Kruger & Dunning 1999; Beilock 2004                                                  | `lsat/blind_review.py`, `lsat/pacing.py` |
+| **Fluency Gates**                 | Retire a skill only when it's accurate _and_ fast — the automaticity that cures choking                                                                                                         | Beilock 2004; Mettler 2016                                                           | `lsat/models/fluency.py`                 |
+| **Transfer Meter**                | Refuses to call a schema "learned" until you're right on _new surface topics_                                                                                                                   | Chi 1981; Barnett & Ceci 2002                                                        | `eval/transfer.py`                       |
 
 All of these surface on the dashboard under **"How you get questions wrong"** and
 are honestly bounded — each abstains until it has enough evidence, and every
@@ -199,11 +199,11 @@ never "2 sigma."
 [`research/debate/DECISION-round2.md`](research/debate/DECISION-round2.md) — over
 29 proposals; the winners below each ship with a measured `eval/` arm):
 
-| Feature | What it does | Code / eval |
-|---|---|---|
-| **Paired Choke Index** | Replaces the unpaired timed−untimed gap (an item-difficulty confound) with a **within-item paired estimator + bootstrap 95% CI**; flags a choke only when the CI excludes 0, else abstains | `lsat/pacing.py` · `eval/choke_validity.py` |
-| **Elaborated Contrast Card** | On a miss, a deterministic (AI-off, gold-set-gated) two-column **why-credited / why-this-trap + minimal-edit** contrast — upgrades the one-tap why-wrong | `lsat/contrast.py` · `eval/feedback.py` |
-| **Exam-Day Retrievability Targeting** | Set a test date; a deadline-aware desired-retention ramp + FSRS exam-day projection surface a **consolidation queue** of cards that would decay below target by test day | `lsat/exam_schedule.py` · `eval/exam_schedule.py` |
+| Feature                               | What it does                                                                                                                                                                               | Code / eval                                       |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| **Paired Choke Index**                | Replaces the unpaired timed−untimed gap (an item-difficulty confound) with a **within-item paired estimator + bootstrap 95% CI**; flags a choke only when the CI excludes 0, else abstains | `lsat/pacing.py` · `eval/choke_validity.py`       |
+| **Elaborated Contrast Card**          | On a miss, a deterministic (AI-off, gold-set-gated) two-column **why-credited / why-this-trap + minimal-edit** contrast — upgrades the one-tap why-wrong                                   | `lsat/contrast.py` · `eval/feedback.py`           |
+| **Exam-Day Retrievability Targeting** | Set a test date; a deadline-aware desired-retention ramp + FSRS exam-day projection surface a **consolidation queue** of cards that would decay below target by test day                   | `lsat/exam_schedule.py` · `eval/exam_schedule.py` |
 
 New reviewer controls: **Tools ▸ LSAT Study Mode** (Timed / Blind / Relaxed —
 feeds the phase-aware Gap Map, Choke Index, and honest-mastery filter) and **Tools
@@ -216,12 +216,12 @@ honest-mastery), `feedback`, and `exam_schedule`.
 21 proposals across 8 under-served areas; each winner ships with a measured
 `eval/` arm):
 
-| Feature | What it does | Code / eval |
-|---|---|---|
-| **Quantifier Reasoning Drill Suite** | Validity (must / cannot / could-be-true over quantifier premises — illicit conversion, undistributed middle, two-`most` overlap) + negation (¬all = *some-not*, ¬most = *at most half*). A bounded **Venn model-checker proves every curated verdict** from first principles in the self-test; grading fails closed | `lsat/quantifier.py` · `eval/quantifier.py` |
-| **Mastery-Growth Panel** | The honest alternative to a fabricated readiness number: a **self-referential**, difficulty-matched, **CI-gated** per-skill early-vs-recent accuracy delta (never a rank) — emits improved/slipped only when the CI excludes 0, else abstains | `lsat/growth.py` · `eval/growth.py` (hard gate) |
-| **Rush-Error Detector** | Flags a rush pattern only when your **fast** answers (under half your own careful pace) are **significantly more wrong** than your slower ones (CI-gated excess, per-learner baseline) — never a raw fast-and-wrong count | `lsat/pacing.py` · `eval/rush.py` (hard gate) |
-| **Time-Leak Diagnostic** | Reclaimable seconds spent under the clock on items you also miss **untimed** (a gap, not a pace problem), reported **with a bootstrap CI**; strictly descriptive, leads with "need a blind pass first" | `lsat/triage.py` · `eval/triage_leak.py` |
+| Feature                              | What it does                                                                                                                                                                                                                                                                                                        | Code / eval                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Quantifier Reasoning Drill Suite** | Validity (must / cannot / could-be-true over quantifier premises — illicit conversion, undistributed middle, two-`most` overlap) + negation (¬all = _some-not_, ¬most = _at most half_). A bounded **Venn model-checker proves every curated verdict** from first principles in the self-test; grading fails closed | `lsat/quantifier.py` · `eval/quantifier.py`     |
+| **Mastery-Growth Panel**             | The honest alternative to a fabricated readiness number: a **self-referential**, difficulty-matched, **CI-gated** per-skill early-vs-recent accuracy delta (never a rank) — emits improved/slipped only when the CI excludes 0, else abstains                                                                       | `lsat/growth.py` · `eval/growth.py` (hard gate) |
+| **Rush-Error Detector**              | Flags a rush pattern only when your **fast** answers (under half your own careful pace) are **significantly more wrong** than your slower ones (CI-gated excess, per-learner baseline) — never a raw fast-and-wrong count                                                                                           | `lsat/pacing.py` · `eval/rush.py` (hard gate)   |
+| **Time-Leak Diagnostic**             | Reclaimable seconds spent under the clock on items you also miss **untimed** (a gap, not a pace problem), reported **with a bootstrap CI**; strictly descriptive, leads with "need a blind pass first"                                                                                                              | `lsat/triage.py` · `eval/triage_leak.py`        |
 
 The quantifier drills join the mobile **Logic** tab (Translate / Validity /
 Negation); growth surfaces as a "Your progress" dashboard section; rush + time-leak
@@ -234,12 +234,12 @@ pending human-calibrated stimuli — see `research/debate/DECISION-round3.md`.)
 24 proposals; the three deterministic/diagnostic winners ship, each with a measured
 `eval/` arm):
 
-| Feature | What it does | Code / eval |
-|---|---|---|
-| **Timed Section Runner + First-Instinct Ledger** (rank 1) | A timed mini-section that captures each answer change; the ledger reports *your own* net wrong→right vs right→wrong **with a CI**, refusing the folk "never change" rule and the population base rate. No-leak (server grades); diagnostic-only | `lsat/answer_change.py`, `lsat/section_runner.py` · `eval/answer_change.py` (hard gate) |
-| **Stem-Polarity Micro-Drill** | Trains the automatic detection of an inverted stem (direct / EXCEPT / LEAST / negated) — the highest-frequency careless LR error. Deterministic classifier seeded from the taxonomy `stem_cues`, **fails closed** on ambiguity | `lsat/stem_polarity.py` · `eval/stem_polarity.py` |
-| **Necessary/Sufficient Discrimination** | Sort a candidate assumption into necessary-only / sufficient-only / both / neither. The cell is **derived by the proven quantifier Venn model-checker** (sufficient = adding it entails the conclusion; necessary = the LSAT negation test), never authored | `lsat/assumption_discrimination.py` · `eval/assumption_discrimination.py` |
-| **Conditional-Chain Trainer** | Judge whether a candidate inference **must follow** from a 3+ arrow chain (transitive chaining + contrapositive vs affirming-the-consequent / denying-the-antecedent) — the gap the single-conditional drill abstains on. Graded by **exact material entailment**; reachability kept as a proven-sound explanation | `lsat/conditional_chain.py` · `eval/conditional_chain.py` |
+| Feature                                                   | What it does                                                                                                                                                                                                                                                                                                       | Code / eval                                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| **Timed Section Runner + First-Instinct Ledger** (rank 1) | A timed mini-section that captures each answer change; the ledger reports _your own_ net wrong→right vs right→wrong **with a CI**, refusing the folk "never change" rule and the population base rate. No-leak (server grades); diagnostic-only                                                                    | `lsat/answer_change.py`, `lsat/section_runner.py` · `eval/answer_change.py` (hard gate) |
+| **Stem-Polarity Micro-Drill**                             | Trains the automatic detection of an inverted stem (direct / EXCEPT / LEAST / negated) — the highest-frequency careless LR error. Deterministic classifier seeded from the taxonomy `stem_cues`, **fails closed** on ambiguity                                                                                     | `lsat/stem_polarity.py` · `eval/stem_polarity.py`                                       |
+| **Necessary/Sufficient Discrimination**                   | Sort a candidate assumption into necessary-only / sufficient-only / both / neither. The cell is **derived by the proven quantifier Venn model-checker** (sufficient = adding it entails the conclusion; necessary = the LSAT negation test), never authored                                                        | `lsat/assumption_discrimination.py` · `eval/assumption_discrimination.py`               |
+| **Conditional-Chain Trainer**                             | Judge whether a candidate inference **must follow** from a 3+ arrow chain (transitive chaining + contrapositive vs affirming-the-consequent / denying-the-antecedent) — the gap the single-conditional drill abstains on. Graded by **exact material entailment**; reachability kept as a proven-sound explanation | `lsat/conditional_chain.py` · `eval/conditional_chain.py`                               |
 
 The mobile **Logic** tab was also redesigned (a design judge-panel winner): the
 cramped segmented control is now a scannable **Drill Launcher** — cards grouped
@@ -251,7 +251,8 @@ a First-Instinct Ledger dashboard tile; the two drills join the mobile **Logic**
 tab. The eval harness gained a hard gate `answer_change` plus report arms
 `stem_polarity` (+0.114) and `assumption_discrimination` (+0.102). Rank-4 **Faded
 Flaw Ladder** is deferred (needs human-authored content) — see the round-4 decision
-+ `docs/research/rc-judgment-staging.md`.
+
+- `docs/research/rc-judgment-staging.md`.
 
 ## Two versions: desktop + mobile PWA
 
@@ -262,15 +263,31 @@ The UI ships in two forms that share the same Svelte components
 - **Desktop (MacBook)** — the PyQt app. A redesigned, theme-aware dashboard
   ([`ts/routes/lsat-dashboard/`](ts/routes/lsat-dashboard)) and study card
   ([`lsat/notetypes.py`](lsat/notetypes.py) `_ITEM_QFMT`), built on Anki's design
-  tokens so it matches light/dark automatically.
+  tokens so it matches light/dark automatically. **Tools ▸ LSAT ▸ Practice (Drills &
+  Sections)** opens the same `lsat-mobile` route (Logic drills, timed sections, Oracle
+  Theater) in a desktop window, so every mobile feature is reachable on the computer
+  without pairing a phone.
 - **Mobile (installable PWA)** — a mobile-first route
   ([`ts/routes/lsat-mobile/`](ts/routes/lsat-mobile)) with a bottom tab bar
   (Study / Progress), served by the desktop app's own `mediasrv` over your LAN.
   It reuses the dashboard components and drives study through HTTP endpoints
   (`lsatNextItem` / `lsatSubmitAnswer` / `lsatSubmitTrap` in
-  [`qt/aqt/lsat_web.py`](qt/aqt/lsat_web.py)) that call the *same* `lsat.grading`
+  [`qt/aqt/lsat_web.py`](qt/aqt/lsat_web.py)) that call the _same_ `lsat.grading`
   code as the desktop `pycmd` hook -- so a phone answer logs an identical
   `PerformanceEvent`. iOS/Android install via "Add to Home Screen".
+
+**Staying in sync (a change in one version must land in the other).** The `lsat/`
+logic, the `ts/lib/lsat/` components, and the `lsat/api.py` handlers are shared, so
+most changes appear in both versions with no extra wiring. The one hand-maintained
+surface is the mobile-PWA **endpoint contract**, which lives in five files
+(`lsat/api.py::ENDPOINTS`, `lsat/server/app.py::_HANDLERS` for Android,
+`qt/aqt/mediasrv.py::post_handler_list` + `qt/aqt/lsat_web.py` for desktop, and
+`ts/lib/lsat/client.ts`). Two guards keep them from drifting: the standalone server
+self-asserts `ENDPOINTS == _HANDLERS` at import, and
+[`qt/tests/test_lsat_parity.py`](qt/tests/test_lsat_parity.py) (run by `just check`)
+asserts **all four endpoint sets are identical** -- so a feature added to one version
+but not the other fails the build instead of 404-ing at runtime. The step-by-step
+checklist is [`SKILL-lsat-parity.md`](SKILL-lsat-parity.md).
 
 **Pair a phone:** launch Anki with `ANKI_API_HOST=0.0.0.0` (bind to the LAN),
 then **Tools -> Study on Your Phone (LSAT)** shows a link to open on your phone
@@ -319,7 +336,7 @@ mutable snapshot. `device_id` is stored per-device (local sidecar), never synced
   `round(20 x max(0, overconfidence_index))` points per side (e.g. +0.10
   overconfidence -> +2 points each side; constant in `lsat-taxonomy.yaml`
   `readiness_uncertainty`). Underconfidence never narrows it. Calibration is a
-  *diagnostic + discount*, never a coaching claim -- app feedback has a weak
+  _diagnostic + discount_, never a coaching claim -- app feedback has a weak
   record at actually training calibration (see `docs/Speedrun_Research_Support.md`).
 - **Memory** shows a topic only after ≥ 10 reviews for that topic.
 - **Misconception re-tests (B3):** every confident-wrong item owes a spaced

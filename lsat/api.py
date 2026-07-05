@@ -188,13 +188,24 @@ def submit_answer(
     response_ms: int = 0,
     phase: str = "timed",
     identified: str = "",
+    idempotency_key: str = "",
 ) -> dict[str, Any]:
-    """Grade a chosen answer, append the graded event, report the result."""
+    """Grade a chosen answer, append the graded event, report the result.
+
+    ``idempotency_key`` (the offline queue's stable ``_idempotency`` id) makes the
+    append at-least-once safe: if this exact submission was already recorded, the
+    stored grade is returned WITHOUT logging a second event (see
+    :func:`lsat.events.idempotent_lookup`)."""
+    from lsat.events import idempotent_lookup, idempotent_remember
     from lsat.grading import grade_answer
+
+    prior = idempotent_lookup(col, idempotency_key)
+    if prior is not None:
+        return prior
 
     note = _item_note(col, item_id)
     ident = identified if identified in ("0", "1") else ""
-    return grade_answer(
+    result = grade_answer(
         col,
         note,
         chosen=str(chosen or ""),
@@ -203,6 +214,8 @@ def submit_answer(
         phase=str(phase or "timed"),
         identified=ident,
     )
+    idempotent_remember(col, idempotency_key, result)
+    return result
 
 
 def submit_trap(
@@ -284,6 +297,11 @@ def submit_conditional(
 
     try:
         idx = int(str(item_id).split("-", 1)[1])
+        # Bound the index (mirrors submit_stem_polarity / submit_assumption): a
+        # negative index like 'cond--1' would otherwise resolve via Python negative
+        # indexing to a real sentence and grade against it instead of failing closed.
+        if not 0 <= idx < len(DRILL_SENTENCES):
+            raise IndexError
         sentence = DRILL_SENTENCES[idx]
     except (ValueError, IndexError):
         return {"graded": False, "reason": "unknown drill item"}
@@ -760,16 +778,25 @@ def _item_correct_letter(col: Collection, item_id: Any) -> str | None:
 
 
 def submit_section_attempt(
-    col: Collection, *, trajectory: Any = None
+    col: Collection, *, trajectory: Any = None, idempotency_key: str = ""
 ) -> dict[str, Any]:
     """Persist a completed timed-section attempt and return the refreshed
     First-Instinct Ledger. The client sends raw first/final CHOICES per question
     (never correctness -- a timed section stays blind until submit); this grades
     them server-side against each item's answer, enriches the trajectory with
     first/final correctness, persists it append-only, and recomputes the ledger.
-    Fail-closed on a non-list / empty payload."""
+    Fail-closed on a non-list / empty payload.
+
+    ``idempotency_key`` guards the offline queue's at-least-once replay so a lost
+    ack cannot double-record a section (minutes of work) -- see
+    :func:`lsat.events.idempotent_lookup`."""
     from lsat.answer_change import compute_answer_change
+    from lsat.events import idempotent_lookup, idempotent_remember
     from lsat.section_runner import record_section_attempt
+
+    prior = idempotent_lookup(col, idempotency_key)
+    if prior is not None:
+        return prior
 
     if not isinstance(trajectory, list) or not trajectory:
         return {"ok": False, "reason": "trajectory must be a non-empty list"}
@@ -797,4 +824,6 @@ def submit_section_attempt(
         return {"ok": False, "reason": "trajectory has no valid question records"}
     record_section_attempt(col, trajectory=enriched)
     ledger = compute_answer_change(col)
-    return {"ok": True, "n_questions": len(enriched), "ledger": ledger}
+    result = {"ok": True, "n_questions": len(enriched), "ledger": ledger}
+    idempotent_remember(col, idempotency_key, result)
+    return result

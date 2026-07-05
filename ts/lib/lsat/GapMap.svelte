@@ -19,11 +19,36 @@ outcome; each quadrant is colour-coded by what it means and sized by its share.
     );
 
     // Matrix reading order (row-major): timed-right row, then timed-wrong row.
-    const cells: { key: keyof GapCounts; label: string; hint: string; status: Status }[] = [
-        { key: "mastered", label: "Mastered", hint: "timed + untimed right", status: "good" },
-        { key: "fragile", label: "Fragile", hint: "timed right, untimed wrong", status: "warn" },
-        { key: "pressure", label: "Pressure", hint: "only right untimed → pacing", status: "neutral" },
-        { key: "knowledge", label: "Knowledge", hint: "wrong either way → content", status: "bad" },
+    const cells: {
+        key: keyof GapCounts;
+        label: string;
+        hint: string;
+        status: Status;
+    }[] = [
+        {
+            key: "mastered",
+            label: "Mastered",
+            hint: "timed + untimed right",
+            status: "good",
+        },
+        {
+            key: "fragile",
+            label: "Fragile",
+            hint: "timed right, untimed wrong",
+            status: "warn",
+        },
+        {
+            key: "pressure",
+            label: "Pressure",
+            hint: "only right untimed → pacing",
+            status: "neutral",
+        },
+        {
+            key: "knowledge",
+            label: "Knowledge",
+            hint: "wrong either way → content",
+            status: "bad",
+        },
     ];
 </script>
 

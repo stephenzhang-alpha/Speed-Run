@@ -272,15 +272,25 @@ def _build(col: Collection, taxonomy: Taxonomy | None = None) -> dict[str, Any]:
     tax = taxonomy or load_taxonomy()
     report = compute_memory(col, tax)
     question_types = [t for t in report.topics if t.kind == "question_type"]
+    model = fit_performance_model(col, tax)
 
+    # Coverage counts GRADED ITEMS per question type -- the quantity the YAML
+    # threshold (min_graded_items_to_count) and the readiness give-up gate both use
+    # -- not reviewed drill-card count (t.n_cards). Counting cards diverged from the
+    # readiness payload on the same dashboard and read ~0% for a fully-graded deck
+    # (the starter deck seeds ~1 drill card per type, so n_cards >= min_items was
+    # unreachable regardless of graded volume).
     min_items = tax.coverage.min_graded_items_to_count
-    covered = [t for t in question_types if t.n_cards >= min_items]
+
+    def _graded_count(t: Any) -> int:
+        return model.counts.get(t.node_id, (0, 0))[0]
+
+    covered = [t for t in question_types if _graded_count(t) >= min_items]
     coverage_pct = (
         round(100.0 * len(covered) / len(question_types), 1) if question_types else 0.0
     )
 
     best_next = _best_next_to_study(question_types, tax)
-    model = fit_performance_model(col, tax)
     performance = _performance_panel(model, tax, min_items)
     readiness = build_readiness(col, tax, model, best_next)
 
@@ -323,8 +333,9 @@ def _build(col: Collection, taxonomy: Taxonomy | None = None) -> dict[str, Any]:
                 {
                     "node_id": t.node_id,
                     "name": t.name,
+                    "n_graded": _graded_count(t),
                     "n_cards": t.n_cards,
-                    "covered": t.n_cards >= min_items,
+                    "covered": _graded_count(t) >= min_items,
                 }
                 for t in question_types
             ],

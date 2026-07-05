@@ -8,8 +8,8 @@
 //! it lives in the shared Rust backend, it ships identically to the desktop app
 //! and the AnkiDroid build.
 //!
-//! It is a *pure query*: it never mutates the collection, records no undo entry,
-//! and runs outside the transaction/op framework, so it cannot corrupt
+//! It is a *pure query*: it never mutates the collection, records no undo
+//! entry, and runs outside the transaction/op framework, so it cannot corrupt
 //! scheduling state.
 //!
 //! Scoring (tunable; mirrored in the model notes):
@@ -19,10 +19,11 @@
 //! points(card)       = max over card.tags of weight(tag) * (1 - mastery(card, tag))
 //! ```
 //!
-//! where `recall` is the card's current FSRS retrievability (0 when the card has
-//! no FSRS memory state, i.e. maximum weakness), and `weight`/`perf_mastery`
-//! come from the caller's LSAT taxonomy (passed per request so the weights stay
-//! editable in one YAML file rather than hard-coded in Rust).
+//! where `recall` is the card's current FSRS retrievability (0 when the card
+//! has no FSRS memory state, i.e. maximum weakness), and
+//! `weight`/`perf_mastery` come from the caller's LSAT taxonomy (passed per
+//! request so the weights stay editable in one YAML file rather than hard-coded
+//! in Rust).
 
 use std::collections::HashMap;
 
@@ -49,8 +50,8 @@ pub struct PointsAtStakeEntry {
 }
 
 impl Collection {
-    /// Order the due cards in `deck_id` (and its children; 0 = whole collection)
-    /// by points at stake, highest first. Read-only.
+    /// Order the due cards in `deck_id` (and its children; 0 = whole
+    /// collection) by points at stake, highest first. Read-only.
     pub(crate) fn points_at_stake_queue(
         &mut self,
         deck_id: DeckId,
@@ -140,8 +141,8 @@ fn card_recall(card: &Card, timing: &SchedTimingToday, fsrs: &FSRS) -> f32 {
         .unwrap_or(0.0)
 }
 
-/// The maximum `(points, tag)` over a card's tags, or `None` if none of its tags
-/// have a configured weight. `points = weight * (1 - mastery)`.
+/// The maximum `(points, tag)` over a card's tags, or `None` if none of its
+/// tags have a configured weight. `points = weight * (1 - mastery)`.
 fn best_points(
     tags: &[&str],
     recall: f32,

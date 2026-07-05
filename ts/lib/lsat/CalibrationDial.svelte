@@ -78,7 +78,9 @@ between the two is your miscalibration, summarised by the overconfidence index.
         <div class="meta">
             <div class="metric">
                 overconfidence
-                {#if verdict}<span class="verdict" style="--c:{statusColor(status)}">{verdict}</span>{/if}
+                {#if verdict}<span class="verdict" style="--c:{statusColor(status)}">
+                        {verdict}
+                    </span>{/if}
             </div>
             <div class="sub">
                 resolution {panel.resolution_auc?.toFixed(2) ?? "—"} &middot; ECE
@@ -90,8 +92,14 @@ between the two is your miscalibration, summarised by the overconfidence index.
     {#if reliability.length}
         <div class="rel">
             <div class="legend">
-                <span><i class="mk claimed-mk"></i>you said</span>
-                <span><i class="mk actual-mk"></i>you were</span>
+                <span>
+                    <i class="mk claimed-mk"></i>
+                    you said
+                </span>
+                <span>
+                    <i class="mk actual-mk"></i>
+                    you were
+                </span>
             </div>
             <ul class="rows">
                 {#each reliability as r (r.confidence_label)}
@@ -103,7 +111,10 @@ between the two is your miscalibration, summarised by the overconfidence index.
                     <li style="--c:{statusColor(st)}">
                         <span class="lbl">{r.confidence_label}</span>
                         <div class="track">
-                            <span class="gap" style="left:{lo}%;width:{hi - lo}%"></span>
+                            <span
+                                class="gap"
+                                style="left:{lo}%;width:{hi - lo}%"
+                            ></span>
                             <span class="claimed" style="left:{stated}%"></span>
                             <span class="actual" style="left:{actual}%"></span>
                         </div>
@@ -118,7 +129,10 @@ between the two is your miscalibration, summarised by the overconfidence index.
     {/if}
 
     {#if sureWrong}
-        <p class="footer"><span class="pin"></span>{sureWrong} "sure but wrong" to revisit</p>
+        <p class="footer">
+            <span class="pin"></span>
+            {sureWrong} "sure but wrong" to revisit
+        </p>
     {/if}
 </InsightCard>
 
@@ -251,7 +265,8 @@ between the two is your miscalibration, summarised by the overconfidence index.
         border-radius: var(--lsat-radius-pill);
         background: var(--c);
         opacity: 0.5;
-        transition: left var(--lsat-transition) var(--lsat-ease),
+        transition:
+            left var(--lsat-transition) var(--lsat-ease),
             width var(--lsat-transition) var(--lsat-ease);
     }
     .claimed {
@@ -272,7 +287,9 @@ between the two is your miscalibration, summarised by the overconfidence index.
         transform: translate(-50%, -50%);
         border-radius: 50%;
         background: var(--c);
-        box-shadow: 0 0 0 2px var(--lsat-surface), var(--lsat-shadow);
+        box-shadow:
+            0 0 0 2px var(--lsat-surface),
+            var(--lsat-shadow);
         transition: left var(--lsat-transition) var(--lsat-ease);
     }
     .vals {

@@ -38,8 +38,12 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
 
     // Symmetric scale around 0 that comfortably contains the estimate and CI.
     $: bound =
-        Math.max(0.12, Math.abs(ciLow ?? 0), Math.abs(ciHigh ?? 0), Math.abs(choke ?? 0)) *
-        1.2;
+        Math.max(
+            0.12,
+            Math.abs(ciLow ?? 0),
+            Math.abs(ciHigh ?? 0),
+            Math.abs(choke ?? 0),
+        ) * 1.2;
     // Map a signed delta onto the 0-100% track (0 sits at the centre).
     $: toPct = (v: number) => clamp01((v / bound + 1) / 2) * 100;
     $: pZero = toPct(0);
@@ -56,6 +60,8 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
     reason={panel.note ?? panel.reason ?? ""}
     emptyHint="Answer items timed, then blind-review them, to measure the clock's cost."
 >
+    {#if panel.headline}<p class="headline">{panel.headline}</p>{/if}
+
     <div class="head">
         <div class="big s-{status}">{signed(choke)}</div>
         <div class="meta">
@@ -75,11 +81,14 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
     </div>
 
     {#if pChoke != null}
-        <div class="line" style="--c:{statusColor(status)}">
+        <div class="line" style="--c:{statusColor(status)}" aria-hidden="true">
             <span class="axis"></span>
             <span class="zero" style="left:{pZero}%"></span>
             {#if hasCI && pLow != null && pHigh != null}
-                <span class="band" style="left:{pLow}%;width:{Math.max(pHigh - pLow, 2)}%"></span>
+                <span
+                    class="band"
+                    style="left:{pLow}%;width:{Math.max(pHigh - pLow, 2)}%"
+                ></span>
             {/if}
             <span class="point" style="left:{pChoke}%"></span>
         </div>
@@ -99,7 +108,9 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
 
     {#if fb}
         <p class="footer">
-            unpaired: untimed {pct(fb.untimed_accuracy)} vs timed {pct(fb.timed_accuracy)}
+            unpaired: untimed {pct(fb.untimed_accuracy)} vs timed {pct(
+                fb.timed_accuracy,
+            )}
             <span class="tag">low-confidence</span>
         </p>
     {/if}
@@ -109,10 +120,14 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
             {Math.round((pacing.overall.slow_share ?? 0) * 100)}% slow
         </p>
     {/if}
-    {#if panel.headline}<p class="footer">{panel.headline}</p>{/if}
 </InsightCard>
 
 <style lang="scss">
+    .headline {
+        margin: 0 0 0.2rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
     .head {
         display: flex;
         align-items: center;
@@ -144,7 +159,7 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
         padding: 0.05rem 0.4rem;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-warn-soft);
-        color: var(--lsat-warn);
+        color: color-mix(in srgb, var(--lsat-warn) 68%, var(--lsat-fg));
         font-size: 0.66rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -189,7 +204,8 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
         border-radius: var(--lsat-radius-pill);
         background: color-mix(in srgb, var(--c) 26%, transparent);
         border: 1px solid color-mix(in srgb, var(--c) 55%, transparent);
-        transition: left var(--lsat-transition) var(--lsat-ease),
+        transition:
+            left var(--lsat-transition) var(--lsat-ease),
             width var(--lsat-transition) var(--lsat-ease);
     }
     .point {
@@ -200,7 +216,9 @@ the unpaired accuracy aggregate is shown as a labelled low-confidence fallback.
         transform: translate(-50%, -50%);
         border-radius: 50%;
         background: var(--c);
-        box-shadow: 0 0 0 2.5px var(--lsat-surface), var(--lsat-shadow);
+        box-shadow:
+            0 0 0 2.5px var(--lsat-surface),
+            var(--lsat-shadow);
         transition: left var(--lsat-transition) var(--lsat-ease);
     }
     .scale {

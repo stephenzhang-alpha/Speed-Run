@@ -495,7 +495,9 @@ class AnkiQt(QMainWindow):
             self.progress.finish()
             problems = future.result()
             if not problems:
-                showInfo("Profiles can now be opened with an older version of LSAT Prep.")
+                showInfo(
+                    "Profiles can now be opened with an older version of LSAT Prep."
+                )
             else:
                 showWarning(
                     "The following profiles could not be downgraded: {}".format(
@@ -1458,6 +1460,12 @@ title="{}" {}>{}</button>""".format(
         self._lsat_autoseed_if_needed()
         self.moveToState("lsatHome")
 
+    def onLsatPractice(self) -> None:
+        from aqt.lsat_mobile import show_practice_dialog
+
+        self._lsat_autoseed_if_needed()
+        show_practice_dialog(self)
+
     def onLsatMobilePair(self) -> None:
         from aqt.lsat_mobile import show_pairing_dialog
 
@@ -1742,6 +1750,13 @@ title="{}" {}>{}</button>""".format(
         lsat_seed_action = QAction("Load Starter Decks…", self)
         qconnect(lsat_seed_action.triggered, self.onLsatSeedDecks)
         lsat_menu.addAction(lsat_seed_action)
+
+        # Opens the lsat-mobile PWA (Logic drills, timed sections, Oracle Theater)
+        # in a desktop window, so those features are reachable on the computer
+        # without pairing a phone -- the same UI the Android app runs.
+        lsat_practice_action = QAction("Practice (Drills && Sections)…", self)
+        qconnect(lsat_practice_action.triggered, self.onLsatPractice)
+        lsat_menu.addAction(lsat_practice_action)
 
         lsat_mobile_action = QAction("Study on Your Phone…", self)
         qconnect(lsat_mobile_action.triggered, self.onLsatMobilePair)

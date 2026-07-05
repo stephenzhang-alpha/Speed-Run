@@ -10,7 +10,7 @@ server-side (lsat/evil_twin.py) via the stateless twin_key -- an LLM only target
 which proven twin to show, never the answer. Mirrors ChainDrill's states/styling.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     import Card from "./Card.svelte";
     import * as client from "./client";
@@ -23,8 +23,8 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
     let state: State = "loading";
     let result: EvilTwinResult | null = null;
     let picked = "";
-    let error = "";
     let shownAt = 0;
+    let nextBtn: HTMLButtonElement | undefined;
 
     const VERDICT_LABEL: Record<string, string> = {
         must_be_true: "Must be true",
@@ -41,7 +41,6 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
         state = "loading";
         result = null;
         picked = "";
-        error = "";
         try {
             const d = await client.evilTwinDrill();
             if (d.done || !d.twin_key) {
@@ -53,7 +52,7 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
             shownAt = Date.now();
             state = "asking";
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -65,9 +64,15 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
         picked = chosen;
         state = "answered"; // guard against a double tap during the round-trip
         try {
-            result = await client.submitEvilTwin(drill.twin_key, chosen, Date.now() - shownAt);
+            result = await client.submitEvilTwin(
+                drill.twin_key,
+                chosen,
+                Date.now() - shownAt,
+            );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -81,14 +86,19 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
     <Card title="No twins right now"><p class="muted">Check back later.</p></Card>
 {:else if state === "error"}
     <Card title="Couldn't load a twin">
-        <p class="muted">{error}</p>
+        <p class="muted">Couldn't reach the server. Try again.</p>
         <button class="next" on:click={load}>Try again</button>
     </Card>
 {:else if drill}
-    <Card title="Skill or luck?" subtitle="A one-edit twin of an item you'd get right — does THIS one follow?">
-        <div class="receipt"><ProvenanceBadge tier="proven" label="Oracle-proven twin" /></div>
+    <Card
+        title="Skill or luck?"
+        subtitle="A one-edit twin of an item you'd get right — does THIS one follow?"
+    >
+        <div class="receipt">
+            <ProvenanceBadge tier="proven" label="Oracle-proven twin" />
+        </div>
         <ul class="premises">
-            {#each drill.premises as p (p)}
+            {#each drill.premises as p, i (i)}
                 <li>{p}</li>
             {/each}
         </ul>
@@ -96,14 +106,16 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
             <span class="lbl">Conclusion</span>
             <p>{drill.conclusion}</p>
         </div>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !result}>
             {#each drill.options as opt (opt)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === opt}
                     class:right={result?.graded && opt === result.verdict}
-                    class:wrong={result?.graded && picked === opt && opt !== result.verdict}
+                    class:wrong={result?.graded &&
+                        picked === opt &&
+                        opt !== result.verdict}
                     disabled={state !== "asking"}
                     on:click={() => pick(opt)}
                 >
@@ -112,9 +124,13 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
             {/each}
         </div>
 
+        {#if state === "answered" && !result}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && result}
             {#if result.graded}
-                <p class="verdict" class:ok={result.correct}>
+                <p class="verdict" class:ok={result.correct} aria-live="polite">
                     {result.correct
                         ? "Correct — you saw the edit, not the surface."
                         : "Caught! The one-token edit flipped the answer."}
@@ -124,15 +140,17 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
                         <span class="lbl">The edit</span>
                         <p>
                             We {result.edit_note}. That flips the answer from
-                            <b>{label(result.original_verdict ?? "")}</b> to
-                            <b>{label(result.verdict ?? "")}</b>.
+                            <b>{label(result.original_verdict ?? "")}</b>
+                            to
+                            <b>{label(result.verdict ?? "")}</b>
+                            .
                         </p>
                     </div>
                 {/if}
             {:else}
                 <p class="muted">{result.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next twin</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>Next twin</button>
         {/if}
     </Card>
 {/if}
@@ -141,6 +159,11 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
     .muted {
         color: var(--lsat-fg-subtle);
         margin: 0;
+    }
+    .checking {
+        margin: 0.6rem 0 0;
+        font-size: 0.85rem;
+        color: var(--lsat-fg-subtle);
     }
     .receipt {
         margin: 0 0 0.5rem;
@@ -205,6 +228,10 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
     .opt:disabled {
         cursor: default;
     }
+    .opt:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     .opt.picked {
         border-width: 2px;
     }
@@ -250,10 +277,14 @@ which proven twin to show, never the answer. Mirrors ChainDrill's states/styling
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: white;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 
     @media (prefers-reduced-motion: reduce) {

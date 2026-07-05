@@ -46,6 +46,7 @@ If `${CLAUDE_PROJECT_DIR}` doesn't expand on your setup, replace it in `.mcp.jso
 ## Optional add-ons (set up only if you need them)
 
 **Claude Context** — vector-based semantic search across the whole codebase; an alternative/complement to Serena that's very token-thrifty at large scale. Needs an embedding provider and a Milvus/Zilliz vector DB, so it's more setup. Add to `mcpServers`:
+
 ```json
 "claude-context": {
   "command": "npx",
@@ -56,15 +57,18 @@ If `${CLAUDE_PROJECT_DIR}` doesn't expand on your setup, replace it in `.mcp.jso
   }
 }
 ```
+
 Use **either** Serena **or** Claude Context as your primary nav layer — running both is redundant. (Confirm current env var names against the package README.)
 
 **SQLite inspector** for `.anki2` integrity checks — genuinely useful for the brief's crash test (prove zero corrupted collections, §12.3) and sync test (no double-counted reviews, §7b). Anki collections are SQLite. Point a **read-only** SQLite MCP at a **copy** of the collection (never the live one). The Anthropic SQLite reference server is archived, so use a maintained one — e.g. `@bytebase/dbhub` with a read-only DSN:
+
 ```json
 "sqlite-anki": {
   "command": "npx",
   "args": ["-y", "@bytebase/dbhub", "--transport", "stdio", "--dsn", "sqlite:///abs/path/to/copy.anki2", "--readonly"]
 }
 ```
+
 Verify the exact DSN scheme and `--readonly` flag against the dbhub README before relying on it.
 
 ## Security notes

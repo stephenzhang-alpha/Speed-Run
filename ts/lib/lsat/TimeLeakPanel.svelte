@@ -61,7 +61,8 @@ footnote). It abstains until there is a blind (untimed) pass to compare against.
     {#if panel.measurable_leak && overall}
         <div class="head">
             <div class="big s-{status}">
-                {toMin(overall.reclaimable_seconds)}<span class="unit">min</span>
+                {toMin(overall.reclaimable_seconds)}
+                <span class="unit">min</span>
             </div>
             <div class="meta">
                 <div class="metric">reclaimable time</div>
@@ -81,9 +82,11 @@ footnote). It abstains until there is a blind (untimed) pass to compare against.
             </div>
         {/if}
         <p class="split-cap">
-            <b>{nUnwinnable}</b> unwinnable
+            <b>{nUnwinnable}</b>
+            unwinnable
             <span class="dot">&middot;</span>
-            <b>{nWinnable}</b> winnable
+            <b>{nWinnable}</b>
+             winnable
         </p>
 
         {#if topSkills.length}

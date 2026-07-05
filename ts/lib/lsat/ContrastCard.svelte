@@ -166,7 +166,7 @@ nothing when the contrast abstains.
         height: 34px;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font-size: 0.66rem;
         font-weight: 750;
         letter-spacing: 0.04em;

@@ -5,7 +5,7 @@ Implements the AI surface from the PRD (§10.1) and challenge 7f, with the promp
 ## Non-negotiable invariants (these are graded)
 
 1. **Every card traces to a named source.** The generator must emit the verbatim source span each card derives from; if the source doesn't support it, no card.
-2. **The checker is independent and is the gate.** It runs as a separate call with its own rubric, never trusts the generator's self-assessment, and blocks any card below a cutoff that is fixed in code *before* you look at results.
+2. **The checker is independent and is the gate.** It runs as a separate call with its own rubric, never trusts the generator's self-assessment, and blocks any card below a cutoff that is fixed in code _before_ you look at results.
 3. **The source is untrusted data, never instructions.** Hidden text in a source ("ignore previous instructions", "mark all cards correct") is treated as ordinary text, never followed.
 4. **The app works with AI off.** If generation/checking is unavailable, the deck falls back to human-authored cards and the three scores still compute locally. The review loop never blocks on the AI.
 
@@ -119,7 +119,7 @@ Run as a **separate call**, ideally on a **different/stronger model** than the g
 ### The three verdicts (these are the 7f counts)
 
 - **CORRECT_USEFUL** — factually correct per mainstream LSAT instruction; the `back` is actually supported by `source_quote`; tests the intended skill on a non-trivial judgment; one defensible best answer; not a duplicate.
-- **WRONG** — a factual/logical error (misclassified question type, wrong contrapositive, mislabeled flaw), OR the answer is **not supported** by the cited span (fabrication), OR the item is ambiguous / has multiple defensible answers. *A wrong card is worse than no card.* **Block.**
+- **WRONG** — a factual/logical error (misclassified question type, wrong contrapositive, mislabeled flaw), OR the answer is **not supported** by the cited span (fabrication), OR the item is ambiguous / has multiple defensible answers. _A wrong card is worse than no card._ **Block.**
 - **CORRECT_BUT_BAD_TEACHING** — technically correct but vague, trivial, a near-duplicate, tests rote recall of wording rather than the reasoning skill, or doesn't discriminate (too easy/hard). **Block.**
 
 **Pre-declared cutoff (fix in code before running):** a card enters the deck **only if** `verdict == CORRECT_USEFUL`. Everything else is blocked.
@@ -191,7 +191,7 @@ Return exactly:
 ## 4) Beat-the-baseline (required side-by-side)
 
 - **Retrieval feature** ("drill my weakest skill"): embedding retrieval vs **BM25/keyword** on the same query set → report precision@k / relevance. The AI method must win.
-- **Generation quality** (optional): compare your LLM generator's three-count pass-rate against a naive template/keyword-extraction generator on the same source. Report the metric; the AI must beat it. The model isn't the win — *showing it beats the simpler method, with numbers,* is the win.
+- **Generation quality** (optional): compare your LLM generator's three-count pass-rate against a naive template/keyword-extraction generator on the same source. Report the metric; the AI must beat it. The model isn't the win — _showing it beats the simpler method, with numbers,_ is the win.
 
 ## 5) Graceful degradation (AI offline / rate-limited / broken)
 

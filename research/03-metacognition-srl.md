@@ -3,12 +3,12 @@
 ## Lens & scope
 
 On a tightly-timed, 120–180 reasoning test, the highest-leverage skill after "can you
-do the item" is **knowing *when* you are actually right** and **diagnosing the specific
-reasoning bug that keeps snaring you.** This lens covers the science of *monitoring* one's
+do the item" is **knowing _when_ you are actually right** and **diagnosing the specific
+reasoning bug that keeps snaring you.** This lens covers the science of _monitoring_ one's
 own knowledge (confidence–accuracy calibration, judgments of learning, the Nelson–Narens
-monitoring/control loop), *learning from errors* (the hypercorrection effect), *targeting*
-practice where it pays (deliberate practice and its honest limits), *closing the loop*
-(Zimmerman's self-regulated-learning cycle), and *performing under the clock* (test anxiety,
+monitoring/control loop), _learning from errors_ (the hypercorrection effect), _targeting_
+practice where it pays (deliberate practice and its honest limits), _closing the loop_
+(Zimmerman's self-regulated-learning cycle), and _performing under the clock_ (test anxiety,
 choking under pressure, speed–accuracy). I treat popular claims skeptically: I report
 effect sizes, replication status, and — where the pop-science version is overstated
 (Dunning–Kruger, "10,000 hours," "just write your worries away") — I say so.
@@ -29,104 +29,104 @@ checked against the actual code (`lsat/events.py`, `lsat/notetypes.py`,
 Each bullet: **claim** · citation · a number/effect size · **evidence rating**.
 
 - **People are systematically over-confident, and (descriptively) the weakest are the most
-  miscalibrated — on logical reasoning specifically.** Kruger & Dunning (1999), *Unskilled and
-  Unaware of It*, *J. Personality & Social Psych.* 77(6):1121–1134. In their **Study 2 (a
+  miscalibrated — on logical reasoning specifically.** Kruger & Dunning (1999), _Unskilled and
+  Unaware of It_, _J. Personality & Social Psych._ 77(6):1121–1134. In their **Study 2 (a
   logical-reasoning test)**, bottom-quartile performers scored at the **12th percentile but
   rated their ability at the ~68th and their score at the ~62nd**; training the underlying
-  skill improved the self-assessment. **Evidence: STRONG as a robust, replicated *description*.**
-  Relevance: an LSAT app must *measure* confidence against outcomes rather than trust learners'
+  skill improved the self-assessment. **Evidence: STRONG as a robust, replicated _description_.**
+  Relevance: an LSAT app must _measure_ confidence against outcomes rather than trust learners'
   self-reports.
 
-- **⚠️ MYTH-CHECK (rigor): the Dunning–Kruger *mechanism* is largely overstated — much of the
-  famous chart is a statistical artefact.** Gignac & Zajenkowski (2020), *The Dunning–Kruger
-  effect is (mostly) a statistical artefact*, *Intelligence* 80:101449. In **N=929**, the
+- **⚠️ MYTH-CHECK (rigor): the Dunning–Kruger _mechanism_ is largely overstated — much of the
+  famous chart is a statistical artefact.** Gignac & Zajenkowski (2020), _The Dunning–Kruger
+  effect is (mostly) a statistical artefact_, _Intelligence_ 80:101449. In **N=929**, the
   classic quartile plot reproduced the "DK pattern" (mean over-estimate: low=32.6, low-avg=22.1,
   high-avg=20.2, high=12.7 IQ points; ANOVA η²=0.20), **but the valid tests failed**: the Glejser
   heteroscedasticity correlation was **near zero (r≈−0.05)** and the self-vs-objective relation
   was **essentially linear** (no quadratic). Most of the effect is the **better-than-average
   effect (d≈1.71) + regression to the mean**. **Evidence: CONTESTED (with active back-and-forth
-  replies).** Implication for us: use the *descriptive* fact that confidence ≠ accuracy, but do
+  replies).** Implication for us: use the _descriptive_ fact that confidence ≠ accuracy, but do
   **not** build features that assume "the incompetent are uniquely blind"; measure each learner's
   own calibration curve instead.
 
-- **High-confidence errors are corrected *more* readily than low-confidence errors — the
-  hypercorrection effect.** Butterfield & Metcalfe (2001), *Errors committed with high confidence
-  are hypercorrected*, *J. Exp. Psych.: LMC* 27(6):1491–1494; reviewed in Metcalfe (2017),
-  *Learning from Errors*, *Annu. Rev. Psych.* 68:465–489. Confident errors are the *most* likely
+- **High-confidence errors are corrected _more_ readily than low-confidence errors — the
+  hypercorrection effect.** Butterfield & Metcalfe (2001), _Errors committed with high confidence
+  are hypercorrected_, _J. Exp. Psych.: LMC_ 27(6):1491–1494; reviewed in Metcalfe (2017),
+  _Learning from Errors_, _Annu. Rev. Psych._ 68:465–489. Confident errors are the _most_ likely
   to be corrected on retest (immediate **and** delayed), driven by **surprise** — a feedback-locked
   **P3a** ERP that "rallies attention." **Evidence: STRONG (highly replicable across labs).**
-  Relevance: the "I was *sure* and wrong" moment is the single highest-ROI review target.
+  Relevance: the "I was _sure_ and wrong" moment is the single highest-ROI review target.
 
-- **…but confident errors *return* if you don't re-practice them.** Butler, Fazio & Marsh (2011),
-  *The hypercorrection effect persists over a week, but high-confidence errors return*, *Psychon.
-  Bull. Rev.* 18(6):1238–1244. The correction survives a 1-week delay, **yet the higher the
+- **…but confident errors _return_ if you don't re-practice them.** Butler, Fazio & Marsh (2011),
+  _The hypercorrection effect persists over a week, but high-confidence errors return_, _Psychon.
+  Bull. Rev._ 18(6):1238–1244. The correction survives a 1-week delay, **yet the higher the
   original confidence, the more likely the error is to reappear** unless the learner gets
   **additional retrieval practice with feedback** (cf. Fazio 2011). **Evidence: MODERATE.**
   Implication: don't just show the fix once — **schedule a spaced re-test** of the corrected item
   (which is exactly what our FSRS layer is for).
 
 - **Monitoring and control are separable, and control is only as good as monitoring is accurate.**
-  Nelson & Narens (1990), *Metamemory: A theoretical framework and new findings*, *Psych. of
-  Learning & Motivation* 26:125–173. The canonical model: a **meta-level** holds a model of the
+  Nelson & Narens (1990), _Metamemory: A theoretical framework and new findings_, _Psych. of
+  Learning & Motivation_ 26:125–173. The canonical model: a **meta-level** holds a model of the
   **object-level**; **monitoring** flows up (object→meta), **control** flows down (meta→object,
   e.g., allocate study time, re-read, stop). **Evidence: STRONG (foundational framework, not an
   effect size).** Relevance: our whole loop is "measure monitoring (confidence) → drive control
   (what to study next, how long, when to stop)."
 
-- **⚠️ MYTH-CHECK: judgments of learning are driven by *fluency*, not learning — feeling ready
-  ≠ being ready.** Rhodes & Castel (2008), *Memory predictions are influenced by perceptual
-  information*, *J. Exp. Psych.: General* 137(4):615–625: words shown in **48-pt vs 18-pt** font
+- **⚠️ MYTH-CHECK: judgments of learning are driven by _fluency_, not learning — feeling ready
+  ≠ being ready.** Rhodes & Castel (2008), _Memory predictions are influenced by perceptual
+  information_, _J. Exp. Psych.: General_ 137(4):615–625: words shown in **48-pt vs 18-pt** font
   got **higher JOLs but recall was unchanged**, and the illusion **survived explicit warnings**.
-  Counter-lever: Nelson & Dunlosky (1991), *the "delayed-JOL effect"*, *Psych. Science*
+  Counter-lever: Nelson & Dunlosky (1991), _the "delayed-JOL effect"_, _Psych. Science_
   2(4):267–271 — **delayed** judgments are far more accurate than immediate ones. **Evidence:
   STRONG/robust.** Relevance: never trust an in-the-moment "felt easy"; capture confidence at the
-  point of a *graded* answer, and prefer *delayed* self-assessment.
+  point of a _graded_ answer, and prefer _delayed_ self-assessment.
 
-- **⚠️ MYTH-CHECK (the big one): deliberate practice does *not* explain "almost everything."**
-  Macnamara, Hambrick & Oswald (2014), *Deliberate Practice and Performance…: A Meta-Analysis*,
-  *Psych. Science* 25(8):1608–1618 (**88 studies, 111 samples, 157 effect sizes, N=11,135**).
+- **⚠️ MYTH-CHECK (the big one): deliberate practice does _not_ explain "almost everything."**
+  Macnamara, Hambrick & Oswald (2014), _Deliberate Practice and Performance…: A Meta-Analysis_,
+  _Psych. Science_ 25(8):1608–1618 (**88 studies, 111 samples, 157 effect sizes, N=11,135**).
   Accumulated practice explained **26% (games), 21% (music), 18% (sports), 4% (education), <1%
   (professions, p=.62)** of performance variance; with **log-based (higher-fidelity) practice
   measures, only ~5%**. The original strong claim — Ericsson, Krampe & Tesch-Römer (1993)
   `[provenance-only]` that individual differences "can largely be accounted for by…amounts of
   practice" — is **not** supported at that strength. **Evidence: STRONG (meta-analysis).** BUT
-  the same paper gives us the design lever: DP paid **most in *high-predictability* domains
+  the same paper gives us the design lever: DP paid **most in _high-predictability_ domains
   (24% variance) vs low-predictability (4%)** — and LSAT question types are highly structured/
-  predictable, so *targeted, structured* practice is exactly where DP earns its keep. Takeaway:
+  predictable, so _targeted, structured_ practice is exactly where DP earns its keep. Takeaway:
   "just do more PrepTests" is weak; **structured, feedback-rich, error-focused, edge-of-ability**
   practice is the win.
 
 - **Self-regulated learning is a cycle, and skipping the reflection phase is what novices do.**
-  Zimmerman (2002), *Becoming a Self-Regulated Learner: An Overview*, *Theory Into Practice*
+  Zimmerman (2002), _Becoming a Self-Regulated Learner: An Overview_, _Theory Into Practice_
   41(2):64–70. Three cyclical phases — **forethought** (task analysis, goal-setting, self-efficacy)
   → **performance** (self-control + self-observation/monitoring) → **self-reflection**
   (self-judgment + attribution) — where reflection feeds the next forethought. Experts set
   hierarchical process→outcome goals and self-monitor; poor learners rely on social comparison and
   attribute failure to fixed ability. **Evidence: MODERATE (dominant, well-validated framework;
-  much correlational).** Relevance: turn the dashboard from a *readout* into a *closed loop*.
+  much correlational).** Relevance: turn the dashboard from a _readout_ into a _closed loop_.
 
-- **Pressure harms the *ablest* most, because it eats the working memory they rely on.** Beilock &
-  Carr (2005), *When High-Powered People Fail*, *Psych. Science* 16(2):101–105: under pressure,
+- **Pressure harms the _ablest_ most, because it eats the working memory they rely on.** Beilock &
+  Carr (2005), _When High-Powered People Fail_, _Psych. Science_ 16(2):101–105: under pressure,
   **only high-working-memory individuals' math accuracy dropped**, and only on the highest-WM-demand
   problems. Mechanism = worries consume WM (distraction theory). **Evidence: STRONG/MODERATE
   (replicated lab effect).** Relevance: an LSAT taker who is fine untimed but craters under the
-  35-minute clock is *choking*, not *ignorant* — a different intervention entirely.
+  35-minute clock is _choking_, not _ignorant_ — a different intervention entirely.
 
-- **Choking is *trainable away* by practicing to automaticity.** Beilock, Kulp, Holt & Carr (2004),
-  *More on the Fragility of Performance*, *J. Exp. Psych.: General* 133(4):584–600: pressure hurt
+- **Choking is _trainable away_ by practicing to automaticity.** Beilock, Kulp, Holt & Carr (2004),
+  _More on the Fragility of Performance_, _J. Exp. Psych.: General_ 133(4):584–600: pressure hurt
   **unpracticed, high-demand** problems, but problems **practiced 50× (answers retrieved directly
   from memory) showed no choking.** **Evidence: MODERATE.** Relevance: over-learning core LR moves
-  (conditional transforms, flaw IDs) so they're *retrieved* not *computed* is a direct anti-choke
+  (conditional transforms, flaw IDs) so they're _retrieved_ not _computed_ is a direct anti-choke
   intervention.
 
 - **⚠️ MYTH-CHECK: "write your worries away" is promising but NOT a guaranteed fix.** Ramirez &
-  Beilock (2011), *Writing About Testing Worries Boosts Exam Performance*, *Science* 331:211–213:
+  Beilock (2011), _Writing About Testing Worries Boosts Exam Performance_, _Science_ 331:211–213:
   a 10-min pre-exam expressive-writing task helped, especially for high-anxiety students —
   **field d=0.57** (writers beat controls by ~6% and the test-anxiety↔score correlation fell from
   **r=−0.51 in controls to −0.14 with writing**); lab **d=2.48**. **BUT** Myers, Davis & Chan (2021),
-  *Cognitive Research: Principles & Implications* 6(1):44, ran it across four authentic class exams
+  _Cognitive Research: Principles & Implications_ 6(1):44, ran it across four authentic class exams
   and found **neither expressive writing nor an instructional intervention worked**; other
-  replications are mixed. **Evidence: CONTESTED/MIXED.** Ship it as an *opt-in* micro-tool and
+  replications are mixed. **Evidence: CONTESTED/MIXED.** Ship it as an _opt-in_ micro-tool and
   **measure it in our own harness** rather than promising a benefit. (And per the brief: we do
   **not** touch debunked ideas like "learning styles.")
 
@@ -149,14 +149,14 @@ Independently verified via LSAC's own pages this session:
 **Why this lens matters more now.** (1) **LR is ~2/3 of the scored test** — reasoning-error
 calibration and error-type diagnosis are worth double. (2) **RC is ~1/3** — metacognitive
 monitoring of comprehension matters. (3) It is a **speeded** exam moving to **high-stakes,
-in-center** conditions — so *pacing and choking* become first-class problems, and the diagnostic
+in-center** conditions — so _pacing and choking_ become first-class problems, and the diagnostic
 "slow/cracked-under-pressure vs doesn't-actually-know" split is central. Our taxonomy already
 reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, and a cross-cutting
 `skill.pacing` competency fed by response timing (`lsat-taxonomy.yaml`).
 
 ---
 
-## What the app already has (so these features go *beyond* it)
+## What the app already has (so these features go _beyond_ it)
 
 - Append-only graded-event log with **latency** per answer (`lsat/events.py`), captured today via
   `qt/aqt/lsat_performance.py` → `pycmd("lsatAnswer:<LETTER>")` → `card.time_taken()` →
@@ -165,7 +165,7 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 - A **model-calibration** notion already exists: `lsat/models/performance.py` fits a logistic/IRT
   P(correct) with a **`timing_z`** covariate and reports **held-out ECE/Brier/log-loss** (k-fold),
   consumed by the readiness give-up rule (`max_heldout_calibration_ece`). This measures whether
-  **the app's** probabilities are calibrated — *not* whether **the student's** confidence is.
+  **the app's** probabilities are calibrated — _not_ whether **the student's** confidence is.
 - Reusable metrics: `eval/metrics.py` ships `brier`, `log_loss`, `reliability_bins`, `ece`, `auc`,
   `bootstrap_ci`.
 - A **points-at-stake** queue: `points = weight·(1 − mastery)`, with weights computed in Python
@@ -195,24 +195,24 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 - **Mechanism.** After choosing an answer, the learner taps **sure / likely / guess** (or a 0–100%
   slider). A dashboard panel shows: a **reliability curve** (stated confidence vs actual accuracy),
   a per-skill **Over-confidence Index** = mean(confidence) − mean(accuracy), a **Resolution** score
-  = `auc(confidence, correct)` (does your confidence actually *separate* your right from wrong
-  answers?), and a ranked **"sure-and-wrong" list**. A coaching line reads, e.g., *"On Necessary
+  = `auc(confidence, correct)` (does your confidence actually _separate_ your right from wrong
+  answers?), and a ranked **"sure-and-wrong" list**. A coaching line reads, e.g., _"On Necessary
   Assumption you're 28 pts hotter than your accuracy; your guesses are better-calibrated than your
-  'sures.'"*
+  'sures.'"_
 - **Theory + citations.** Monitoring/control (Nelson & Narens 1990, **STRONG framework**);
   confidence≠accuracy (Kruger & Dunning 1999, **STRONG description**, with the Gignac & Zajenkowski
-  2020 caveat that we measure the *individual's* curve, not assume a universal mechanism —
+  2020 caveat that we measure the _individual's_ curve, not assume a universal mechanism —
   **CONTESTED mechanism**); fluency illusions mean we must score feelings against outcomes and
   prefer delayed judgments (Rhodes & Castel 2008; Nelson & Dunlosky 1991, **STRONG**).
-- **LSAT fit.** The 5-choice "best answer" format is *engineered* to manufacture confident errors
+- **LSAT fit.** The 5-choice "best answer" format is _engineered_ to manufacture confident errors
   via seductive traps (already in our `skill.trap.*`); on a tight 120–180 curve a handful of
   confident misses move the score. A calibration coach is a uniquely LSAT-shaped intervention.
 - **Implementability.** New `lsat/models/calibration.py` reusing `eval/metrics.py` verbatim
   (`reliability_bins`, `ece`, `auc`, `brier`, `bootstrap_ci`), fed by the `confidence` field;
   surface via `lsat/dashboard_data.py` + a panel in `ts/routes/lsat-dashboard/` (Qt host
   `qt/aqt/lsat_dashboard.py`). Reuses the existing reliability-diagram machinery. **Effort: M.**
-- **Novelty.** Anki's Again/Hard/Good/Easy is a *prospective* self-rating **never scored against
-  outcomes**; our built ECE measures the *model's* calibration. This measures the *human's* —
+- **Novelty.** Anki's Again/Hard/Good/Easy is a _prospective_ self-rating **never scored against
+  outcomes**; our built ECE measures the _model's_ calibration. This measures the _human's_ —
   an orthogonal, new axis. No mainstream LSAT product reports a personal Brier/resolution curve.
 - **Risks / failure modes.** Prompt fatigue (mitigate: one tap, sample every Nth item, skippable);
   **degenerate flat ratings** (caught by the Resolution/AUC metric and a variance check);
@@ -221,7 +221,7 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 
 ### Feature 2 — Hypercorrection-Prioritized, Spaced Error Queue ("fix what you were sure about, then re-test it")
 
-- **Pitch.** Your review queue leads with **high-confidence misses**, then *re-tests* each one on
+- **Pitch.** Your review queue leads with **high-confidence misses**, then _re-tests_ each one on
   a short, spaced schedule so the correction sticks.
 - **Mechanism.** A confident-wrong answer is flagged, its feedback framed as a **"surprise"**
   correction ("You were 90% sure — here's why (E) beats (B)"), and the item is **scheduled for a
@@ -229,10 +229,10 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
   weekly "corrected vs relapsed" counter track it.
 - **Theory + citations.** Hypercorrection: confident errors are corrected best (Butterfield &
   Metcalfe 2001; Metcalfe 2017 — surprise/P3a, **STRONG**). Crucially, Butler, Fazio & Marsh (2011,
-  **MODERATE**) show confident errors **return without re-practice** — so the *spacing* is not
+  **MODERATE**) show confident errors **return without re-practice** — so the _spacing_ is not
   optional; retrieval-practice-with-feedback is what makes the fix durable (a natural fit for FSRS).
 - **LSAT fit.** LR/RC misses are reasoning slips, not vocabulary; the confident ones are where a
-  mistaken *rule* ("a necessary assumption must be stated strongly") is entrenched — the highest-
+  mistaken _rule_ ("a necessary assumption must be stated strongly") is entrenched — the highest-
   yield thing to overwrite before test day.
 - **Implementability.** Pure Python: in `lsat/events.topic_weights_for_queue`, add a **bounded
   boost** for skills/items with recent high-confidence misses (reads `confidence`); create the
@@ -240,25 +240,25 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
   `LSAT Card`/`Item` via the existing FSRS layer. **No Rust change** (weights are computed in Python
   and passed to the RPC). **Effort: S–M.**
 - **Novelty.** The current queue is **recency-weighted accuracy only** — it has no notion of
-  *confidence-at-time-of-error*, so a confident miss and a shrugged guess look identical. This adds
-  a theory-backed new priority signal *and* enforces the re-test that keeps it corrected.
+  _confidence-at-time-of-error_, so a confident miss and a shrugged guess look identical. This adds
+  a theory-backed new priority signal _and_ enforces the re-test that keeps it corrected.
 - **Risks / failure modes.** Over-boosting a fluky confident miss (cap the boost, require repetition
   before it dominates); confidence-gaming (cross-checked by Feature 1's resolution metric); make
   sure the spaced re-test doesn't crowd out coverage (blend, don't replace, the exam-weighted queue).
 
 ### Feature 3 — Reasoning-Bug ("Cognitive Leech") Diagnosis ("you keep picking the too-strong answer")
 
-- **Pitch.** Detect the *recurring error type* across items — not a hard card, but a hard *habit* —
+- **Pitch.** Detect the _recurring error type_ across items — not a hard card, but a hard _habit_ —
   e.g., "you fall for **extreme-language** traps on 38% of your Strengthen misses."
-- **Mechanism.** Because we now log the **chosen** option, we map each *distractor* to a trap/flaw
+- **Mechanism.** Because we now log the **chosen** option, we map each _distractor_ to a trap/flaw
   label (`skill.trap.*` / `flaw_catalog`) and fold errors by that label. When a pattern crosses a
   threshold, the app names the bug in plain language, shows 2–3 exemplar misses, and offers a
   targeted mini-lesson + drill for that specific trap.
 - **Theory + citations.** Learning-from-errors requires **analysis of the reasoning that led to the
-  mistake**, not just the right answer (Metcalfe 2017, **STRONG**); this is the *monitoring→control*
-  loop applied at error-*type* granularity (Nelson & Narens 1990). Confident, patterned errors are
+  mistake**, not just the right answer (Metcalfe 2017, **STRONG**); this is the _monitoring→control_
+  loop applied at error-_type_ granularity (Nelson & Narens 1990). Confident, patterned errors are
   precisely the hypercorrection targets (Feature 2 feeds this).
-- **LSAT fit.** LR/RC wrong answers are systematic and *named* by the prep community (out-of-scope,
+- **LSAT fit.** LR/RC wrong answers are systematic and _named_ by the prep community (out-of-scope,
   reversal of sufficient/necessary, half-right, extreme language) — a finite bug taxonomy we already
   encode. Diagnosing "which trap owns you" is the difference between grinding items and fixing the
   root cause.
@@ -267,9 +267,9 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
   verified by the existing independent checker (source-span requirement). Surface in the dashboard;
   feed the queue at **trap granularity** via `topic_weights_for_queue`. **Effort: M** (needs
   distractor→trap labels; leverages taxonomy + AI pipeline).
-- **Novelty.** Anki's "leech" is a *card-level* repeated-failure flag; this is an **error-*type*-level**
-  diagnosis *across* items — impossible without the chosen-option capture we add. No SRS does this;
-  LSAT courses teach the trap taxonomy but don't *mine each learner's* trap fingerprint.
+- **Novelty.** Anki's "leech" is a _card-level_ repeated-failure flag; this is an **error-_type_-level**
+  diagnosis _across_ items — impossible without the chosen-option capture we add. No SRS does this;
+  LSAT courses teach the trap taxonomy but don't _mine each learner's_ trap fingerprint.
 - **Risks / failure modes.** Mislabeled distractors (gate on checker pass-rate, start with the
   clearest trap types); multi-cause misses (allow multiple labels, report probabilistically);
   small-n over-interpretation (threshold + CIs before naming a "bug").
@@ -277,25 +277,25 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 ### Feature 4 — Deliberate-Practice Micro-Loops on the Single Weakest Sub-Skill ("edge-of-ability, not more volume")
 
 - **Pitch.** Instead of another full PrepTest, a short, focused, feedback-rich loop on your
-  *current weakest* node, at the *edge of your ability*, with an explicit per-loop goal.
+  _current weakest_ node, at the _edge of your ability_, with an explicit per-loop goal.
 - **Mechanism.** The app picks the weakest node (lowest `predict_interval` lower-bound with enough
   evidence), states a **process goal** ("get 8/10 Sufficient-Assumption at medium difficulty under
   90s"), serves a tight AI-generated set **targeted to that skill + difficulty**, gives **immediate
   per-item feedback**, and **stops when the mastery threshold is hit** (Nelson–Narens "control:
   terminate"), then hands off to spacing.
-- **Theory + citations.** Deliberate practice works when it is *structured, targeted, and
-  feedback-rich* — and matters **more in high-predictability domains (24% variance) than in
+- **Theory + citations.** Deliberate practice works when it is _structured, targeted, and
+  feedback-rich_ — and matters **more in high-predictability domains (24% variance) than in
   unstructured ones (4%)** (Macnamara et al. 2014, **STRONG**; construct origin Ericsson et al.
   1993 `[provenance-only]`). Goal-setting + monitoring + stop-rules are the SRL performance phase
-  (Zimmerman 2002, **MODERATE**). Honest caveat: DP explains a *minority* of variance, so this is a
+  (Zimmerman 2002, **MODERATE**). Honest caveat: DP explains a _minority_ of variance, so this is a
   **targeting** tool, not a silver bullet.
 - **LSAT fit.** LSAT question types are highly structured and repeatable — the exact profile where
-  targeted DP pays — so concentrating reps on the weakest *transferable* move (e.g., conditional
+  targeted DP pays — so concentrating reps on the weakest _transferable_ move (e.g., conditional
   contrapositive) beats spreading effort across full sections.
 - **Implementability.** Orchestration in `lsat/` reading `lsat/models/performance.py` to pick the
   weakest node; generation targeting via `lsat/ai/` (skill + difficulty); reuse the reviewer flow
   and event log; a "focus loop" surface in the dashboard/reviewer. **Effort: M–L.**
-- **Novelty.** Goes beyond our interleaving toggle and points-at-stake queue (which *order* a mixed
+- **Novelty.** Goes beyond our interleaving toggle and points-at-stake queue (which _order_ a mixed
   queue) by running a **bounded, goal-gated, edge-of-ability drill with a stop-rule** — an explicit
   DP loop, not just prioritization.
 - **Risks / failure modes.** Over-drilling one node (cap loop length, rotate, keep interleaving for
@@ -309,10 +309,10 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 - **Mechanism.** From each learner's `response_ms` distribution the app sets a per-item budget and
   **ratchets it down** as accuracy holds (over-learning toward automaticity). A **Choke Index** =
   (relaxed-mode accuracy − timed-mode accuracy) per skill flags where pressure — not knowledge — is
-  the problem, routing those skills to *automaticity* drills rather than new content. An **opt-in**
+  the problem, routing those skills to _automaticity_ drills rather than new content. An **opt-in**
   90-second expressive-writing "brain dump" is offered before high-pressure sessions.
 - **Theory + citations.** Pressure consumes the working memory the ablest rely on (Beilock & Carr
-  2005, **STRONG/MODERATE**); practicing to *retrieval/automaticity* removes choking (Beilock et al.
+  2005, **STRONG/MODERATE**); practicing to _retrieval/automaticity_ removes choking (Beilock et al.
   2004, **MODERATE**); pre-exam expressive writing can help anxious students (Ramirez & Beilock 2011,
   **d=0.57**) **but doesn't always replicate** (Myers, Davis & Chan 2021 — **CONTESTED**), so it's
   opt-in and measured, never promised.
@@ -323,10 +323,10 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
   relaxed) from the shared change; budget logic + Choke Index in `lsat/` (extending
   `skill.pacing`); a reviewer timer + a dashboard pacing panel; the writing tool is a simple
   pre-session modal logged as a session flag. **Effort: M.**
-- **Novelty.** Our stack *observes* timing (`timing_z`) but never *trains* pacing or distinguishes
+- **Novelty.** Our stack _observes_ timing (`timing_z`) but never _trains_ pacing or distinguishes
   choking from ignorance; no SRS applies calibrated time-pressure or an anxiety-reset. LSAT courses
   give generic "pacing tips," not a per-skill, data-driven choke diagnosis.
-- **Risks / failure modes.** Time pressure can *induce* anxiety (ramp gently, keep a relaxed mode);
+- **Risks / failure modes.** Time pressure can _induce_ anxiety (ramp gently, keep a relaxed mode);
   the writing intervention may do nothing (that's why it's opt-in + A/B-measured in `eval/`); Choke
   Index needs both timed and relaxed samples (abstain until both exist).
 
@@ -334,15 +334,15 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 
 - **Pitch.** Wrap each study session in Zimmerman's cycle: a 20-second **goal + score prediction**
   up front, monitoring during, and a **predicted-vs-actual + attribution** reflection after.
-- **Mechanism.** *Forethought:* pick a focus and **predict** session accuracy / a score band (a
-  session-level, *scored* judgment of learning). *Performance:* the confidence taps (F1) supply
-  live monitoring. *Self-reflection:* show predicted vs actual, your calibration delta, and a
+- **Mechanism.** _Forethought:_ pick a focus and **predict** session accuracy / a score band (a
+  session-level, _scored_ judgment of learning). _Performance:_ the confidence taps (F1) supply
+  live monitoring. _Self-reflection:_ show predicted vs actual, your calibration delta, and a
   one-tap **attribution** ("ran out of time" / "misread the stem" / "didn't know the rule") that
   routes to the right fix (F5 pacing / F3 bug / F4 drill) and seeds the next session's forethought.
 - **Theory + citations.** Zimmerman (2002, **MODERATE**) — the reflection phase is what novices skip
   and experts run; Nelson & Narens (1990) control depends on accurate monitoring; **delayed,
   outcome-anchored** self-judgment beats in-the-moment fluency (Nelson & Dunlosky 1991; Rhodes &
-  Castel 2008, **STRONG**). Attribution to *controllable* causes (strategy/effort) rather than fixed
+  Castel 2008, **STRONG**). Attribution to _controllable_ causes (strategy/effort) rather than fixed
   ability is the motivational core of SRL.
 - **LSAT fit.** LSAT prep is a months-long solo grind where learners over-rely on raw section scores
   and "felt fluency." A structured predict→reconcile loop converts each session into calibrated,
@@ -352,7 +352,7 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
   the prediction to realized accuracy; reads Feature 1's calibration and the readiness model.
   **Effort: S–M.**
 - **Novelty.** Anki has no notion of session goals, predictions, or reflection; our dashboard is a
-  *readout*, not a *loop*. This closes it — and makes the session-level prediction another
+  _readout_, not a _loop_. This closes it — and makes the session-level prediction another
   calibration signal.
 - **Risks / failure modes.** Friction/skipping (keep it ~20s, make prediction one tap); reflection
   theater (tie attributions to concrete routes so it changes behavior); prediction anchoring (use
@@ -363,7 +363,7 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 ## Ranked shortlist (best first)
 
 1. **Confidence Tagging + Human-Calibration Dashboard (F1)** — cheap (reuses `eval/metrics.py`),
-   orthogonal to everything built, and the *enabler* for F2/F5/F6. Strong, LSAT-shaped.
+   orthogonal to everything built, and the _enabler_ for F2/F5/F6. Strong, LSAT-shaped.
 2. **Hypercorrection-Prioritized Spaced Error Queue (F2)** — highest score-relevant ROI (confident
    errors first), strong evidence, Python-only, and it makes the queue theory-aware.
 3. **Reasoning-Bug ("Leech") Diagnosis (F3)** — differentiating and LSAT-native (trap taxonomy);
@@ -379,55 +379,55 @@ reflects this: `format_as_of: "2024-08"`, `scored_sections: ["LR","LR","RC"]`, a
 
 ## Sources (all retrieved & read this session unless marked `[provenance-only]`)
 
-1. Kruger, J., & Dunning, D. (1999). *Unskilled and Unaware of It: How Difficulties in Recognizing
-   One's Own Incompetence Lead to Inflated Self-Assessments.* Journal of Personality and Social
+1. Kruger, J., & Dunning, D. (1999). _Unskilled and Unaware of It: How Difficulties in Recognizing
+   One's Own Incompetence Lead to Inflated Self-Assessments._ Journal of Personality and Social
    Psychology, 77(6), 1121–1134. https://doi.org/10.1037/0022-3514.77.6.1121
    (full text: https://www.rhps.org/stuff/psp7761121.pdf)
-2. Gignac, G. E., & Zajenkowski, M. (2020). *The Dunning–Kruger effect is (mostly) a statistical
-   artefact: Valid approaches to testing the hypothesis with individual differences data.*
+2. Gignac, G. E., & Zajenkowski, M. (2020). _The Dunning–Kruger effect is (mostly) a statistical
+   artefact: Valid approaches to testing the hypothesis with individual differences data._
    Intelligence, 80, 101449. https://doi.org/10.1016/j.intell.2020.101449
    (full text: https://gwern.net/doc/iq/2020-gignac.pdf)
-3. Butterfield, B., & Metcalfe, J. (2001). *Errors committed with high confidence are hypercorrected.*
+3. Butterfield, B., & Metcalfe, J. (2001). _Errors committed with high confidence are hypercorrected._
    Journal of Experimental Psychology: Learning, Memory, and Cognition, 27(6), 1491–1494.
    https://doi.org/10.1037/0278-7393.27.6.1491
-4. Metcalfe, J. (2017). *Learning from Errors.* Annual Review of Psychology, 68, 465–489.
+4. Metcalfe, J. (2017). _Learning from Errors._ Annual Review of Psychology, 68, 465–489.
    https://doi.org/10.1146/annurev-psych-010416-044022
    (full text: https://www.columbia.edu/cu/psychology/metcalfe/PDFs/Learning%20from%20errorsAnnual%20ReviewMetcalfe2016.pdf)
-5. Butler, A. C., Fazio, L. K., & Marsh, E. J. (2011). *The hypercorrection effect persists over a
-   week, but high-confidence errors return.* Psychonomic Bulletin & Review, 18(6), 1238–1244.
+5. Butler, A. C., Fazio, L. K., & Marsh, E. J. (2011). _The hypercorrection effect persists over a
+   week, but high-confidence errors return._ Psychonomic Bulletin & Review, 18(6), 1238–1244.
    https://doi.org/10.3758/s13423-011-0173-y
-6. Nelson, T. O., & Narens, L. (1990). *Metamemory: A theoretical framework and new findings.* In
+6. Nelson, T. O., & Narens, L. (1990). _Metamemory: A theoretical framework and new findings._ In
    G. H. Bower (Ed.), The Psychology of Learning and Motivation (Vol. 26, pp. 125–173). Academic
    Press. https://doi.org/10.1016/S0079-7421(08)60053-5
    (full text: https://sites.socsci.uci.edu/~lnarens/1990/Nelson%26Narens_Book_Chapter_1990.pdf)
-7. Macnamara, B. N., Hambrick, D. Z., & Oswald, F. L. (2014). *Deliberate Practice and Performance
-   in Music, Games, Sports, Education, and Professions: A Meta-Analysis.* Psychological Science,
+7. Macnamara, B. N., Hambrick, D. Z., & Oswald, F. L. (2014). _Deliberate Practice and Performance
+   in Music, Games, Sports, Education, and Professions: A Meta-Analysis._ Psychological Science,
    25(8), 1608–1618. https://doi.org/10.1177/0956797614535810
    (full text: https://www.psychologie.uzh.ch/dam/jcr:658d39fe-2f4b-467f-9ae2-ffeb25caf2b6/McNamara.PsychSci.25.2014.pdf)
-8. Ericsson, K. A., Krampe, R. T., & Tesch-Römer, C. (1993). *The Role of Deliberate Practice in
-   the Acquisition of Expert Performance.* Psychological Review, 100(3), 363–406.
-   https://doi.org/10.1037/0033-295X.100.3.363  `[provenance-only — claim carried by Macnamara 2014]`
-9. Zimmerman, B. J. (2002). *Becoming a Self-Regulated Learner: An Overview.* Theory Into Practice,
+8. Ericsson, K. A., Krampe, R. T., & Tesch-Römer, C. (1993). _The Role of Deliberate Practice in
+   the Acquisition of Expert Performance._ Psychological Review, 100(3), 363–406.
+   https://doi.org/10.1037/0033-295X.100.3.363 `[provenance-only — claim carried by Macnamara 2014]`
+9. Zimmerman, B. J. (2002). _Becoming a Self-Regulated Learner: An Overview._ Theory Into Practice,
    41(2), 64–70. https://doi.org/10.1207/s15430421tip4102_2
    (full text: https://www.leiderschapsdomeinen.nl/wp-content/uploads/2016/12/Zimmerman-B.-2002-Becoming-Self-Regulated-Learner.pdf)
-10. Beilock, S. L., & Carr, T. H. (2005). *When High-Powered People Fail: Working Memory and
-    "Choking Under Pressure" in Math.* Psychological Science, 16(2), 101–105.
+10. Beilock, S. L., & Carr, T. H. (2005). _When High-Powered People Fail: Working Memory and
+    "Choking Under Pressure" in Math._ Psychological Science, 16(2), 101–105.
     https://doi.org/10.1111/j.0956-7976.2005.00789.x
-11. Beilock, S. L., Kulp, C. A., Holt, L. E., & Carr, T. H. (2004). *More on the Fragility of
-    Performance: Choking Under Pressure in Mathematical Problem Solving.* Journal of Experimental
+11. Beilock, S. L., Kulp, C. A., Holt, L. E., & Carr, T. H. (2004). _More on the Fragility of
+    Performance: Choking Under Pressure in Mathematical Problem Solving._ Journal of Experimental
     Psychology: General, 133(4), 584–600. https://doi.org/10.1037/0096-3445.133.4.584
-12. Ramirez, G., & Beilock, S. L. (2011). *Writing About Testing Worries Boosts Exam Performance in
-    the Classroom.* Science, 331(6014), 211–213. https://doi.org/10.1126/science.1199427
-13. Myers, S. J., Davis, S. D., & Chan, J. C. K. (2021). *Does expressive writing or an instructional
-    intervention reduce the impacts of test anxiety in a college classroom?* Cognitive Research:
+12. Ramirez, G., & Beilock, S. L. (2011). _Writing About Testing Worries Boosts Exam Performance in
+    the Classroom._ Science, 331(6014), 211–213. https://doi.org/10.1126/science.1199427
+13. Myers, S. J., Davis, S. D., & Chan, J. C. K. (2021). _Does expressive writing or an instructional
+    intervention reduce the impacts of test anxiety in a college classroom?_ Cognitive Research:
     Principles and Implications, 6(1), 44. https://doi.org/10.1186/s41235-021-00309-x
-14. Rhodes, M. G., & Castel, A. D. (2008). *Memory predictions are influenced by perceptual
-    information: Evidence for metacognitive illusions.* Journal of Experimental Psychology: General,
+14. Rhodes, M. G., & Castel, A. D. (2008). _Memory predictions are influenced by perceptual
+    information: Evidence for metacognitive illusions._ Journal of Experimental Psychology: General,
     137(4), 615–625. https://doi.org/10.1037/a0013684
-15. Nelson, T. O., & Dunlosky, J. (1991). *When people's judgments of learning (JOLs) are extremely
-    accurate at predicting subsequent recall: The "delayed-JOL effect."* Psychological Science,
+15. Nelson, T. O., & Dunlosky, J. (1991). _When people's judgments of learning (JOLs) are extremely
+    accurate at predicting subsequent recall: The "delayed-JOL effect."_ Psychological Science,
     2(4), 267–271. https://doi.org/10.1111/j.1467-9280.1991.tb00147.x
-16. LSAC. *Frequently Asked Questions about the LSAT.* https://www.lsac.org/lsat/frequently-asked-questions-about-lsat
-17. LSAC. *What to Expect Starting With the August 2024 LSAT.* https://www.lsac.org/blog/what-to-expect-starting-with-august-2024-lsat
-18. LSAC. *Changes are coming to the LSAT in August 2024.* https://www.lsac.org/lsat/lsat-changes-coming-august-2024
-19. LSAC. *Specifications of the LSAT and LSAT Argumentative Writing.* https://www.lsac.org/lsat/register-lsat/accommodations/specifications-lsat-and-lsat-argumentative-writing
+16. LSAC. _Frequently Asked Questions about the LSAT._ https://www.lsac.org/lsat/frequently-asked-questions-about-lsat
+17. LSAC. _What to Expect Starting With the August 2024 LSAT._ https://www.lsac.org/blog/what-to-expect-starting-with-august-2024-lsat
+18. LSAC. _Changes are coming to the LSAT in August 2024._ https://www.lsac.org/lsat/lsat-changes-coming-august-2024
+19. LSAC. _Specifications of the LSAT and LSAT Argumentative Writing._ https://www.lsac.org/lsat/register-lsat/accommodations/specifications-lsat-and-lsat-argumentative-writing

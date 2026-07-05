@@ -51,7 +51,8 @@ const viteConfig = defineViteConfig({
 const vitestConfig = defineVitestConfig({
     test: {
         include: ["**/*.{test,spec}.{js,ts}"],
-        exclude: ["tests/e2e/**", "node_modules/**"],
+        // e2e/e2e-offline are Playwright specs (browser fixtures), not vitest units.
+        exclude: ["tests/e2e/**", "tests/e2e-offline/**", "node_modules/**"],
         coverage: {
             include: ["lib/**", "routes/**", "editable/**", "editor/**", "html-filter/**", "reviewer/**", "tools/**"],
         },

@@ -68,7 +68,11 @@ Android. Honest even when abstaining (0 is shown, not hidden).
         /* a whisper of the brand accent in the top-right, over the surface -
          * presence without spending the "proven" gradient. */
         background:
-            radial-gradient(130% 150% at 100% 0%, var(--lsat-accent-soft) 0%, transparent 55%),
+            radial-gradient(
+                130% 150% at 100% 0%,
+                var(--lsat-accent-soft) 0%,
+                transparent 55%
+            ),
             var(--lsat-surface);
         border: 1px solid var(--lsat-border-subtle);
         box-shadow: var(--lsat-shadow);

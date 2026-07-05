@@ -17,5 +17,8 @@ export const load = (async ({ fetch }) => {
         throw new Error(`${resp.status}: ${await resp.text()}`);
     }
     const dashboard = await resp.json();
+    if (!dashboard || !dashboard.scores) {
+        throw new Error("Malformed dashboard response");
+    }
     return { dashboard };
 }) satisfies PageLoad;

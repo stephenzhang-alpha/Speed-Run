@@ -30,8 +30,10 @@ family; the parent grades it and passes back `result` for feedback.
             <button
                 type="button"
                 disabled={result !== null}
-                on:click={() => dispatch("select", fam)}>{label}</button
+                on:click={() => dispatch("select", fam)}
             >
+                {label}
+            </button>
         {/each}
     </div>
     {#if result && result.actual_label}
@@ -85,6 +87,10 @@ family; the parent grades it and passes back `result` for feedback.
     button:disabled {
         opacity: 0.5;
         cursor: default;
+    }
+    button:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     /* Verdict pill, mirroring the identification feedback for a consistent voice. */
     .fb {

@@ -68,4 +68,14 @@ export function installPwaMeta(name = "LSAT Prep", short = "LSAT"): void {
     upsertMeta("apple-mobile-web-app-title", short);
     upsertMeta("apple-mobile-web-app-status-bar-style", "default");
     upsertMeta("mobile-web-app-capable", "yes");
+
+    // Register the app-shell service worker so the PWA opens OFFLINE after its first
+    // online load (lsat/server serves it root-scoped). It no-ops where it isn't served
+    // (e.g. the desktop mediasrv, which serves pages under /_anki/pages/ out of a root
+    // SW's scope): the register() promise just rejects and we swallow it.
+    if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/service-worker.js").catch(() => {
+            /* no service worker at this origin/scope -> online-only shell, still fine */
+        });
+    }
 }

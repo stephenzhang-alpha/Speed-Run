@@ -15,22 +15,9 @@ ordering functions below are shared by the app and the ablation harness.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
-
-if TYPE_CHECKING:
-    from anki.collection import Collection
-
-INTERLEAVE_CONFIG_KEY = "lsat:interleave_lr"
+from typing import TypeVar
 
 _T = TypeVar("_T")
-
-
-def is_enabled(col: Collection) -> bool:
-    return bool(col.get_config(INTERLEAVE_CONFIG_KEY, False))
-
-
-def set_enabled(col: Collection, enabled: bool) -> None:
-    col.set_config(INTERLEAVE_CONFIG_KEY, bool(enabled))
 
 
 def _bucket(items: list[tuple[_T, str]]) -> tuple[list[str], dict[str, list[_T]]]:
@@ -120,18 +107,6 @@ def confusable_interleaved_order(items: list[tuple[_T, str]]) -> list[_T]:
     for key in group_order:
         result.extend(interleaved_order(groups[key]))
     return result
-
-
-def order_for_study(
-    items: list[tuple[_T, str]], interleave: bool, *, confusable: bool = True
-) -> list[_T]:
-    """Study order: blocked, or interleaved (within confusable clusters by
-    default; ``confusable=False`` gives the uniform round-robin)."""
-    if not interleave:
-        return blocked_order(items)
-    return (
-        confusable_interleaved_order(items) if confusable else interleaved_order(items)
-    )
 
 
 def interleaving_degree(types: list[str]) -> float:

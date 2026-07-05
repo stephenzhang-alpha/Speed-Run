@@ -877,6 +877,9 @@ def _walk_moves(
     return {
         "steps": steps,
         "blocked_frontier": blocked_frontier,
+        # the raw literal the draft actually reached (whether it stopped short un-blocked
+        # or ran out of moves); used to prove the continuation when proved is False.
+        "reached_frontier": frontier,
         "proved": proved,
         "world": world,
         # the literal the NEXT valid move must start from (unchanged by a block,
@@ -906,10 +909,16 @@ def _assemble_scenario(
     )
     steps = walk["steps"]
     blocked_frontier = walk["blocked_frontier"]
+    proved = walk["proved"]
 
     corrected: list[dict[str, Any]] = []
-    if blocked_frontier is not None:
-        cont = build_worked_example(chain, Implication(blocked_frontier, candidate.cons))
+    # If the draft did NOT reach the goal -- whether it was BLOCKED on a bad step or
+    # merely STOPPED SHORT of the conclusion -- append the continuation the oracle can
+    # prove from wherever the draft actually got to. Keying only off `blocked_frontier`
+    # (the old behavior) let a valid-but-incomplete draft render as a finished proof.
+    if not proved:
+        cont_from = blocked_frontier if blocked_frontier is not None else walk["reached_frontier"]
+        cont = build_worked_example(chain, Implication(cont_from, candidate.cons))
         if cont.get("available"):
             for st in cont["steps"]:
                 imp2 = (
@@ -927,15 +936,20 @@ def _assemble_scenario(
     verified_steps = sum(1 for s in steps if s["verified"])
     blocked_any = any(s["blocked"] for s in steps)
     plural = "" if verified_steps == 1 else "s"
-    if blocked_any:
+    if proved:
+        note = (
+            f"all {verified_steps} step{plural} re-derived live by the "
+            "material-entailment oracle — the draft is proven."
+        )
+    elif blocked_any:
         note = (
             f"{verified_steps} step{plural} re-derived live by the material-entailment "
             "oracle; the next step was blocked and the oracle proved the rest."
         )
     else:
         note = (
-            f"all {verified_steps} step{plural} re-derived live by the "
-            "material-entailment oracle — the draft is proven."
+            f"{verified_steps} step{plural} re-derived live, but the draft stops short "
+            "of the goal — the oracle completed the proof below."
         )
     scenario = {
         "id": defn["id"],
@@ -948,7 +962,10 @@ def _assemble_scenario(
         "provenance": provenance,
         "steps": steps,
         "corrected": corrected,
-        "receipt": {"verified_steps": verified_steps, "note": note},
+        # proved: did the DRAFT itself reach the goal (no block, no stop-short)? The
+        # client must never present an unproven draft as a completed proof.
+        "proved": proved,
+        "receipt": {"verified_steps": verified_steps, "note": note, "proved": proved},
     }
     if model_used is not None:
         scenario["model_used"] = model_used

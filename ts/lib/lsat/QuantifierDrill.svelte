@@ -14,7 +14,7 @@ Grading is deterministic server-side (lsat/quantifier.py). Mirrors
 ConditionalDrill's states, double-submit guard, and styling.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     import Card from "./Card.svelte";
     import * as client from "./client";
@@ -31,9 +31,9 @@ ConditionalDrill's states, double-submit guard, and styling.
     type State = "loading" | "asking" | "answered" | "done" | "error";
 
     let state: State = "loading";
-    let error = "";
     let shownAt = 0;
     let picked = "";
+    let nextBtn: HTMLButtonElement | undefined;
 
     // Validity mode.
     let validity: QuantifierValidityDrill | null = null;
@@ -55,7 +55,6 @@ ConditionalDrill's states, double-submit guard, and styling.
 
     async function load(): Promise<void> {
         state = "loading";
-        error = "";
         picked = "";
         validity = null;
         validityResult = null;
@@ -80,7 +79,7 @@ ConditionalDrill's states, double-submit guard, and styling.
             shownAt = Date.now();
             state = "asking";
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -97,8 +96,10 @@ ConditionalDrill's states, double-submit guard, and styling.
                 chosen,
                 Date.now() - shownAt,
             );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -115,8 +116,10 @@ ConditionalDrill's states, double-submit guard, and styling.
                 chosen,
                 Date.now() - shownAt,
             );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -130,7 +133,7 @@ ConditionalDrill's states, double-submit guard, and styling.
     <Card title="No drills right now"><p class="muted">Check back later.</p></Card>
 {:else if state === "error"}
     <Card title="Couldn't load a drill">
-        <p class="muted">{error}</p>
+        <p class="muted">Couldn't reach the server. Try again.</p>
         <button class="next" on:click={load}>Try again</button>
     </Card>
 {:else if mode === "validity" && validity}
@@ -147,13 +150,14 @@ ConditionalDrill's states, double-submit guard, and styling.
             <span class="lbl">Conclusion</span>
             <span class="txt">{validity.conclusion}</span>
         </div>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !validityResult}>
             {#each VERDICTS as [value, label] (value)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === value}
-                    class:right={validityResult?.graded && value === validityResult.verdict}
+                    class:right={validityResult?.graded &&
+                        value === validityResult.verdict}
                     class:wrong={validityResult?.graded &&
                         picked === value &&
                         value !== validityResult.verdict}
@@ -165,9 +169,13 @@ ConditionalDrill's states, double-submit guard, and styling.
             {/each}
         </div>
 
+        {#if state === "answered" && !validityResult}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && validityResult}
             {#if validityResult.graded}
-                <p class="verdict" class:ok={validityResult.correct}>
+                <p class="verdict" class:ok={validityResult.correct} aria-live="polite">
                     {validityResult.correct
                         ? "Correct."
                         : `Not quite — the answer is "${verdictLabel(validityResult.verdict)}".`}
@@ -181,19 +189,20 @@ ConditionalDrill's states, double-submit guard, and styling.
             {:else}
                 <p class="muted">{validityResult.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next drill</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>Next drill</button>
         {/if}
     </Card>
 {:else if mode === "negation" && negation}
     <Card title="Negation" subtitle="What is the exact logical negation?">
         <p class="sentence">{negation.sentence}</p>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !negationResult}>
             {#each negation.options as opt (opt.quant)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === opt.quant}
-                    class:right={negationResult?.graded && opt.quant === negationResult.answer}
+                    class:right={negationResult?.graded &&
+                        opt.quant === negationResult.answer}
                     class:wrong={negationResult?.graded &&
                         picked === opt.quant &&
                         opt.quant !== negationResult.answer}
@@ -205,9 +214,13 @@ ConditionalDrill's states, double-submit guard, and styling.
             {/each}
         </div>
 
+        {#if state === "answered" && !negationResult}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && negationResult}
             {#if negationResult.graded}
-                <p class="verdict" class:ok={negationResult.correct}>
+                <p class="verdict" class:ok={negationResult.correct} aria-live="polite">
                     {negationResult.correct
                         ? "Correct — that's the exact negation."
                         : "Not quite — the highlighted option is the exact negation."}
@@ -215,7 +228,7 @@ ConditionalDrill's states, double-submit guard, and styling.
             {:else}
                 <p class="muted">{negationResult.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next drill</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>Next drill</button>
         {/if}
     </Card>
 {/if}
@@ -224,6 +237,11 @@ ConditionalDrill's states, double-submit guard, and styling.
     .muted {
         color: var(--lsat-fg-subtle);
         margin: 0;
+    }
+    .checking {
+        margin: 0.6rem 0 0;
+        font-size: 0.85rem;
+        color: var(--lsat-fg-subtle);
     }
     .sentence {
         font-size: 1.02rem;
@@ -300,6 +318,10 @@ ConditionalDrill's states, double-submit guard, and styling.
     .opt:disabled {
         cursor: default;
     }
+    .opt:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     .opt.picked {
         border-width: 2px;
     }
@@ -341,10 +363,14 @@ ConditionalDrill's states, double-submit guard, and styling.
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: white;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 
     @media (prefers-reduced-motion: reduce) {

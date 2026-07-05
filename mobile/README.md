@@ -54,10 +54,45 @@ To change the server later, re-`export LSAT_SERVER_URL=...` and re-run
   auto-enables `cleartext` only for `http://` URLs (LAN/emulator). A hosted
   server should use `https://` behind a reverse proxy (see the server README).
 
+## Offline review & reconnect sync
+
+The app is **not** a purely network-dependent WebView. Study works offline:
+
+- **Prefetch** — on open, the client caches a batch of items
+  (`client.prefetchItems`, a no-answer payload), so review continues with no signal.
+- **Durable answer queue** — a graded answer submitted while offline (or on a
+  connectivity failure) is saved to `localStorage` and reported as _queued_, not lost
+  (`client.postDurable` → `lsat-offline-queue`). The no-answer-leak invariant means
+  grading is always server-side, so a queued answer is graded when it syncs.
+- **Reconnect sync** — on the `online` event the queue is replayed to the server in
+  order (`client.flushQueue`, wired by `client.initOfflineSync`), where each answer is
+  graded and appended to the same append-only `PerformanceEvent` log. The Study tab
+  shows an offline banner + a "N queued" count that clears on sync.
+- **Exactly-once under a flaky radio** — the queue drops a row only after the server
+  acks it, and each submission carries a stable `_idempotency` id the server dedupes
+  against (`lsat.events.idempotent_lookup`), so a lost ack that triggers a re-POST can
+  never double-log an event. Proven by `qt/tests/test_lsat_idempotency.py`.
+
+This flow is **recorded on video** at
+[`docs/offline-sync-recording.webm`](../docs/offline-sync-recording.webm) (the real PWA
+in Chromium: offline banner → "Saved offline" → syncs on reconnect), covered by
+`ts/lib/lsat/client.offline.test.ts` (`just test-ts`) and the Playwright e2e
+(`playwright.offline.config.ts`), and demonstrated end-to-end by `sync/offline_demo.py`
+(`make sync-demo`). See [`docs/verification.md`](../docs/verification.md).
+
+**Two deployment modes** (see `capacitor.config.ts`), both offline-review capable:
+
+| Mode                           | Shell loads from                | Offline shell?                           | Build                                                                                                                   |
+| ------------------------------ | ------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Remote** (default)           | the hosted PWA over the network | needs network to load first each session | `LSAT_SERVER_URL=… npx cap sync android`                                                                                |
+| **Local bundle** (recommended) | the PWA bundled _into_ the app  | ✅ loads with no network                 | `./ninja sveltekit && cp -r "$BUILD_ROOT"/sveltekit/* www/ && LSAT_LOCAL_BUNDLE=1 LSAT_API_BASE=… npx cap sync android` |
+
+In local-bundle mode the shell reaches the server at the absolute `LSAT_API_BASE`
+(persisted from a one-time `#api=…&token=…` pairing link → `client.apiBase()`), so the
+app opens and lets you review even with the radio off, syncing when it comes back.
+
 ## Notes / limitations
 
-- This is a WebView wrapper, not native UI: it needs network reach to the
-  backend (no offline data), consistent with reusing the PWA.
 - The generated `android/` directory is git-ignored; regenerate it with
   `npx cap add android`. Everything needed to do so is in this folder.
 - iOS is not set up here, but the same PWA works via `npx cap add ios`

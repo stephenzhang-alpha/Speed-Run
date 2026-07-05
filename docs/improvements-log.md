@@ -28,6 +28,7 @@ Verified the project is in a healthy, working state before making changes:
   - **dashboard_build p50 726ms / p95 789ms** — first-load < 1s ✓ but **refresh > 500ms target (PRD §13) ✗**
 
 Observations feeding the improvement plan:
+
 - Retrieval win over BM25 is **thin** (0.3519 vs 0.3333) — candidate to strengthen honestly.
 - No dedicated **unit tests** for `lsat/`/`eval/` modules; the eval acts as the only gate.
 - Deferred backlog (per DECISION.md §7): Structure Twins, BKT, section simulator, Successive Relearning.
@@ -49,12 +50,13 @@ webview (`lsatWeb`) forced a **persistent extra render process** that stayed ali
 whole session — even while the user was studying/browsing and the dashboard was off-screen.
 
 **Changes (biggest lever first).**
+
 1. **Free the dashboard render process** (`qt/aqt/main.py`). `lsatWeb` was created eagerly
-   at window init and only *hidden* on leaving home (never freed). Now it is **created
+   at window init and only _hidden_ on leaving home (never freed). Now it is **created
    lazily** on first entry to the `lsatHome` state (`_ensure_lsat_web`, inserted after the
    MAIN webview) and **destroyed on leave** (`_destroy_lsat_web` in `_lsatHomeCleanup`:
    `cleanup()` -> `removeWidget` -> `deleteLater`), then recreated on the next home entry.
-   Because it is the only *resident* api-access webview (deck-options/editor/stats dialogs
+   Because it is the only _resident_ api-access webview (deck-options/editor/stats dialogs
    are transient), destroying it lets Chromium reclaim its render process whenever the user
    is not on the dashboard. The api-access dashboard design and the home hint strip are
    unchanged. **Measured: off the dashboard the app now runs 3 render processes instead of
@@ -84,7 +86,7 @@ Events dedup + 50k A/B as above; `py_compile` clean on all edited Python. Backen
 via `./ninja pylib` (offline-OK; no JS registry needed) so the Rust change is live.
 
 **Honest caveats.** Total process RSS on a Chromium app is a noisy OS high-water mark, so
-the headline win is the *reclaimed render process* (a structural, deterministic reduction
+the headline win is the _reclaimed render process_ (a structural, deterministic reduction
 during study), not a single before/after RSS number. The SQLite ~20 MiB and the V8 heap cap
 are secondary, conservative, all-users changes kept only because they were measured
 non-regressing.
@@ -100,6 +102,7 @@ internal `anki`/`aqt` packages, the `anki.*` proto namespace, `/_anki/` URLs, an
 UI ambition **all-in, evolving** the existing ⊢/"PROVEN" identity (not a fresh aesthetic).
 
 **A. Rebrand (user-facing "Anki" -> "LSAT Prep").**
+
 - **Brand assets** built around the turnstile ⊢: a new app/window icon
   (`qt/aqt/data/qt/icons/anki.png`), About logo (`…/web/imgs/anki-logo-thin.png`),
   favicon (PNG-in-ICO, since no ImageMagick/PIL — hand-wrapped), Linux menu icon, and an
@@ -129,6 +132,7 @@ UI ambition **all-in, evolving** the existing ⊢/"PROVEN" identity (not a fresh
 **B. UI/UX redesign (evolving PROVEN).** Diagnosed from live baseline screenshots that
 the rough feel came from (1) a dominant graph-paper grid that read as a wireframe,
 (2) the mobile PWA stretching full-width on wide viewports, and (3) a sparse hero.
+
 - **Design system** (`ts/lib/lsat/theme.scss`, the single token source): pinned a premium
   brand palette (indigo `#4f46e5` -> violet `#7c3aed`) that no longer inherits Anki's
   arbitrary accent, so branding is consistent everywhere; kept surfaces/text inheriting
@@ -177,13 +181,14 @@ the api-access allowlist in `qt/aqt/webview.py`, so its profile never injects th
 `Authorization: Bearer <key>` header). When the dashboard page POSTs to
 `/_anki/lsatDashboardData`, Anki's `_check_dynamic_request_permissions`
 (`qt/aqt/mediasrv.py`) runs: `_have_api_access()` is False and the endpoint is not in
-the reviewer/previewer whitelist, so it shows *"Unexpected API access…"* and 403s —
-*before* the endpoint's own `pairing_authorized` even runs. (The standalone dashboard
-*dialog* never hit this because it uses the api-access `LSAT_DASHBOARD` webview kind.)
+the reviewer/previewer whitelist, so it shows _"Unexpected API access…"_ and 403s —
+_before_ the endpoint's own `pairing_authorized` even runs. (The standalone dashboard
+_dialog_ never hit this because it uses the api-access `LSAT_DASHBOARD` webview kind.)
 
 **Fix (`qt/aqt/main.py`).** Render the home dashboard in a **dedicated
 `LSAT_DASHBOARD`-kind webview** (`self.lsatWeb`) — the same api-access profile the
 dialog uses — instead of the MAIN webview:
+
 - create `self.lsatWeb = AnkiWebView(kind=AnkiWebViewKind.LSAT_DASHBOARD)` in the
   main layout, hidden by default;
 - `_lsatHomeState` now hides `self.web`, shows `self.lsatWeb`, and loads the page
@@ -210,14 +215,15 @@ software while preserving all core functionalities."
 
 **Method.** Measured first with `make bench` (50k-deck; reports peak RSS + peak
 Python allocation via tracemalloc) and a tracemalloc profile of `dashboard_build`.
-Findings: `dashboard_build`'s peak is *transient* DB-query processing (freed after
+Findings: `dashboard_build`'s peak is _transient_ DB-query processing (freed after
 build — retained payload is tiny), and the bench synthesizes 0 events, so its
-number can't reflect the real hotspot. The dominant *retained* LSAT-layer heap
+number can't reflect the real hotspot. The dominant _retained_ LSAT-layer heap
 structure for an active user is the parsed **event log** — `read_events` (and the
 single-parse `events_cache` window `build()` already uses) materialize one
 `PerformanceEvent` per graded answer (thousands to 50k+).
 
 **Change (safe, zero-behaviour).**
+
 - `PerformanceEvent` (`lsat/events.py`) → `@dataclass(frozen=True, slots=True)`:
   removes the per-instance `__dict__` overhead on the 50k-scale event list.
 - `_read_events_uncached` now `sys.intern`s the highly-repetitive fields (item id,
@@ -250,13 +256,14 @@ your changes to the Macbook version carry over to the Android version."
 
 **Android model.** The Android app (`mobile/`) is a thin Capacitor WebView that loads
 `<server>/lsat-mobile` live from `lsat/server/app.py` — it bundles no web assets, so
-the served SvelteKit PWA *is* the Android UI. Carry-over therefore = (a) the
+the served SvelteKit PWA _is_ the Android UI. Carry-over therefore = (a) the
 `lsat-mobile` route + shared components reflect every change, (b) `server/app.py`
 serves every endpoint the components call, (c) the served bundle is rebuilt.
 
 **Gaps found + fixed.**
+
 - The **proof-header hero** and **graph-paper canvas** were desktop-route-only. Fixed
-  by extracting the hero into a shared `ProofHeader.svelte` rendered *inside*
+  by extracting the hero into a shared `ProofHeader.svelte` rendered _inside_
   `DashboardView` (so it now appears on the desktop dashboard AND the mobile Progress
   tab), and applying `--lsat-graph` to the mobile shell's `.app` (matching the desktop
   `.dash`). The desktop route is now a thin canvas wrapper — zero duplication.
@@ -267,7 +274,7 @@ serves every endpoint the components call, (c) the served bundle is rebuilt.
 
 **Creative (shared → both platforms).** `AnswerFeedback` now uses one stroke-SVG icon
 language (retiring the mixed text glyphs ✓/✗ the jury-benchmark flagged): a correct
-answer's check *draws itself in* (a small trust signal), a miss gets a calm static ✗
+answer's check _draws itself in_ (a small trust signal), a miss gets a calm static ✗
 with no punishment motion — reduced-motion collapses both to instant.
 
 **Build/propagation caveat + fix.** `./ninja qt` fails offline at
@@ -294,8 +301,8 @@ workflow (learning-science · award-UI craft · flashcard UX · AI-demo · Awwwa
 benchmark → adversarial synthesis) produced a binding design spec; a subagent built
 the AI marquee end-to-end.
 
-**The concept — PROVEN.** One idea unifies the product: *a study instrument that
-refuses to show a number, or an answer, it can't prove.* Identity is carried by
+**The concept — PROVEN.** One idea unifies the product: _a study instrument that
+refuses to show a number, or an answer, it can't prove._ Identity is carried by
 GEOMETRY (confidence-interval bands, the turnstile ⊢, a proof rail) + TEXTURE (a
 hatch = "not yet proven") + NOTATION (mono for logic/numerals), never the accent hue
 (which inherits Anki's arbitrary theme in-app). This fuses the existing honesty
@@ -318,8 +325,8 @@ with a point tick + CI span + a one-shot "ink-in" reveal; abstention is a hatche
 tabular mono.
 
 **Flashcard/study experience** (`StudyItem.svelte`). The signature learning move: a
-confidence × correctness **2×2 reveal** — a *sure + wrong* miss gets the
-hypercorrection frame ("the highest-value fix"), a *guess + correct* gets a
+confidence × correctness **2×2 reveal** — a _sure + wrong_ miss gets the
+hypercorrection frame ("the highest-value fix"), a _guess + correct_ gets a
 "skill or luck? prove it →" nudge into an Evil Twin (never rewards luck, never
 punishes a miss). Keyboard access (1-5/A-E pick, 1/2/3 confidence, Enter advances);
 chosen answer stays prominent pre-reveal without leaking correctness.
@@ -350,6 +357,7 @@ debug." Deployed 3 parallel debug subagents (Rust/proto/build · dashboard front
 flashcards/reviewer) + independent verification.
 
 **Diagnosis — no code-level crash found in any layer:**
+
 - **Build:** `cargo check --workspace` passes (52s). The isolated `cargo check -p
   anki` tokio `io-util` failure is a feature-unification artifact (a dev-dep enables
   it), NOT the real build — confirmed by the workspace check + 148 passing scheduler/
@@ -374,7 +382,7 @@ across 5 data states (empty → maximal) with zero crashes — the render path i
 broken. The real defect is **serving/auth**: the LSAT dashboard was a buried
 `QDialog` using the api-access `LSAT_DASHBOARD` webview kind (which injects the
 bearer token), so it worked; but the correct "home screen" migration loads it into
-the **MAIN** window webview, which is *deliberately excluded* from the api-access
+the **MAIN** window webview, which is _deliberately excluded_ from the api-access
 allowlist (it also renders untrusted card JS) and therefore never sends the
 `Authorization: Bearer` header. `lsat_dashboard_data` gated on `pairing_authorized()`
 → **HTTP 403** → the `+page.ts` loader throws → blank "broken" dashboard. Plus the
@@ -393,6 +401,7 @@ flashcards appeared absent. Fixes:
    authenticated backend access — a security regression).
 
 Fixes in `qt/aqt/main.py`:
+
 1. **The LSAT dashboard is now the home screen.** New `lsatHome` main-window state
    (`_lsatHomeState` loads the `lsat-dashboard` SvelteKit page into the main
    webview); collection-load lands there instead of `deckBrowser`. Deck management
@@ -420,27 +429,29 @@ click away (and auto-seeded on first run).
 features, especially the AI feature… effective and unique selling points so I can
 sell for a profit. In an age where AI could create software, why would someone buy
 what I made?" A 6-agent strategy workflow (a brutal VC bear case + 4 grounded POV
-lenses + adversarial synthesis) stress-tested the thesis *before* editing.
+lenses + adversarial synthesis) stress-tested the thesis _before_ editing.
 
 **The reframe (what the bear case corrected).** "Trust-by-construction" is a seller's
 virtue, not a buyer's need. The wedge is the **outcome verification makes safe**: the
-*proven truth about the student's own test* — which points they leak under the clock,
+_proven truth about the student's own test_ — which points they leak under the clock,
 which wins were luck, which misses were confident misconceptions — with AI quarantined
 behind a proof-checker. The afternoon-AI-app **is** the confidently-wrong tier this
 product is the inverse of ("ask an LLM to build the checker and it returns PASS").
 Two corrections the bear case landed on our own code, both now fixed:
-1. On the oracle slice the LLM was *decorative* (BFS already authored the proof). →
+
+1. On the oracle slice the LLM was _decorative_ (BFS already authored the proof). →
    Built **Evil Twins**, where LLM generation is genuinely load-bearing (targets +
    freshens) while the oracle still proves every answer.
 2. `client.py` pinned the moving alias `claude-3-5-sonnet-latest`. → Pinned a concrete
    model, record the API-resolved id on every gated result, re-gate on change.
 
 **Shipped (all tested to `GATE OK`):**
+
 - **Evil Twins** (`lsat/evil_twin.py`, `eval/evil_twin.py`) — oracle-proven
   "skill or luck?" discrimination twins: a minimal edit flips the answer; the oracle
   (`quantifier.classify` / `conditional_chain.entails`) enumerates + proves every
   twin, the LLM only does logically-inert targeting + noun choice, fail-closed.
-  Gate: 47 curated twins + 3,500+ fuzz flips, **0 mislabels** vs an *independent*
+  Gate: 47 curated twins + 3,500+ fuzz flips, **0 mislabels** vs an _independent_
   oracle, malicious-drafter-safe. Reachable: Logic-tab **Skill or luck?** drill
   (`EvilTwinDrill.svelte`) + full api/server/mediasrv/client wiring.
 - **Proof Receipt** on worked examples — `WorkedExampleDrill.svelte` now shows a
@@ -472,10 +483,10 @@ held: no synthetic "+X points" in any pitch; every efficacy arm stays report-onl
 feature repeatedly until ready for production." Built research feature #1 — the
 top-ranked, lowest-residual-risk AI feature from
 `research/ai-features-for-faster-prep.md` — because its correctness check is a
-*proof*, so the safety-critical path is fully testable to a hard gate offline.
+_proof_, so the safety-critical path is fully testable to a hard gate offline.
 
 **What it is — the "generate-with-a-proof" pattern.** For a multi-arrow
-conditional-chain item, an LLM may *draft* a step-by-step derivation, but the
+conditional-chain item, an LLM may _draft_ a step-by-step derivation, but the
 exact material-entailment oracle (`lsat.conditional_chain.entails`) **re-derives
 every step and BLOCKS the example unless all steps verify**. A hallucinated
 inference cannot pass: it fails entailment (or cites a premise that does not
@@ -483,6 +494,7 @@ license the step) and the whole example is withheld. Correctness never rests on
 the LLM; with AI off the feature serves the deterministic oracle-derived proof.
 
 **Code.**
+
 - `lsat/worked_example.py` — `verify_worked_example` (the oracle GATE),
   `build_worked_example` (deterministic oracle-derived floor), `faded_variants` +
   `grade_fill` (backward fading), `draft_and_verify` (LLM drafts → oracle verifies
@@ -492,10 +504,10 @@ the LLM; with AI off the feature serves the deterministic oracle-derived proof.
 - `eval/worked_example.py` — a **HARD gate** + `WORKED_STEP_FALSE_PASS_MAX = 0.0`
   in `eval/config.py`; registered in `eval/run.py`.
 - Reachable end-to-end: `lsat/api.py` (`worked_example_drill` / `submit_worked_step`
-  + `ENDPOINTS`), `lsat/server/app.py` (`_HANDLERS`, passes the import guard),
-  `qt/aqt/lsat_web.py` + `qt/aqt/mediasrv.py` (desktop mediasrv routes),
-  `ts/lib/lsat/client.ts` + `types.ts`, and a new `WorkedExampleDrill.svelte`
-  wired into the Logic tab of `ts/routes/lsat-mobile/+page.svelte`.
+  - `ENDPOINTS`), `lsat/server/app.py` (`_HANDLERS`, passes the import guard),
+    `qt/aqt/lsat_web.py` + `qt/aqt/mediasrv.py` (desktop mediasrv routes),
+    `ts/lib/lsat/client.ts` + `types.ts`, and a new `WorkedExampleDrill.svelte`
+    wired into the Logic tab of `ts/routes/lsat-mobile/+page.svelte`.
 
 **Honesty posture (per the red-team).** Ships AI-on but oracle-decided;
 pre-generatable/offline; the shipping narration is **template-only** (from the
@@ -505,10 +517,11 @@ synthetic arm (disclosed `GAIN`/`COST`), not evidence — real learners settle t
 magnitude, exactly as the discipline requires.
 
 **Verification (tested repeatedly to production).**
+
 - Module self-test: **46/46** checks (valid build round-trips; does-not-follow
   abstains; the gate blocks empty/forged/truncated/affirming-consequent/garbage
   derivations; valid AI draft verified & served; malicious/garbled/offline drafts
-  all degrade to the *correct* deterministic proof; fading + oracle-graded fill;
+  all degrade to the _correct_ deterministic proof; fading + oracle-graded fill;
   JSON-safe served-drill surface).
 - Eval HARD gate (in `make eval`): **planted false-pass 0/20, fuzz false-pass
   0/3014 accepted, valid-walk coverage 3000/3000** (proves the gate accepts every
@@ -529,7 +542,7 @@ magnitude, exactly as the discipline requires.
 ### 2026-07-02 — Research: AI features for faster LSAT prep (deliverable, not shipped code)
 
 **Requirement (new directive).** "Deploy subagents to research AI features to add to
-the software. What AI features will help LSAT candidates prepare *faster*? Write up your
+the software. What AI features will help LSAT candidates prepare _faster_? Write up your
 research after looping for an hour." Research-and-write-up task; **no product code was
 changed** — the deliverable is `research/ai-features-for-faster-prep.md`.
 
@@ -544,7 +557,7 @@ claims and found real defects; all five top fixes applied.
 **Findings.** Ranked top-6 AI features, all sharing one shape — **AI as a constrained
 transform over authoritative artifacts, never an authority** (generate-with-a-proof /
 classify-onto-closed-set / point-at-verbatim-span / tie-break-deterministic-ranking).
-#1 Oracle-verified faded worked examples is safest *and* the only feature defensible on
+#1 Oracle-verified faded worked examples is safest _and_ the only feature defensible on
 speed (novices, formal-logic LR); #2/#6 are safe allocation aids (no borrowable effect
 size); #3/#5 are the risky free-text graders → **ship AI-off by default**. Honest ceiling
 is **single-digit scaled points**, every magnitude a borrowed prior awaiting an equal-time
@@ -581,12 +594,13 @@ flat LSAT items cluttered the Tools menu. (4) Two out-of-sync feature-naming sys
 (`A1–D3` spec vs the `K/F1–F5/H` + rounds 2-4 debate scheme).
 
 **Fixes.**
+
 - **Decks now load in-app.** New `Tools ▸ LSAT ▸ Load Starter Decks` action
   (`onLsatSeedDecks`, idempotent) + the LSAT Dashboard offers to seed on first open.
   A fresh profile can now populate the four decks in one click → every feature has
   content. (`qt/aqt/main.py`.)
 - **Dashboard condensed to prominence.** "How you get questions wrong" now renders
-  ONLY the diagnostics you've *earned* (each present one is prominent) and folds the
+  ONLY the diagnostics you've _earned_ (each present one is prominent) and folds the
   rest into a single honest "N more unlock as you study: …" strip — replacing nine
   ghost cards. Analysis engines unchanged; presentation only. (`DashboardView.svelte`,
   svelte-check 1303/0/0.)
@@ -605,11 +619,11 @@ flat LSAT items cluttered the Tools menu. (4) Two out-of-sync feature-naming sys
   original items** covering the high-frequency LR types (weaken / strengthen /
   necessary + sufficient assumption / flaw [causal, sampling, equivocation,
   composition, nec-suf] / must-be-true / principle / parallel / method / paradox)
-  + RC (main-point + structure), each with per-distractor trap labels and a spread
-  of difficulties. Every new item's single correct answer was justified
-  (mini-autopsy) and reviewed; the conditional/quantifier items were **machine-verified
-  against the shipped `conditional_chain` / `quantifier` model-checkers**. (52
-  flashcards unchanged.) All original — no LSAC copying.
+  - RC (main-point + structure), each with per-distractor trap labels and a spread
+    of difficulties. Every new item's single correct answer was justified
+    (mini-autopsy) and reviewed; the conditional/quantifier items were **machine-verified
+    against the shipped `conditional_chain` / `quantifier` model-checkers**. (52
+    flashcards unchanged.) All original — no LSAC copying.
 
 **Demoability proof (the point of all this).** On a temp collection: seed → answer
 the 25 practice items (timed) + an 8-item blind-review pass → the **Performance
@@ -630,20 +644,21 @@ svelte-check 1303/0/0; eslint clean; `make eval` GATE OK (unaffected).
 [`-round4`](../research/debate/DECISION-round4.md)) over ~90 proposals →
 **14 features shipped** end-to-end, each behind a measured `eval/` arm at equal
 study time with a bootstrap CI:
-- *Round 2 (6):* Paired Choke-Index CI, Elaborated Contrast Card, Exam-Day
+
+- _Round 2 (6):_ Paired Choke-Index CI, Elaborated Contrast Card, Exam-Day
   Retrievability Targeting, Fatigue Curve, If-Then Study Plan, Conditional
   Translation Drill.
-- *Round 3 (4):* Quantifier Reasoning Suite (Venn-model-checker-proved),
+- _Round 3 (4):_ Quantifier Reasoning Suite (Venn-model-checker-proved),
   Mastery-Growth Panel (CI-gated, hard gate), Rush-Error Detector (hard gate),
   Time-Leak Diagnostic.
-- *Round 4 (4):* Stem-Polarity Micro-Drill, Necessary/Sufficient Discrimination,
+- _Round 4 (4):_ Stem-Polarity Micro-Drill, Necessary/Sufficient Discrimination,
   **Timed Section Runner + First-Instinct Ledger** (rank-1, hard gate),
   Conditional-Chain Trainer (exact-entailment grader).
 
 **Honesty discipline held throughout:** every learning claim is a measured arm
 (CI excludes 0 → ship; includes 0 → reported as unproven); diagnostics make no
 learning claim; grading fails closed; two features (**RC-Judgment**, **Faded-Flaw
-Ladder**) were *deferred with written reports* because they need human-calibrated
+Ladder**) were _deferred with written reports_ because they need human-calibrated
 content — not shipped on AI-authored labels.
 
 **Correctness:** ~6 adversarial-review cycles, every confirmed finding fixed —
@@ -660,7 +675,7 @@ working tree by ~148 MB (regenerable `mobile/` artifacts).
 **Final bill of health:** `make eval` **GATE OK** (9 hard gates + report arms) ·
 all engine self-tests green · `SERVER_OK` (19 PWA endpoints, drift-guarded) ·
 svelte-check **1303 files 0/0** · eslint + ruff clean · `cargo test -p anki`
-points_at_stake 8/8. *Environment limit (unchanged):* full `just build`/`just
+points_at_stake 8/8. _Environment limit (unchanged):_ full `just build`/`just
 check` + the Rust→Python bridge rebuild need an online JS registry; mitigated with
 `cargo test`, `out/pyenv`, and cached-`node_modules` svelte-check/eslint.
 
@@ -673,6 +688,7 @@ finish improving the software, making the repository as slim as possible." Run o
 after the improvement + review phases were complete.
 
 **What (conservative — remove only the provably-dead + the regenerable).**
+
 - **Dead code:** the whole `lsat/`+`eval/` tree is clean under `ruff --select
   F401,F811,F841` (unused imports / redefinitions / unused vars); the only hit was
   one leftover self-test assignment (`lsat/conditional.py` `p = parse_conditional(...)`
@@ -722,7 +738,7 @@ svelte-check 1303/0/0, eslint clean, ruff clean.
 ### 2026-07-02 — UI/UX: Logic-tab "Drill Launcher" redesign + #22 Conditional-Chain drill
 
 **Requirement.** The goal's explicit "make the software look creative and unique
-(UI/UX via subagents)" + DECISION-round4 #22 (the top deferred *deterministic*
+(UI/UX via subagents)" + DECISION-round4 #22 (the top deferred _deterministic_
 winner). The Logic tab had grown to a cramped 5-segment control; and #22 fills the
 gap the single-conditional drill abstains on (≥3-arrow chains).
 
@@ -743,11 +759,12 @@ not a narrower tab.
 chain ("If A then B; if B then C; …") + a candidate inference; judge **must-follow /
 does-not-follow** (transitive chaining + contrapositive vs affirming-the-consequent /
 denying-the-antecedent). Structured implications rendered to prose (no fragile
-parsing). **Graded by exact material entailment** (truth-table) — *complete*, unlike
+parsing). **Graded by exact material entailment** (truth-table) — _complete_, unlike
 a pure reachability check (which I found misses tautological-consequent + vacuous
 cases: a real 29/500 discrepancy that forced the exact grader). Reachability is kept
 as the human-explainable chaining intuition and **proven sound** (0 over-claims /
 500 random chains). Fails closed.
+
 - Verify: `lsat.conditional_chain` **21/21** (exact grader == curated; reachability
   sound; both verdicts covered; fail-closed on bad id/prefix/verdict). End-to-end
   API probe green (no leak, cycles, logs `skill.conditional_logic`).
@@ -771,7 +788,7 @@ logically correct and never emits a wrong cell. Six lesser findings, all fixed:
 2. **The new negation pattern fired on "not only … but"** (a benign intensifier) →
    added a `(?!\s+only)` guard; test added.
 3. **The self-test's entailment cross-check is a logical tautology** of the
-   negation test (`P∧¬A⊨¬C ⟺ P∧C⊨A`), so it gave zero *independent* assurance →
+   negation test (`P∧¬A⊨¬C ⟺ P∧C⊨A`), so it gave zero _independent_ assurance →
    relabeled it a consistency check and documented that the **higher-cap oracle
    regression** is the real independent guard.
 4. **An out-of-fragment quantifier crashed** (`ValueError`) instead of abstaining,
@@ -785,7 +802,7 @@ logically correct and never emits a wrong cell. Six lesser findings, all fixed:
 6. **Eval "graded deterministically by lsat.X" oversold** what the arm exercises
    (it's a synthetic IRT sim, not routed through the real grader) → added an honest
    scope note to both eval docstrings (the grader's determinism is validated by the
-   module self-test; the arm demonstrates the equal-time + CI *mechanism*).
+   module self-test; the arm demonstrates the equal-time + CI _mechanism_).
 
 **Verify:** quantifier **64/64** (incl. cap differential), stem_polarity **26/26**,
 assumption_discrimination **24/24**, ruff clean. Both stem findings are
@@ -798,6 +815,7 @@ input) but fixed for correctness of the public function.
 every prior feature is per-item; none was full-section **test-day execution**.
 
 **What.** A timed mini-section surface + the honest answer-change diagnostic.
+
 - `lsat/answer_change.py` — the **First-Instinct Ledger**: the learner's OWN net
   wrong→right vs right→wrong answer changes with a bootstrap CI. It **refuses the
   folk "never change" rule and the population ~2:1 base rate** (applying either to
@@ -811,7 +829,7 @@ every prior feature is per-item; none was full-section **test-day execution**.
   (via `notetypes.py`; cards suspended, HLC-synced, idempotent registration, no
   proto/Rust/schema migration). Persists the per-question trajectory; reads it back
   for the ledger (7/7).
-- **No-leak design (a correctness call I made):** a *timed* section must stay blind,
+- **No-leak design (a correctness call I made):** a _timed_ section must stay blind,
   so the client sends raw first/final **choices** and the **server grades** them
   into correctness on submit — verified A→B=wr, C→A=rw, unreached excluded, only the
   aggregate ledger returned.
@@ -845,7 +863,7 @@ Baked this in as a self-test regression (independent oracle, 0 wrong cells over
 ("candidate already contradicts or is entailed by the premises").
 
 **#13 (stem-polarity) — high-precision negation.** The old `_NEGATION_RE` matched a
-bare "not"/"is not" anywhere, so a stem whose *content* said "not" ("the plan will
+bare "not"/"is not" anywhere, so a stem whose _content_ said "not" ("the plan will
 not succeed") would false-positive as `negated`. Tightened it to reliable
 task-negation phrasings only (the CANNOT-be-true family, "does not <task-verb>", a
 negation inside the wh-clause); a genuinely-negated stem in another phrasing now
@@ -861,7 +879,7 @@ correctness does **not** depend on human-calibrated content; the other two are
 deferred with a report.
 
 **#13 (rank 2) Stem-Polarity Micro-Drill — `lsat/stem_polarity.py`.** The
-highest-frequency *careless* LR error: an EXCEPT/LEAST/negated stem inverts the
+highest-frequency _careless_ LR error: an EXCEPT/LEAST/negated stem inverts the
 task and, under time pressure, the test-taker runs the prepotent (un-inverted)
 task. A deterministic lexicon+regex classifier maps a stem to its polarity
 (direct / EXCEPT / LEAST / negated) + the search instruction, **seeded from the
@@ -869,6 +887,7 @@ taxonomy `stem_cues`**, and **fails closed** on ambiguity (two conflicting
 markers). Mechanism: automatizing the stem→task-set mapping makes the correct set
 resource-independent, so it survives the fatigue moment (Monsell 2003; Shiffrin &
 Schneider 1977; Logan 1988).
+
 - Verify: `lsat.stem_polarity` **21/21** (every curated stem pinned to its polarity,
   all four polarities covered, ambiguous/empty stems abstain, grading fails closed).
   End-to-end API probe: serve→grade→event, no leak, cycles, logs `diction.except`.
@@ -887,6 +906,7 @@ is **derived, not authored**: it reuses the proven `lsat.quantifier` Venn
 model-checker as an oracle — sufficient ⟺ `P+[A]` entails `C`; necessary ⟺ the LSAT
 **negation test** (`P+[¬A]` makes `C` impossible) — with a gap-guard requiring the
 argument to actually have a gap (`classify(P,C)==COULD_BE_EITHER`).
+
 - Verify: `lsat.assumption_discrimination` **22/22** — every curated cell PROVEN by
   the model-checker AND cross-checked against the equivalent entailment form; all
   four cells covered; fails closed on a degenerate/incoherent argument. End-to-end
@@ -931,7 +951,7 @@ growth self-test **10/10** (incl. a Finding-1 regression); gate still PASS.
 processes).
 
 **Finding 4 (LOW, fixed).** `grade_validity`/`grade_negation` parsed only the
-integer after `-`, so `grade_validity("qneg-2", …)` graded a *validity* item. Added
+integer after `-`, so `grade_validity("qneg-2", …)` graded a _validity_ item. Added
 `_item_index` requiring the **exact `qval-`/`qneg-` prefix** → genuinely fails
 closed (quantifier self-test **63/63**).
 
@@ -949,11 +969,12 @@ honesty discipline.
 validity + negation drill for `skill.quantifier_logic`. A learner judges whether a
 conclusion **must / cannot / could** follow from quantifier premises (attacking
 illicit conversion, the undistributed middle, the two-`most` overlap), and picks
-the exact negation of a statement (the traps: ¬all = *some-not* not *no*; ¬most =
-*at most half*). **Correctness gate:** the curated verdict/negation tables are the
+the exact negation of a statement (the traps: ¬all = _some-not_ not _no_; ¬most =
+_at most half_). **Correctness gate:** the curated verdict/negation tables are the
 runtime source of truth, but a **bounded Venn-region model-checker** (`classify`,
-`_is_negation`) independently *proves* every entry from first principles in the
+`_is_negation`) independently _proves_ every entry from first principles in the
 self-test — a wrong table entry fails the suite. Grading fails **closed**.
+
 - Verify: `lsat.quantifier` **61/61** (model-checker matches every curated verdict:
   Barbara, illicit conversion, two-most overlap, "most" doesn't chain, contradictions;
   negations proven exact complements + involutions; fail-closed on bad id/verdict).
@@ -971,6 +992,7 @@ accuracy delta (never a rank/percentile — Kluger & DeNisi). **Difficulty-match
 (stratify by band + pool, so a difficulty-mix shift can't masquerade as progress)
 and **CI-gated** (emit improved/slipped only when the bootstrap CI excludes 0, else
 abstain). Routes each readout to a concrete next drill.
+
 - Verify: `lsat.growth` **9/9** (detects true up/down with CI excluding 0;
   **false-direction rate 0.043 < 0.05** on true-no-change; abstains on
   non-overlapping bands and mix-only shifts).
@@ -984,18 +1006,20 @@ untimed pace) are **materially and significantly more wrong** than their non-fas
 ones — an excess with a bootstrap CI excluding 0, never a raw fast-and-wrong count
 (which carries the base error rate). Per-learner baseline, so a naturally
 fast-and-accurate learner is never flagged. Diagnostic, non-punitive.
+
 - Verify: `lsat.pacing` self-test extended (genuine rush pattern flags; fast misses
   that don't beat the slow rate do NOT; abstains without an untimed baseline).
 - Eval `eval/rush.py` — **HARD gate**: planted-rush detection 0.870 (≥0.80);
   naturally-fast false-flag **0.013 (≤0.10) vs naive absolute-clock 0.860** → valid
   and beats naive. (Designing this exposed and fixed a real flaw: a count-based
-  detector false-flagged 32% of fast-accurate learners; CI-gating the *excess* fixed it.)
+  detector false-flagged 32% of fast-accurate learners; CI-gating the _excess_ fixed it.)
 
 **#5 (rank 5) Time-Leak Diagnostic — `lsat/triage.py`.** Reclaimable seconds = time
 spent under the clock on items missed **even untimed** (a gap, not a pace problem;
 a lone guess-confidence untimed miss doesn't count). Reported **with a bootstrap
 CI**; strictly descriptive (time, never a promised score gain); leads with "need a
 blind pass first" and returns ~0 for a learner who isn't time-pressured.
+
 - Verify: `lsat.triage` **14/14** (real leak flagged with CI; true-leak-0 null → 0s;
   abstains without a blind pass; lone-guess misses excluded).
 - Eval `eval/triage_leak.py` (report): recovers 58% of true wasted time (CI
@@ -1039,7 +1063,7 @@ never drilled). Previously staged as Effort-L; I built the verifiable core.
 `parse_conditional` normalizes an English conditional (if/then, only-if, unless,
 no/all/only, requires, sufficient/necessary-for) into its `sufficient → necessary`
 arrow + contrapositive; `grade_conditional` grades a learner's identification.
-**Fail-closed:** mis-grading would teach the *wrong* rule, so it recognizes only a
+**Fail-closed:** mis-grading would teach the _wrong_ rule, so it recognizes only a
 fixed phrasing table and **hard-abstains** on anything ambiguous (the caller shows
 the worked answer instead of grading). The mis-teaching risk lives entirely in the
 parser, which is **exhaustively unit-tested (20/20)** — incl. unless≡if-not,
@@ -1076,7 +1100,7 @@ svelte-check 0/0 (1290 files); eslint + ruff clean.
 cards") stored in config; adherence (active days / completed days / consecutive
 missed / re-plan flag) is **inferred from the existing graded-event log** — no new
 notetype, no new synced record, no new sync path. **Locked constraints honored:**
-no streak counters, no loss-aversion, and a *neutral* re-plan nudge after ≥2 missed
+no streak counters, no loss-aversion, and a _neutral_ re-plan nudge after ≥2 missed
 days (never shaming). (`lsat/adherence.py`; **Tools → Set LSAT Study Plan…** in
 `qt/aqt/main.py`; dashboard `adherence` payload.)
 
@@ -1115,7 +1139,7 @@ confirmed the bulk correct and surfaced **7 real issues, all now fixed**:
   scenarios incl. wrong-clock).
 - **(honesty) choke_validity didn't test the operating floor.** It validated CI
   coverage at n≈50, but the product flagged at n=5 where percentile-bootstrap
-  coverage is only ~0.82. Fixed: a *confident* flag now requires ≥
+  coverage is only ~0.82. Fixed: a _confident_ flag now requires ≥
   `MIN_CONFIDENT_FLAG_ITEMS` (10) paired items (the estimate + CI still SHOW from
   n=5), and the eval validates coverage AT that floor (**0.92 ≥ 0.90**).
 - **(honesty) exam_schedule eval simulated a metric-optimizing greedy, not the
@@ -1134,8 +1158,8 @@ confirmed the bulk correct and surfaced **7 real issues, all now fixed**:
 Done **after** the improvement work, per the goal. Scoped to be safe (no upstream
 Anki code touched, nothing that would break the build):
 
-- **Removed `anki.git/` (55 MB)** — a stray *bare mirror of the user's own
-  Speed-Run repo* (its `origin` = the same GitHub repo), untracked, referenced by
+- **Removed `anki.git/` (55 MB)** — a stray _bare mirror of the user's own
+  Speed-Run repo_ (its `origin` = the same GitHub repo), untracked, referenced by
   nothing (not `origin`, not a git alternate/worktree, not the build). Verified
   the main repo has no `objects/info/alternates` first, so removal can't corrupt
   it; fully reversible (re-clonable from origin).
@@ -1147,7 +1171,7 @@ Anki code touched, nothing that would break the build):
   Python fmt/lint step).
 
 **Deliberately NOT done (a "too risky to auto-delete here" report):** static
-dead-*module* elimination. The LSAT layer uses pervasive **lazy imports**
+dead-_module_ elimination. The LSAT layer uses pervasive **lazy imports**
 (`from lsat.x import y` inside functions), so a static reference scan produces
 false "unused" positives (it flagged `events`/`taxonomy`/`grading` — all live —
 as unreferenced). Deleting a module that is only lazily imported would break the
@@ -1201,7 +1225,7 @@ reflect the Rust edit and TS wasn't built via `just` — mitigated with
 ### 2026-07-02 — Feature #10: Fatigue Curve (time-on-task decay)
 
 **Requirement:** DECISION-round2 #10 (new ground — no shipped signal captures
-session position; F4's Choke Index measures per-item *pressure*, orthogonal).
+session position; F4's Choke Index measures per-item _pressure_, orthogonal).
 
 **What.** `lsat/fatigue.py`: **no schema migration** — sessions are inferred from
 the append-only event log's existing HLC wall timestamps (a >20-min gap starts a
@@ -1240,6 +1264,7 @@ tabular, gradient headline).
 
 **4 parallel subagents**, each owning distinct files, verifying svelte-check 0/0 +
 eslint, keeping every prop/data-flow unchanged (visual-only):
+
 - **Mobile shell + study flow:** gradient app-mark header, a sliding segmented phase
   control, animated tab indicator; choice/confidence/trap interactions with
   status-coded feedback; the **ContrastCard** signature moment (credited │ "vs" pivot
@@ -1263,7 +1288,7 @@ OK and 8/8 module self-tests still pass (UI touched no Python).
 ### 2026-07-02 — Feature #7: Exam-Day Retrievability Targeting
 
 **Requirement:** DECISION-round2 #7 (8.0, the only exam-DATE-aware winner). The
-shipped queue/ZPD are blind to *when* the test is; this reallocates the same
+shipped queue/ZPD are blind to _when_ the test is; this reallocates the same
 review minutes toward being retrievable ON test day.
 
 **What.** `lsat/exam_schedule.py`: a shared `exam_date` config; a deadline-adjusted
@@ -1276,7 +1301,7 @@ date or thin FSRS state. Wired: dashboard payload `exam_schedule` summary
 (`lsat/dashboard_data.py`, cheap — returns before scanning when no date) + a
 **Tools → Set LSAT Exam Date…** action (`qt/aqt/main.py`).
 
-**Honest claim.** A scheduling *reallocation*, ~single-digit points at most; can be
+**Honest claim.** A scheduling _reallocation_, ~single-digit points at most; can be
 net-zero for a daily studier. `eval/exam_schedule.py` (registered, report-only):
 equal-review-count sim — **deadline-aware 0.869 vs fixed-DR 0.863 weighted exam-day
 retrievability, delta +0.006 (95% CI [+0.005,+0.006])**; **daily-studier null delta
@@ -1336,7 +1361,7 @@ documented. (`lsat/contrast.py`; wired into `lsat/grading.py::grade_answer` →
 `StudyItem.svelte`; `ts/lib/lsat/types.ts` `AnswerContrast`.)
 
 **Honest claim.** ≤ a small (~single-digit) held-out gain over KCR at equal study
-TIME, only if the eval CI excludes 0. New `eval/feedback.py` 3-arm equal-*time*
+TIME, only if the eval CI excludes 0. New `eval/feedback.py` 3-arm equal-_time_
 ablation (KR / KCR≈shipped-F2 / EF-contrast; EF costs more seconds so does fewer
 items — penalized honestly): **ef 0.807 vs kcr 0.800 vs kr 0.788, ef−kcr +0.007
 (95% CI [+0.007,+0.007]) → ship recommended.**
@@ -1376,8 +1401,8 @@ concurrent eval-arms edit settles.)
   - **Mobile:** a Timed/Blind/Relaxed segmented toggle in the study tab that
     drives `StudyItem`'s `phase` prop (already plumbed to `submitAnswer`), with an
     "untimed pass — doesn't inflate mastery" hint. (`ts/routes/lsat-mobile/+page.svelte`.)
-  **Verified:** `main.py` compiles; `set_session_phase` import works; svelte-check
-  + eslint clean.
+    **Verified:** `main.py` compiles; `set_session_phase` import works; svelte-check
+  * eslint clean.
 - **#16 (MED) mobile double-log.** `grade()` had no re-entrancy guard, so a
   double confidence-tap during the network round-trip could log two events. Fix:
   guard on `state === "confidence"` and move to a transient `"grading"` state
@@ -1393,7 +1418,7 @@ concurrent eval-arms edit settles.)
 ### 2026-07-02 — Audit fixes batch 2 (security + AI safety + correctness)
 
 - **#4 (HIGH, security) PWA endpoints exposed unauthenticated on the LAN.**
-  `_have_api_access` returns True whenever `ANKI_API_HOST=0.0.0.0` — the *only*
+  `_have_api_access` returns True whenever `ANKI_API_HOST=0.0.0.0` — the _only_
   mode phone pairing works in — so the documented "per-session bearer token" was
   never enforced and the whole backend was reachable on the LAN. Fix: every LSAT
   endpoint (`next_item`/`submit_answer`/`submit_trap`/`submit_classify` +
@@ -1429,7 +1454,7 @@ concurrent eval-arms edit settles.)
 
 ### 2026-07-01 — Audit fixes batch 1 (eval honesty + honest-mastery)
 
-- **#2 (HIGH) ablation not equal-study-time.** The `full` arm spent a *variable*
+- **#2 (HIGH) ablation not equal-study-time.** The `full` arm spent a _variable_
   misconception budget (~10.5 events) while other arms deducted a fixed 12, giving
   `full` ~1.5 extra ability-building generic-study events → a budget-artifact
   effect even when the feature is inert. Fix: every arm now spends exactly
@@ -1546,7 +1571,7 @@ the notes table. Profiling on the 50k deck: `find_cards` = **486 ms**, vs
 retrievability 45 ms + revlog 17 ms.
 
 **Fix.** Replaced the 36 per-node tag searches with **one joined scan** that
-returns each LSAT-tagged card's tags *and* its FSRS retrievability together
+returns each LSAT-tagged card's tags _and_ its FSRS retrievability together
 (`cards ⋈ notes`, filtered by an `lsat::` `LIKE` pre-filter), then buckets recall
 per node in Python — replicating Anki's hierarchical `tag:` matching via
 `_tag_ancestors` (a card tagged `lsat::flaw::causal::x` still counts toward
@@ -1567,7 +1592,7 @@ real student with hundreds/thousands of graded answers.
 
 **Fix.** Added `events_cache(col)` — a `contextvars`-scoped, collection-keyed
 read cache. Inside the window `read_events` returns one shared parse; `build()`
-wraps its whole assembly in it. Safe because no event *note* is written during a
+wraps its whole assembly in it. Safe because no event _note_ is written during a
 build (`append_projection` writes config, not a note). Reentrant; isolated per
 async task/thread. Zero signature changes elsewhere. (`lsat/events.py`,
 `lsat/dashboard_data.py`.)
@@ -1580,7 +1605,7 @@ blind_review, error_patterns). Collapses ~10 scans → 1 per build.
 **Problem.** `main()` called `tracemalloc.start()` **before** the latency
 measurement and stopped it after — so every hot-path latency was measured with
 per-allocation tracing active. This inflates allocation-heavy paths ~5×
-(dashboard_build **156 ms → 794 ms** under tracing), making a *passing* latency
+(dashboard_build **156 ms → 794 ms** under tracing), making a _passing_ latency
 falsely report as a **failure** of the §13 dashboard-refresh target.
 
 **Fix.** Measure latency with tracing **off** (representative of production);

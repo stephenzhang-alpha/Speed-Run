@@ -53,6 +53,7 @@ _HANDLERS: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {
         response_ms=body.get("response_ms", 0),
         phase=body.get("phase", "timed"),
         identified=str(body.get("identified", "") or ""),
+        idempotency_key=str(body.get("_idempotency", "") or ""),
     ),
     "lsatSubmitTrap": lambda col, body: api.submit_trap(
         col,
@@ -103,7 +104,9 @@ _HANDLERS: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {
         col, n=int(body.get("n", 10) or 10)
     ),
     "lsatSubmitSectionAttempt": lambda col, body: api.submit_section_attempt(
-        col, trajectory=body.get("trajectory")
+        col,
+        trajectory=body.get("trajectory"),
+        idempotency_key=str(body.get("_idempotency", "") or ""),
     ),
     "lsatChainDrill": lambda col, body: api.chain_drill(col),
     "lsatSubmitChain": lambda col, body: api.submit_chain(
@@ -135,14 +138,26 @@ _HANDLERS: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {
     ),
 }
 
-# Fail fast if a new PWA endpoint is added to lsat.api.ENDPOINTS without a handler
-# here -- the standalone server must serve exactly what the mobile client calls
-# (this guard is why the round-2 conditional gap could not recur silently).
+# Fail fast if the endpoint contract drifts -- the standalone server (which the
+# Android app talks to) must serve EXACTLY what lsat.api.ENDPOINTS declares and the
+# mobile client calls (this guard is why the round-2 conditional gap could not
+# recur silently). Both directions matter: a missing handler makes the Android app
+# 404 on a feature the desktop has; an extra handler is a dead endpoint that drifted
+# from the canonical list. The full cross-layer check (desktop + client.ts too)
+# lives in qt/tests/test_lsat_parity.py.
 _missing = set(api.ENDPOINTS) - set(_HANDLERS)
+_extra = set(_HANDLERS) - set(api.ENDPOINTS)
 assert not _missing, f"lsat/server/app.py missing handlers for: {sorted(_missing)}"
+assert not _extra, (
+    f"lsat/server/app.py has handlers not in lsat.api.ENDPOINTS: {sorted(_extra)}"
+)
 
 # Read-only endpoints: a failure is a real 500. Submit endpoints mirror the
 # desktop adapters and return {"error": ...} with 200 (the client shows it).
+# The drill "get" endpoints belong here too: the desktop adapters (qt/aqt/lsat_web.py)
+# have no try/except, so an exception there becomes a mediasrv 500 -- listing them
+# keeps the Android server's error semantics identical (a real failure surfaces as a
+# thrown error the UI handles, not a silent 200+{error} rendering a blank drill).
 _READ_ENDPOINTS = frozenset(
     {
         "lsatDashboardData",
@@ -150,6 +165,14 @@ _READ_ENDPOINTS = frozenset(
         "lsatOracleTheater",
         "lsatProveStep",
         "lsatOracleDraftLive",
+        "lsatConditionalDrill",
+        "lsatChainDrill",
+        "lsatWorkedExampleDrill",
+        "lsatEvilTwinDrill",
+        "lsatQuantifierValidityDrill",
+        "lsatQuantifierNegationDrill",
+        "lsatStemPolarityDrill",
+        "lsatAssumptionDrill",
     }
 )
 
@@ -159,6 +182,43 @@ _READ_ENDPOINTS = frozenset(
 # whole app renders blank. Keep this an allowlist of non-sensitive boot RPCs.
 _BACKEND_PASSTHROUGH = frozenset({"i18nResources"})
 _CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")
+
+# Root-scoped app-shell service worker so the REMOTE-mode PWA (a WebView pointed at
+# this server) opens OFFLINE after its first online load -- the piece that turns a
+# network-dependent WebView into an offline-capable app. Runtime cache-on-fetch:
+# same-origin GETs are cached as they load online and served from cache offline (the
+# SPA shell falls back to the cached /lsat-mobile navigation); /_anki/* is NEVER cached
+# (the offline answer queue in client.ts handles those POSTs + reconnect sync).
+_SERVICE_WORKER_JS = """\
+const CACHE = 'lsat-shell-v1';
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(
+  caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    .then(() => self.clients.claim())
+));
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  const url = new URL(req.url);
+  if (req.method !== 'GET') return;                  // API mutations -> network + offline queue
+  if (url.pathname.startsWith('/_anki/')) return;    // never cache the API
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(req);
+    if (cached) return cached;                        // hashed /_app assets + cached shell
+    try {
+      const res = await fetch(req);
+      if (res && res.ok && url.origin === self.location.origin) cache.put(req, res.clone());
+      return res;
+    } catch (err) {
+      if (req.mode === 'navigate') {                  // offline nav -> cached SPA shell
+        const shell = (await cache.match('/lsat-mobile')) || (await cache.match('/index.html')) || (await cache.match('/'));
+        if (shell) return shell;
+      }
+      throw err;
+    }
+  })());
+});
+"""
 
 
 def _default_web_root() -> str | None:
@@ -265,6 +325,16 @@ def create_app(
             return send_from_directory(
                 os.path.join(sveltekit, "_app"), asset, max_age=31536000
             )
+
+        @app.route("/service-worker.js")
+        def _service_worker():
+            # Explicit literal route (Werkzeug ranks it above the _spa catch-all, which
+            # would otherwise return the index.html shell for the .js path). Served at
+            # the root so its default scope is "/" (covers /lsat-mobile).
+            resp = Response(_SERVICE_WORKER_JS, mimetype="text/javascript")
+            resp.headers["Service-Worker-Allowed"] = "/"
+            resp.headers["Cache-Control"] = "no-cache"  # always revalidate the SW itself
+            return resp
 
         @app.route("/<path:req_path>")
         def _spa(req_path: str):

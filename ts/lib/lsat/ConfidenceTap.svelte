@@ -28,10 +28,13 @@ selected label ("sure" | "likely" | "guess" | "").
                 class:guess={val === "guess"}
                 on:click={() => dispatch("select", val)}
             >
-                <span class="dot" aria-hidden="true"></span>{label}
+                <span class="dot" aria-hidden="true"></span>
+                {label}
             </button>
         {/each}
-        <button type="button" class="skip" on:click={() => dispatch("select", "")}>skip</button>
+        <button type="button" class="skip" on:click={() => dispatch("select", "")}>
+            skip
+        </button>
     </div>
 </div>
 
@@ -68,6 +71,10 @@ selected label ("sure" | "likely" | "guess" | "").
             border-color var(--lsat-transition) var(--lsat-ease),
             background var(--lsat-transition) var(--lsat-ease),
             transform var(--lsat-transition) var(--lsat-ease);
+    }
+    button:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     /* Confidence-coded options: a leading dot reads at a glance. */
     .opt {

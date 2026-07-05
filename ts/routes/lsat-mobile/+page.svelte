@@ -18,6 +18,7 @@ the desktop dashboard and the same HTTP-backed study flow.
     import DrillPicker from "$lib/lsat/DrillPicker.svelte";
     import EvilTwinDrill from "$lib/lsat/EvilTwinDrill.svelte";
     import { lastPracticed, markPracticed, recency } from "$lib/lsat/drillProgress";
+    import * as client from "$lib/lsat/client";
     import { installPwaMeta } from "$lib/lsat/pwa";
     import QuantifierDrill from "$lib/lsat/QuantifierDrill.svelte";
     import StemPolarityDrill from "$lib/lsat/StemPolarityDrill.svelte";
@@ -142,15 +143,42 @@ the desktop dashboard and the same HTTP-backed study flow.
         const id = openDrill;
         openDrill = null;
         await tick();
-        (document.querySelector(`.drill[data-id="${id}"]`) as HTMLElement | null)?.focus();
+        (
+            document.querySelector(`.drill[data-id="${id}"]`) as HTMLElement | null
+        )?.focus();
     }
 
-    onMount(() => installPwaMeta());
+    // Offline review + reconnect sync: track connectivity + the local queue depth,
+    // flush the queue automatically on reconnect, and prefetch a batch of items so
+    // study continues without a connection. `client.initOfflineSync` registers the
+    // `online` listener once and refreshes `pending` after each flush.
+    let online = true;
+    let pending = 0;
+    function refreshConnState(): void {
+        online = typeof navigator === "undefined" || navigator.onLine !== false;
+        pending = client.pendingCount();
+    }
+    onMount(() => {
+        installPwaMeta();
+        refreshConnState();
+        client.initOfflineSync(refreshConnState);
+        void client.prefetchItems(10);
+        const on = () => refreshConnState();
+        window.addEventListener("online", on);
+        window.addEventListener("offline", on);
+        return () => {
+            window.removeEventListener("online", on);
+            window.removeEventListener("offline", on);
+        };
+    });
 </script>
 
 <svelte:head>
     <title>LSAT Prep</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
 </svelte:head>
 
 <div class="app">
@@ -169,6 +197,24 @@ the desktop dashboard and the same HTTP-backed study flow.
 
     <main>
         {#if tab === "study"}
+            {#if !online || pending > 0}
+                <p
+                    class="conn-banner"
+                    class:offline={!online}
+                    role="status"
+                    aria-live="polite"
+                >
+                    {#if !online}
+                        Offline &mdash; answers save on this device and sync when you
+                        reconnect.
+                    {:else}
+                        Reconnected &mdash; syncing your saved answers&hellip;
+                    {/if}
+                    {#if pending > 0}
+                        <span class="pend">{pending} queued</span>
+                    {/if}
+                </p>
+            {/if}
             <div
                 class="phasebar"
                 role="group"
@@ -180,20 +226,30 @@ the desktop dashboard and the same HTTP-backed study flow.
                     <button
                         type="button"
                         class:active={studyPhase === p}
-                        on:click={() => (studyPhase = p)}>{label}</button
+                        aria-pressed={studyPhase === p}
+                        on:click={() => (studyPhase = p)}
                     >
+                        {label}
+                    </button>
                 {/each}
             </div>
             {#if studyPhase !== "timed"}
                 <p class="phase-hint">
-                    Untimed pass &mdash; answers refine your Gap Map without inflating mastery.
+                    Untimed pass &mdash; answers refine your Gap Map without inflating
+                    mastery.
                 </p>
             {/if}
             <a class="section-cta" href="/lsat-section-runner">
                 Start a timed section
                 <span class="arrow" aria-hidden="true">&rarr;</span>
             </a>
-            <StudyItem phase={studyPhase} />
+            <StudyItem
+                phase={studyPhase}
+                on:practicetwin={() => {
+                    tab = "logic";
+                    openLogicDrill("twin");
+                }}
+            />
         {:else if tab === "logic"}
             {#if openDrill === null}
                 <DrillPicker
@@ -206,8 +262,10 @@ the desktop dashboard and the same HTTP-backed study flow.
                     class="backbar"
                     type="button"
                     bind:this={backEl}
-                    on:click={closeLogicDrill}>&lsaquo; All drills</button
+                    on:click={closeLogicDrill}
                 >
+                    &lsaquo; All drills
+                </button>
                 {#if openDrill === "translate"}
                     <ConditionalDrill />
                 {:else if openDrill === "chain"}
@@ -232,44 +290,65 @@ the desktop dashboard and the same HTTP-backed study flow.
             <div class="notice">
                 <h2>Not connected</h2>
                 <p>
-                    Open this page from your desktop's <b>Study on your phone</b> dialog to load your
-                    progress.
+                    Open this page from your desktop's <b>Study on your phone</b>
+                    dialog to load your progress.
                 </p>
-                {#if data.error}<p class="err">{data.error}</p>{/if}
+                {#if data.error}
+                    <p class="err">{data.error}</p>
+                    <button
+                        type="button"
+                        class="backbar"
+                        on:click={() => location.reload()}
+                    >
+                        Try again
+                    </button>
+                {/if}
             </div>
         {/if}
     </main>
 
     <nav class="tabs">
         <div class="tabs-inner">
-        <button class:active={tab === "study"} on:click={() => (tab = "study")}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"
-                ><path
-                    d="M4 5h11l5 5v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm0 6h9m-9 4h9"
-                /></svg
+            <button
+                type="button"
+                class:active={tab === "study"}
+                aria-current={tab === "study" ? "page" : undefined}
+                on:click={() => (tab = "study")}
             >
-            <span>Study</span>
-        </button>
-        <button
-            class:active={tab === "logic"}
-            on:click={() => {
-                if (tab === "logic") {
-                    openDrill = null;
-                }
-                tab = "logic";
-            }}
-        >
-            <svg viewBox="0 0 24 24" aria-hidden="true"
-                ><path d="M5 7h6M5 12h4M8 3v18M14 8l3 3-3 3m5-3h-8" /></svg
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                        d="M4 5h11l5 5v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm0 6h9m-9 4h9"
+                    />
+                </svg>
+                <span>Study</span>
+            </button>
+            <button
+                type="button"
+                class:active={tab === "logic"}
+                aria-current={tab === "logic" ? "page" : undefined}
+                on:click={() => {
+                    if (tab === "logic") {
+                        openDrill = null;
+                    }
+                    tab = "logic";
+                }}
             >
-            <span>Logic</span>
-        </button>
-        <button class:active={tab === "progress"} on:click={() => (tab = "progress")}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"
-                ><path d="M4 20V10m6 10V4m6 16v-7" /></svg
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 7h6M5 12h4M8 3v18M14 8l3 3-3 3m5-3h-8" />
+                </svg>
+                <span>Logic</span>
+            </button>
+            <button
+                type="button"
+                class:active={tab === "progress"}
+                aria-current={tab === "progress" ? "page" : undefined}
+                on:click={() => (tab = "progress")}
             >
-            <span>Progress</span>
-        </button>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 20V10m6 10V4m6 16v-7" />
+                </svg>
+                <span>Progress</span>
+            </button>
         </div>
     </nav>
 </div>
@@ -328,7 +407,7 @@ the desktop dashboard and the same HTTP-backed study flow.
         width: 19px;
         height: 19px;
         fill: none;
-        stroke: #fff;
+        stroke: var(--lsat-ink-on-accent);
         stroke-width: 1.7;
         stroke-linecap: round;
     }
@@ -363,7 +442,10 @@ the desktop dashboard and the same HTTP-backed study flow.
         position: relative;
         display: flex;
         gap: 0;
-        margin-bottom: 0.7rem;
+        /* Cap + centre so the segmented control does not stretch on wide
+         * (tablet / desktop-preview) viewports. */
+        max-width: 520px;
+        margin: 0 auto 0.7rem;
         padding: 0.25rem;
         background: var(--lsat-inset);
         border: 1px solid var(--lsat-border-subtle);
@@ -402,10 +484,14 @@ the desktop dashboard and the same HTTP-backed study flow.
             transform var(--lsat-transition) var(--lsat-ease);
     }
     .phasebar button.active {
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
     }
     .phasebar button:active {
         transform: scale(0.96);
+    }
+    .phasebar button:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     /* Back to the Drill Launcher from an open logic drill. */
     .backbar {
@@ -427,7 +513,11 @@ the desktop dashboard and the same HTTP-backed study flow.
             transform var(--lsat-transition) var(--lsat-ease);
     }
     .backbar:hover {
-        border-color: color-mix(in srgb, var(--lsat-accent) 40%, var(--lsat-border-subtle));
+        border-color: color-mix(
+            in srgb,
+            var(--lsat-accent) 40%,
+            var(--lsat-border-subtle)
+        );
     }
     .backbar:active {
         transform: scale(0.97);
@@ -441,18 +531,48 @@ the desktop dashboard and the same HTTP-backed study flow.
         font-size: 0.78rem;
         color: var(--lsat-fg-subtle);
     }
+    /* Connectivity banner: offline (answers queue locally) / reconnecting (syncing). */
+    .conn-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0 0 0.7rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--lsat-radius-sm);
+        background: color-mix(in srgb, var(--lsat-good) 10%, var(--lsat-surface));
+        border: 1px solid color-mix(in srgb, var(--lsat-good) 30%, transparent);
+        font-size: 0.82rem;
+        color: var(--lsat-fg);
+    }
+    .conn-banner.offline {
+        background: color-mix(in srgb, var(--lsat-warn) 12%, var(--lsat-surface));
+        border-color: color-mix(in srgb, var(--lsat-warn) 35%, transparent);
+    }
+    .conn-banner .pend {
+        margin-left: auto;
+        flex: none;
+        padding: 0.1rem 0.5rem;
+        border-radius: var(--lsat-radius-pill);
+        background: var(--lsat-inset);
+        font-weight: 650;
+        font-size: 0.72rem;
+        color: var(--lsat-fg-subtle);
+    }
     /* Launches the self-contained Timed Section Runner route. */
     .section-cta {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        margin-bottom: 0.8rem;
+        /* Cap + centre so the CTA pill does not span the full width on wide
+         * (tablet / desktop-preview) viewports. */
+        max-width: 520px;
+        margin: 0 auto 0.8rem;
         min-height: 46px;
         padding: 0.6rem 1rem;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         text-decoration: none;
         font-weight: 650;
         box-shadow: var(--lsat-shadow);
@@ -465,6 +585,10 @@ the desktop dashboard and the same HTTP-backed study flow.
     }
     .section-cta:active {
         transform: scale(0.98);
+    }
+    .section-cta:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .section-cta .arrow {
         transition: transform var(--lsat-transition) var(--lsat-ease);
@@ -535,6 +659,11 @@ the desktop dashboard and the same HTTP-backed study flow.
     }
     .tabs button:active {
         transform: scale(0.94);
+    }
+    /* Inset ring so the focus outline is not clipped by the fixed bottom bar. */
+    .tabs button:focus-visible {
+        outline: none;
+        box-shadow: inset var(--lsat-ring);
     }
     .tabs svg {
         width: 22px;

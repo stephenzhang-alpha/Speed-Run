@@ -1,0 +1,256 @@
+{
+    "items": [
+        {
+            "id": "g01",
+            "sha256": "4262df346655504ae8e99fc786dc6c068dc3030230b71c10864c7a179dd6b5e9",
+            "split": "train"
+        },
+        {
+            "id": "g02",
+            "sha256": "97f71b5aa5ae02ff3adddb4fe9dbb3fb1b7c0595274a0aee533272cb7b8bbd86",
+            "split": "train"
+        },
+        {
+            "id": "g03",
+            "sha256": "6be1eb7bc0b2b244ddf8b03d799256b7cf6c636781e286aae3890922b03137c3",
+            "split": "train"
+        },
+        {
+            "id": "g04",
+            "sha256": "0b93b92dde0a69e6d6a4b3170208924e50beedd674eaaf90e21f0fff93da1472",
+            "split": "train"
+        },
+        {
+            "id": "g05",
+            "sha256": "a055451c77e55742ad2b11baceba0ce8570b216ff94ccf85daa81821d2b3ba6a",
+            "split": "train"
+        },
+        {
+            "id": "g06",
+            "sha256": "70300a4e613552ef47bb51a88d960bd2359b06c856a32a47a2bbdd4510e9544f",
+            "split": "train"
+        },
+        {
+            "id": "g07",
+            "sha256": "04c29f85a49f470f1d491d6ce3a48e702e6e1cccbc9e565341cb3d7d0bfc1b6e",
+            "split": "train"
+        },
+        {
+            "id": "g08",
+            "sha256": "9a2171ec1750a1f111b8f0ce017d457e2be79e23c2ab2c9f37c736755c7a1322",
+            "split": "train"
+        },
+        {
+            "id": "g09",
+            "sha256": "2b52476c14f4d1d9c8bee8bd4d4aa2a13b491c8af5799ac2e924f02357834831",
+            "split": "train"
+        },
+        {
+            "id": "g10",
+            "sha256": "a96a2d0df83ce2167391b199774682a1423079c56660415627612d2d20a0ee33",
+            "split": "train"
+        },
+        {
+            "id": "g11",
+            "sha256": "1a87b9cae11bc280c933570c030b63f50716669d5682d629d1c8425411b23db9",
+            "split": "train"
+        },
+        {
+            "id": "g12",
+            "sha256": "51a510e30d9392c0b6ffec31d6f45f0f9a1ca61dfc66e4fbb43d661efa303f7a",
+            "split": "train"
+        },
+        {
+            "id": "g13",
+            "sha256": "ec7497445c1c14cdb2bd777d54221b06aa3185b4766598231a1fbe9f384372dc",
+            "split": "train"
+        },
+        {
+            "id": "g14",
+            "sha256": "9bcaa9f93ece1bb5bb1f1c7cd148f51f4bd32aa2e987fbbf3962ca83723991aa",
+            "split": "train"
+        },
+        {
+            "id": "g15",
+            "sha256": "6047ab98f997906d0444e8fcf13d09e30213abb67901251d1ddb73ee7cdcea95",
+            "split": "train"
+        },
+        {
+            "id": "g16",
+            "sha256": "192517e8c175cf5fbf223e80c500074c443d9c8ee1f206a18fa5f7e7d2b4c0a0",
+            "split": "train"
+        },
+        {
+            "id": "g17",
+            "sha256": "2a72d9cb49be90897922436178460f0300045ca6a321f92ab8b648adb64e3be6",
+            "split": "train"
+        },
+        {
+            "id": "g18",
+            "sha256": "1a0aa43af9f62a29eebd9720c4c6e2be98b9484df9069a9a471996f7d790c5ef",
+            "split": "heldout"
+        },
+        {
+            "id": "g19",
+            "sha256": "88a116b8a4e7bd1f5fb74b40ef4f03e638eaa3924246c3b62ba5555c8457d0e9",
+            "split": "train"
+        },
+        {
+            "id": "g20",
+            "sha256": "863b71e7114ac7387de538dc1f768a186fdfa9678699e2fb2cea044cee766de6",
+            "split": "heldout"
+        },
+        {
+            "id": "g21",
+            "sha256": "16899b37954052f11ab94cc8a84483d8ee850a6dfcd5c645263227bf5ebf1a40",
+            "split": "train"
+        },
+        {
+            "id": "g22",
+            "sha256": "30188d194db266275339414c443ceabba7a6acb39000b1542026d47bc398c5fb",
+            "split": "train"
+        },
+        {
+            "id": "g23",
+            "sha256": "74d06979d6bd6200bd7bb981b6a0543d9e8faa03c2ebb98577d563f35de77376",
+            "split": "train"
+        },
+        {
+            "id": "g24",
+            "sha256": "22f33c220e5cc1e1f13e6d1eefe7c95cf8d00bf1951ce27c6cceac32d997681b",
+            "split": "train"
+        },
+        {
+            "id": "g25",
+            "sha256": "9f1fd1f23ceab9ba5e9dcf4a96f4ea128b72ac0513566885150f98f159b25bf6",
+            "split": "train"
+        },
+        {
+            "id": "g26",
+            "sha256": "61e7419d799d65f2cd38e81e0221ec861ad3922491e7a3d80e492e14b150f79c",
+            "split": "heldout"
+        },
+        {
+            "id": "g27",
+            "sha256": "fdda9f2cde45a68b9c6844d8fc1faa9b66ac128d79a2ac82a2c0e2c07ed5bd67",
+            "split": "heldout"
+        },
+        {
+            "id": "g28",
+            "sha256": "cb227e87e0b17e39968ca713509033213a2a1a67741bb81c042b61261f6daf8f",
+            "split": "train"
+        },
+        {
+            "id": "g29",
+            "sha256": "26a2a41c9930124896f6576199001a8557b97f75d5a7b37190734f32223fdbce",
+            "split": "train"
+        },
+        {
+            "id": "g30",
+            "sha256": "47b2ad6c5a49853960098c4406846eb060f6884d97a94ddfa4efcb8ffc09434c",
+            "split": "train"
+        },
+        {
+            "id": "g31",
+            "sha256": "eb35c798dcedfa1882780c9273aa8dd47dfa4b9573cc8cdada1c5b2325267e16",
+            "split": "train"
+        },
+        {
+            "id": "g32",
+            "sha256": "a383d8c8c93c9e0fce2e4e5acea82f98420f1fd1e7e466e057d81c71eafd114c",
+            "split": "heldout"
+        },
+        {
+            "id": "g33",
+            "sha256": "6b567f8b2de6d518da8a6aca4c66ebb08e6b7c49577d9cc24eff221a3a65a4dd",
+            "split": "heldout"
+        },
+        {
+            "id": "g34",
+            "sha256": "3181279dac1a2d86fa4d109cb3d8fd64353173a84becb67479f399b3fb2937af",
+            "split": "train"
+        },
+        {
+            "id": "g35",
+            "sha256": "4702c376694f81b00e1813ac08e128c8fa29978f82fc046c3ed9c3e956015b98",
+            "split": "train"
+        },
+        {
+            "id": "g36",
+            "sha256": "4160b64d2fe58a7bb7fc901225554c6acbc7c226df8fac0f3c4d148c90ba596f",
+            "split": "train"
+        },
+        {
+            "id": "g37",
+            "sha256": "9df095229bb00b0c72b93e16a481a7078025c1e471fe25ab266fb19a317eb994",
+            "split": "train"
+        },
+        {
+            "id": "g38",
+            "sha256": "626db7392c4495b512b59ec4de5c1d8138ca3dee3413928019a5506a4fba3a89",
+            "split": "train"
+        },
+        {
+            "id": "g39",
+            "sha256": "28bb3e8b9b74c6c9a30ce3336e942d51d8507fde80118b2c1d1bf71c8404745a",
+            "split": "heldout"
+        },
+        {
+            "id": "g40",
+            "sha256": "add2e215073d0e5e759006b9a8338d75565c8ed15037f7fc876d27cfa7c33953",
+            "split": "train"
+        },
+        {
+            "id": "g41",
+            "sha256": "56a9d4550cbdce6e23c539c2ae8b812de0567ba34941b440bb130002a638c883",
+            "split": "train"
+        },
+        {
+            "id": "g42",
+            "sha256": "98db3259043af0a335d748349eaefa5488b7455c3d829d0ee9cef402e2db331f",
+            "split": "train"
+        },
+        {
+            "id": "g43",
+            "sha256": "893e64e7b9bafbf236c45c0bf9a4c0a4990fa5879564928b4f1d4f570060c712",
+            "split": "heldout"
+        },
+        {
+            "id": "g44",
+            "sha256": "1e02e2799a420129b7205d6ec2c64f604059e4d50e29cf9fa73aaae9f80feef0",
+            "split": "train"
+        },
+        {
+            "id": "g45",
+            "sha256": "ecd7407d906085cc24d0eb3f47680c373df1c3105a7bc803eed9619cf44eb3e2",
+            "split": "train"
+        },
+        {
+            "id": "g46",
+            "sha256": "bbc2f60ba7f543400cf099064d6647447b70e1706f82a6e66a44e3c2bb2c7768",
+            "split": "train"
+        },
+        {
+            "id": "g47",
+            "sha256": "466fe62a436defff9bb7ad290d931bc4c7b3f7de3d679af98f875bdaa5b58dff",
+            "split": "train"
+        },
+        {
+            "id": "g48",
+            "sha256": "80baf8fd5027fa2ff3246ebe9c53232ef1f43dbfd30120c8498479e957462906",
+            "split": "heldout"
+        },
+        {
+            "id": "g49",
+            "sha256": "d61a2663c6030891a41bc5406d61d84d2bd10cfbd1cce3881a0111705a92ef71",
+            "split": "train"
+        },
+        {
+            "id": "g50",
+            "sha256": "29401f245def8c0088a491d781906bfbc103d1e05f6a0df3a43094c6a0f04f75",
+            "split": "heldout"
+        }
+    ],
+    "n_items": 50,
+    "seed": 1234
+}

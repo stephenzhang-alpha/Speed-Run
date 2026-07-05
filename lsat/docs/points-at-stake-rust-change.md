@@ -47,7 +47,7 @@ entries = col.sched.points_at_stake_queue(
    Re-deriving retrievability in Python would drift from what the engine
    believes and could disagree with the scheduler.
 3. **Shared engine → ships to both platforms once.** The Rust backend is wrapped
-   by the desktop app *and* AnkiDroid. Implementing the queue once in Rust gives
+   by the desktop app _and_ AnkiDroid. Implementing the queue once in Rust gives
    identical behaviour on desktop and Android, with a single type-safe protobuf
    contract across Rust, Python, and TypeScript/Kotlin. A Python reimplementation
    would not exist on Android, would diverge, and would be slow.
@@ -124,7 +124,7 @@ both of which rebase cleanly unless upstream reorders those exact lines.
 - The candidate set is "due" cards (`is:due`) in the deck (and children), gathered
   via Anki's existing search. This standalone RPC powers the dashboard's "single
   best next thing to study" and an ordered study session; making it drive the
-  *default* reviewer order would require editing the shared `QueueBuilder` and is
+  _default_ reviewer order would require editing the shared `QueueBuilder` and is
   intentionally deferred.
 - The 0.5 / 0.5 recall↔performance blend is a documented default; it will be
   tuned and stated in the model notes.

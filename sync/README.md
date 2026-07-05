@@ -31,14 +31,14 @@ out/pyenv/bin/python sync/validate.py
 
 Observed result (all pass):
 
-| Scenario | What it proves |
-| --- | --- |
-| device-id per-device | the two collections keep **distinct** `device_id`s after a full download |
-| 10+10 no-loss/no-double | 20 distinct `revlog` ids on both sides, zero duplicates |
-| same-card conflict | **both** revlog rows preserved; the card's current state **converges** to one documented winner |
-| event-log set-union | both graded events present once on both sides (keyed by id) |
-| wrong-clock (HLC LWW) | a device with a 10-day-stale clock still gets the greater HLC and wins correctly |
-| interrupted/retry | re-syncing changes nothing (idempotent) |
+| Scenario                | What it proves                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| device-id per-device    | the two collections keep **distinct** `device_id`s after a full download                        |
+| 10+10 no-loss/no-double | 20 distinct `revlog` ids on both sides, zero duplicates                                         |
+| same-card conflict      | **both** revlog rows preserved; the card's current state **converges** to one documented winner |
+| event-log set-union     | both graded events present once on both sides (keyed by id)                                     |
+| wrong-clock (HLC LWW)   | a device with a 10-day-stale clock still gets the greater HLC and wins correctly                |
+| interrupted/retry       | re-syncing changes nothing (idempotent)                                                         |
 
 ## Layer 1 — standard collection (Anki's native sync)
 
@@ -51,7 +51,7 @@ Cards, notes, **revlog**, decks, and config sync via the server, tracked by
   none lost or doubled).
 - **Deletions** propagate via the `graves` table.
 - **Same card on two devices:** both revlog rows are preserved (history is never
-  double-counted); the card's *current* scheduling state resolves to one side and
+  double-counted); the card's _current_ scheduling state resolves to one side and
   both devices **converge** to it on the next sync (verified). We do not assert an
   internal tiebreak from memory — the validation records the observed converged
   state.
@@ -84,7 +84,7 @@ We make it correct and adversary-proof with two design choices:
    `max(local clock, last-seen physical time)` and bumps the counter on ties, so
    it stays monotonic **even if a device's wall clock is wrong**. The HLC baseline
    syncs via collection config so devices stay monotonic relative to each other —
-   but whole-map config last-writer-wins could *lower* that baseline on a sync. To
+   but whole-map config last-writer-wins could _lower_ that baseline on a sync. To
    stop a lowered baseline from minting a stamp **below an event that already
    exists**, each mint first **reconciles the baseline against the append-only
    event log** (which set-unions and is never lost): the baseline is raised to at
@@ -105,7 +105,7 @@ We make it correct and adversary-proof with two design choices:
 Both records we persist today are append-only, so **no production record
 currently resolves by last-writer-wins.** The LWW half of the rule is implemented
 as the reusable primitive `lsat.events.resolve_lww` (order by HLC, tie-break on
-`device_id`) — kept ready for a *future* genuinely-mutable derived snapshot, and
+`device_id`) — kept ready for a _future_ genuinely-mutable derived snapshot, and
 exercised directly by the wrong-clock validation (`sync/validate.py`) to prove a
 skewed clock cannot win it. The append-only logs are `lsat.events`
 (`append_event` / `read_events` / `fold_recent_performance`) and

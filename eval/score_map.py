@@ -61,7 +61,36 @@ def run(seed: int = config.RANDOM_SEED, **_kwargs: Any) -> dict[str, Any]:
         high = 180
     low, high = max(120, low), min(180, high)
     width_half = (high - low) // 2
-    passed = (high - low) >= 2 * config.SCORE_MIN_RANGE_POINTS
+    # A width-only check is tautological: the +/-3 floor above guarantees
+    # (high-low) >= 2*SCORE_MIN_RANGE_POINTS for ANY mapping, so it can never fail
+    # and never exercises the shipped raw_to_scaled. Gate on what the floor does NOT
+    # guarantee, so a broken mapping (constant, inverted, or off-scale) is caught:
+    #  - responsive:  more correct answers must yield a strictly higher score;
+    #  - in_scale:    every score (endpoints, point, and the reported band) in 120-180;
+    #  - band_ok:     the Monte-Carlo band brackets the point (not inverted);
+    #  - width_ok:    the reported range still honors the >= +/-3 floor.
+    # Check the WHOLE mapping, not just the endpoints: every additional correct
+    # answer must not lower the score (non-decreasing), and more-correct must beat
+    # fewer-correct overall (strict at the ends). Non-decreasing (rather than
+    # strictly increasing everywhere) tolerates legitimate plateaus in the equating
+    # table while still catching a middle dip / inversion an endpoints-only check missed.
+    scores_by_raw = [raw_to_scaled(r, _N_ITEMS) for r in range(_N_ITEMS + 1)]
+    lo_score, hi_score = scores_by_raw[0], scores_by_raw[-1]
+
+    def _responsive(scores: list[float]) -> bool:
+        return scores[0] < scores[-1] and all(
+            a <= b for a, b in zip(scores, scores[1:])
+        )
+
+    responsive = _responsive(scores_by_raw)
+    in_scale = all(120 <= s <= 180 for s in (point, low, high, lo_score, hi_score))
+    band_ok = mc_lo <= point <= mc_hi
+    width_ok = (high - low) >= 2 * config.SCORE_MIN_RANGE_POINTS
+    passed = responsive and in_scale and band_ok and width_ok
+    # Committed gate-teeth: a constant or inverted equating table must FAIL the
+    # responsive check (so a reviewer sees the gate is not vacuous, from the snapshot).
+    _const = _responsive([150.0] * (_N_ITEMS + 1))
+    _inverted = _responsive([180.0 - (s - 120.0) for s in scores_by_raw])
     return {
         "name": "score_map",
         "passed": passed,
@@ -73,6 +102,16 @@ def run(seed: int = config.RANDOM_SEED, **_kwargs: Any) -> dict[str, Any]:
         "mc_band": [round(mc_lo, 1), round(mc_hi, 1)],
         "trials": _TRIALS,
         "n_items": _N_ITEMS,
+        "endpoints": [lo_score, hi_score],
+        "n_monotone_checks": _N_ITEMS,
+        # negative controls: broken equating tables that MUST fail `responsive`.
+        "controls": {
+            "shipped_responsive": responsive,
+            "constant_responsive": _const,
+            "inverted_responsive": _inverted,
+        },
         "detail": f"projected {point} range {low}-{high} (>= +/-{config.SCORE_MIN_RANGE_POINTS}); "
+        f"endpoints {lo_score}->{hi_score}; gate-teeth: constant & inverted equating "
+        f"tables both fail responsive ({_const}, {_inverted}), shipped passes ({responsive}); "
         "method: Monte-Carlo raw->scaled via documented equating table",
     }

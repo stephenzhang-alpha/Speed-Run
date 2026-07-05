@@ -282,6 +282,62 @@ def append_event(
     return note.id
 
 
+# -- idempotency (at-least-once replay guard) ---------------------------------
+#
+# The offline PWA queue (``ts/lib/lsat/client.ts``) drops a queued submission only
+# AFTER the server acks it, so a lost ack -- the radio dropping during the response,
+# after the event was already committed -- makes the client re-POST a submission the
+# server already recorded. Without a guard that re-POST would append a SECOND event,
+# breaking the "one PerformanceEvent per submission" invariant. Each queued
+# submission therefore carries a stable client-generated ``_idempotency`` id; the
+# server records ``id -> result`` for every processed submission in a bounded ring
+# and, on an id it has already seen, returns the stored result WITHOUT appending
+# again. The ring lives in config (which syncs, so the dedup even survives a restore)
+# -- never in the append-only event log. It is FIFO-bounded to ``IDEMPOTENCY_CAP``
+# distinct keys, so the guarantee is "no duplicate within the last N submissions":
+# ample for a single phone whose retry lands on the very next reconnect, and past
+# the window the worst case is one stale replay logging a single duplicate -- the log
+# can never be corrupted, only marginally over-counted in an implausible tail.
+
+IDEMPOTENCY_CONFIG_KEY = "lsat:idempotency"
+IDEMPOTENCY_CAP = 256
+
+
+def idempotent_lookup(col: Collection, key: str) -> dict | None:
+    """Return the stored result for an already-processed submission ``key``, or
+    ``None`` if unseen (or evicted past the bounded window). Empty key = no dedup."""
+    if not key:
+        return None
+    store = col.get_config(IDEMPOTENCY_CONFIG_KEY, None)
+    if not isinstance(store, dict):
+        return None
+    entry = store.get("map", {}).get(key)
+    return entry if isinstance(entry, dict) else None
+
+
+def idempotent_remember(col: Collection, key: str, result: dict) -> None:
+    """Record ``key -> result`` so a later replay of the same submission returns the
+    stored result instead of appending a duplicate. FIFO-bounded to
+    ``IDEMPOTENCY_CAP`` keys; a key already present is left untouched (keep the first
+    result + its queue position, so a re-remember can't refresh a key past eviction)."""
+    if not key or not isinstance(result, dict):
+        return
+    store = col.get_config(IDEMPOTENCY_CONFIG_KEY, None)
+    if not isinstance(store, dict) or not isinstance(store.get("order"), list) or not isinstance(
+        store.get("map"), dict
+    ):
+        store = {"order": [], "map": {}}
+    order: list = store["order"]
+    mapping: dict = store["map"]
+    if key in mapping:
+        return
+    order.append(key)
+    mapping[key] = result
+    while len(order) > IDEMPOTENCY_CAP:
+        mapping.pop(order.pop(0), None)
+    col.set_config(IDEMPOTENCY_CONFIG_KEY, {"order": order, "map": mapping})
+
+
 # -- read + fold --------------------------------------------------------------
 
 
@@ -486,10 +542,6 @@ MISCONCEPTION_QUEUE_CONFIG_KEY = "lsat:misconception_queue"
 
 def misconception_queue_enabled(col: Collection) -> bool:
     return bool(col.get_config(MISCONCEPTION_QUEUE_CONFIG_KEY, True))
-
-
-def set_misconception_queue(col: Collection, enabled: bool) -> None:
-    col.set_config(MISCONCEPTION_QUEUE_CONFIG_KEY, bool(enabled))
 
 
 def misconception_penalty(

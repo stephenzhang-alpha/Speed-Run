@@ -142,7 +142,10 @@ def give_up_status(
 
     ok_graded = n_graded >= gu.min_graded_performance_items
     ok_lr = lr_cov >= gu.min_lr_question_type_coverage
-    ok_rc = not rc_missing
+    # Honor the taxonomy flag (it was parsed but never read): when
+    # require_each_rc_question_type is false, an untested RC type does not block
+    # readiness (and the "missing" message below is skipped, since it keys on ok_rc).
+    ok_rc = (not gu.require_each_rc_question_type) or not rc_missing
     ok_timed = n_timed >= gu.min_timed_items
     ok_calib = ece is not None and ece <= gu.max_heldout_calibration_ece
     # Only enforceable once measurable; underconfidence never blocks.

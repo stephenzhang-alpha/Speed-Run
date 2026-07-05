@@ -11,7 +11,7 @@ hallucinated step is never served; the correct move is withheld until submit.
 Mirrors ChainDrill's states, double-submit guard, and styling.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     import Card from "./Card.svelte";
     import * as client from "./client";
@@ -24,8 +24,8 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
     let state: State = "loading";
     let result: WorkedStepResult | null = null;
     let picked = "";
-    let error = "";
     let shownAt = 0;
+    let nextBtn: HTMLButtonElement | undefined;
 
     // Provenance label (the tier is always "proven" — every served worked example
     // is oracle-derived or oracle-verified; the source just says how).
@@ -42,7 +42,6 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
         state = "loading";
         result = null;
         picked = "";
-        error = "";
         try {
             const d = await client.workedExampleDrill();
             if (d.done || !d.item_id) {
@@ -54,7 +53,7 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
             shownAt = Date.now();
             state = "asking";
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -71,8 +70,10 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
                 moveId,
                 Date.now() - shownAt,
             );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -83,19 +84,24 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
 {#if state === "loading"}
     <Card><p class="muted">Loading&hellip;</p></Card>
 {:else if state === "done"}
-    <Card title="No worked examples right now"><p class="muted">Check back later.</p></Card>
+    <Card title="No worked examples right now">
+        <p class="muted">Check back later.</p>
+    </Card>
 {:else if state === "error"}
     <Card title="Couldn't load a worked example">
-        <p class="muted">{error}</p>
+        <p class="muted">Couldn't reach the server. Try again.</p>
         <button class="next" on:click={load}>Try again</button>
     </Card>
 {:else if drill}
-    <Card title="Worked example" subtitle="Finish the proof: pick the step that reaches the goal">
+    <Card
+        title="Worked example"
+        subtitle="Finish the proof: pick the step that reaches the goal"
+    >
         <div class="receipt" title={drill.verification?.claim ?? ""}>
             <ProvenanceBadge tier="proven" label={sourceLabel(drill.source)} />
         </div>
         <ul class="premises">
-            {#each drill.premises as p (p)}
+            {#each drill.premises as p, i (i)}
                 <li>{p}</li>
             {/each}
         </ul>
@@ -105,28 +111,37 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
         </div>
         {#if drill.shown_steps.length}
             <ol class="steps">
-                {#each drill.shown_steps as s (s)}
-                    <li><span class="tick" aria-hidden="true">✓</span>{s}</li>
+                {#each drill.shown_steps as s, i (i)}
+                    <li>
+                        <span class="tick" aria-hidden="true">✓</span>
+                        {s}
+                    </li>
                 {/each}
             </ol>
         {/if}
         {#if drill.verification}
             <p class="proof-note">
-                {drill.verification.steps_verified} step{drill.verification.steps_verified === 1
+                {drill.verification.steps_verified} step{drill.verification
+                    .steps_verified === 1
                     ? ""
-                    : "s"} verified by {drill.verification.method}. A step an AI proposes that
-                doesn't check out is discarded — a hallucinated step can't appear here.
+                    : "s"} verified by {drill.verification.method}. A step an AI
+                proposes that doesn't check out is discarded — a hallucinated step can't
+                appear here.
             </p>
         {/if}
         <p class="prompt">{drill.prompt}</p>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !result}>
             {#each drill.options as opt (opt.move_id)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === opt.move_id}
-                    class:right={result?.graded && result.correct && picked === opt.move_id}
-                    class:wrong={result?.graded && !result.correct && picked === opt.move_id}
+                    class:right={result?.graded &&
+                        result.correct &&
+                        picked === opt.move_id}
+                    class:wrong={result?.graded &&
+                        !result.correct &&
+                        picked === opt.move_id}
                     disabled={state !== "asking"}
                     on:click={() => pick(opt.move_id)}
                 >
@@ -135,11 +150,15 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
             {/each}
         </div>
 
+        {#if state === "answered" && !result}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && result}
             {#if result.graded}
-                <p class="verdict" class:ok={result.correct}>
+                <p class="verdict" class:ok={result.correct} aria-live="polite">
                     {result.correct
-                        ? `Correct — that reaches “${result.to_text}”, completing the chain.`
+                        ? `Correct — that reaches “${result.to_text ?? drill.goal}”, completing the chain.`
                         : "Not quite — that step doesn't complete the chain to the goal."}
                 </p>
                 {#if result.note}
@@ -151,7 +170,9 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
             {:else}
                 <p class="muted">{result.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next worked example</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>
+                Next worked example
+            </button>
         {/if}
     </Card>
 {/if}
@@ -160,6 +181,11 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
     .muted {
         color: var(--lsat-fg-subtle);
         margin: 0;
+    }
+    .checking {
+        margin: 0.6rem 0 0;
+        font-size: 0.85rem;
+        color: var(--lsat-fg-subtle);
     }
     /* Proof receipt: the visible "this is verified, not vibes" trust marker. */
     .receipt {
@@ -254,6 +280,10 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
     .opt:disabled {
         cursor: default;
     }
+    .opt:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     .opt.picked {
         border-width: 2px;
     }
@@ -299,10 +329,14 @@ Mirrors ChainDrill's states, double-submit guard, and styling.
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: white;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 
     @media (prefers-reduced-motion: reduce) {

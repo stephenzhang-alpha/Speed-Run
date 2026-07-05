@@ -47,17 +47,32 @@ readiness band-widening under measured overconfidence as geometry.
 
 {#if available}
     <div class="band earned" class:inked class:widened>
-        <div class="scale" role="img" aria-label={`${point}${unit}, interval ${low} to ${high}`}>
+        <div
+            class="scale"
+            role="img"
+            aria-label={low != null && high != null
+                ? `${point}${unit}, interval ${low}${unit} to ${high}${unit}`
+                : `${point}${unit}`}
+        >
             <div class="track"></div>
             <div class="ci" style="left:{loPct}%;width:{spanPct}%"></div>
             {#if widened}
-                <div class="widen-cap" style="left:{loPct}%;width:{spanPct}%" aria-hidden="true"></div>
+                <div
+                    class="widen-cap"
+                    style="left:{loPct}%;width:{spanPct}%"
+                    aria-hidden="true"
+                ></div>
             {/if}
             <div class="tick" style="left:{ptPct}%"></div>
         </div>
-        <div class="ends"><span>{min}{unit}</span><span>{max}{unit}</span></div>
+        <div class="ends">
+            <span>{min}{unit}</span>
+            <span>{max}{unit}</span>
+        </div>
         {#if widened}
-            <p class="widen-note">Band widened — your confidence runs ahead of your accuracy.</p>
+            <p class="widen-note">
+                Band widened — your confidence runs ahead of your accuracy.
+            </p>
         {/if}
     </div>
 {:else}
@@ -71,7 +86,8 @@ readiness band-widening under measured overconfidence as geometry.
         {#if earnedNote}
             <p class="meter-cap">
                 <span class="ev">{earnedNote}</span>
-                {#if unlockLabel}<span class="arrow" aria-hidden="true">→</span> {unlockLabel}{/if}
+                {#if unlockLabel}<span class="arrow" aria-hidden="true">→</span>
+                    {unlockLabel}{/if}
             </p>
         {/if}
     </div>

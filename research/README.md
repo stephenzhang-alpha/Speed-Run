@@ -29,7 +29,7 @@ and a **binding decision** — then the features were implemented in the codebas
 
 ## What we shipped
 
-The unifying idea: **capture *how* you got a question wrong, not just whether.**
+The unifying idea: **capture _how_ you got a question wrong, not just whether.**
 Plain Anki and every LSAT competitor record only right/wrong; we store, per
 answer, the **distractor you picked**, a one-tap **confidence**, and the
 **timed-vs-untimed phase** — the keystone that unlocks everything else.
@@ -41,18 +41,18 @@ Misconception Engine (the Rust queue), (4) the Timed Section Runner + Execution
 Diagnostics, and (5) Three Honest Scores + Readiness. The table below is the
 mechanism-level record; each row folds under one of those five.
 
-| Feature | Code | Status |
-|---|---|---|
-| Keystone: per-answer `chosen`/`confidence`/`phase` store | `lsat/events.py`, `lsat/notetypes.py`, `qt/aqt/lsat_performance.py` | shipped |
-| ZPD Daily Engine (~85%) | `lsat/selection.py` | shipped |
-| Distractor-Reasoning: trap fingerprint + "which trap?" tap + queue boost | `lsat/error_patterns.py`, item template, `topic_weights_for_queue` | shipped |
-| Calibration + Hypercorrection spaced queue | `lsat/models/calibration.py` | shipped |
-| Blind-Review "Gap Map" + Choke/Pacing | `lsat/blind_review.py`, `lsat/pacing.py` | shipped |
-| Fluency Gates (+ Structure Sprints) | `lsat/models/fluency.py` | shipped |
-| Transfer Meter (report-only honesty layer) | `eval/transfer.py`, `struct.*` in taxonomy | shipped |
-| Dashboard "How you get questions wrong" panels | `lsat/dashboard_data.py`, `ts/routes/lsat-dashboard/` | shipped |
+| Feature                                                                  | Code                                                                | Status  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------- | ------- |
+| Keystone: per-answer `chosen`/`confidence`/`phase` store                 | `lsat/events.py`, `lsat/notetypes.py`, `qt/aqt/lsat_performance.py` | shipped |
+| ZPD Daily Engine (~85%)                                                  | `lsat/selection.py`                                                 | shipped |
+| Distractor-Reasoning: trap fingerprint + "which trap?" tap + queue boost | `lsat/error_patterns.py`, item template, `topic_weights_for_queue`  | shipped |
+| Calibration + Hypercorrection spaced queue                               | `lsat/models/calibration.py`                                        | shipped |
+| Blind-Review "Gap Map" + Choke/Pacing                                    | `lsat/blind_review.py`, `lsat/pacing.py`                            | shipped |
+| Fluency Gates (+ Structure Sprints)                                      | `lsat/models/fluency.py`                                            | shipped |
+| Transfer Meter (report-only honesty layer)                               | `eval/transfer.py`, `struct.*` in taxonomy                          | shipped |
+| Dashboard "How you get questions wrong" panels                           | `lsat/dashboard_data.py`, `ts/routes/lsat-dashboard/`               | shipped |
 
-**Deferred (gated), per the decision:** AI-generated spaced *distractor-rejection*
+**Deferred (gated), per the decision:** AI-generated spaced _distractor-rejection_
 cards (gated on the checker's false-pass bar), Structure Twins (gated on the
 Transfer Meter), a faithful full-section simulator (data-blocked), and BKT
 (must beat the recency fold on held-out AUC). CDM/DKT and a daily 50%-difficulty
@@ -66,8 +66,8 @@ items at equal study time — never "2 sigma." Every effect ships as a measured
 
 [`ai-features-for-faster-prep.md`](ai-features-for-faster-prep.md) is a separate,
 forward-looking study (same multi-agent research→debate→red-team→critique method)
-answering: *what LLM-powered features would help a candidate prep **faster**, without
-breaking the honesty discipline?* It ranks six AI features by
+answering: _what LLM-powered features would help a candidate prep **faster**, without
+breaking the honesty discipline?_ It ranks six AI features by
 `prep-speed × feasibility × honesty`, quantifies the honest per-feature speed ceiling
 with cited effect sizes, red-teams each on six risk axes, and lays out a build roadmap —
 including the one load-bearing unlock (the dead semantic-leakage signal in

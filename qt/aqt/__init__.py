@@ -111,7 +111,15 @@ import aqt.forms
 
 
 from aqt import addcards, addons, browser, editcurrent, filtered_deck  # isort:skip
-from aqt import stats, about, preferences, mediasync, lsat_dashboard, lsat_performance  # isort:skip
+from aqt import (
+    about,
+    lsat_dashboard,
+    lsat_mobile,
+    lsat_performance,
+    mediasync,
+    preferences,
+    stats,
+)  # isort:skip
 
 # Anki for LSAT: capture graded LSAT Item answers posted from the reviewer.
 lsat_performance.register_lsat_performance()
@@ -130,6 +138,7 @@ class DialogManager:
         "Preferences": [preferences.Preferences, None],
         "sync_log": [mediasync.MediaSyncDialog, None],
         "LSATDashboard": [lsat_dashboard.LsatDashboardDialog, None],
+        "LSATPractice": [lsat_mobile.LsatPracticeDialog, None],
     }
 
     def open(self, name: str, *args: Any, **kwargs: Any) -> Any:
@@ -461,7 +470,10 @@ def parseArgs(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument("-p", "--profile", help="profile name to load", default="")
     parser.add_argument("-l", "--lang", help="interface language (en, de, etc)")
     parser.add_argument(
-        "-v", "--version", help="print the LSAT Prep version and exit", action="store_true"
+        "-v",
+        "--version",
+        help="print the LSAT Prep version and exit",
+        action="store_true",
     )
     parser.add_argument(
         "--safemode", help="disable add-ons and automatic syncing", action="store_true"

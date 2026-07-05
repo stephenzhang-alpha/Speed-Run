@@ -28,6 +28,7 @@ out/eval/              # plots, metrics.json, report.md
 ```
 
 Entry point (mirrors `make bench`):
+
 ```bash
 make eval       # -> python -m eval.run
 ```
@@ -82,6 +83,7 @@ Turn per-item P(correct) into a 120–180 projection.
 ## The leakage check (7e) — a hard gate
 
 Scan everything used for training/generation for any held-out item or near-copy:
+
 1. **Normalized match:** lowercase, strip punctuation/whitespace → exact and substring matches.
 2. **Embedding match:** cosine ≥ `LEAK_COSINE_MAX` → flag (catches paraphrases, the real LSAT risk).
 

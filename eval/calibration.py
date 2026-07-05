@@ -40,6 +40,15 @@ def run(seed: int = config.RANDOM_SEED, **_kwargs: Any) -> dict[str, Any]:
     model_ece = ece(preds, ys)
     over_ece = ece(over_preds, ys)
     passed = model_ece <= config.ECE_MAX
+    # Self-test the "gate has teeth" claim rather than trusting prose: the
+    # overconfident negative control MUST exceed the gate. Raise (not assert -- assert
+    # is stripped under python -O) if the control is vacuous.
+    overconfident_fails = over_ece > config.ECE_MAX
+    if not overconfident_fails:
+        raise AssertionError(
+            f"calibration negative control is vacuous: overconfident ECE={over_ece:.4f} "
+            f"does not exceed the gate {config.ECE_MAX}"
+        )
     return {
         "name": "calibration",
         "passed": passed,
@@ -49,6 +58,7 @@ def run(seed: int = config.RANDOM_SEED, **_kwargs: Any) -> dict[str, Any]:
         "brier": round(brier(preds, ys), 4),
         "log_loss": round(log_loss(preds, ys), 4),
         "overconfident_ece": round(over_ece, 4),
+        "overconfident_fails": overconfident_fails,
         "reliability": [
             {
                 "bin": f"{b['lo']:.1f}-{b['hi']:.1f}",

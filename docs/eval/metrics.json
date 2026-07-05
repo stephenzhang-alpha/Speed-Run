@@ -1,0 +1,690 @@
+[
+    {
+        "detail": "content-aware split: 40 train / 10 heldout (seed=1234); manifest.json written",
+        "manifest_path": "/Users/stephenzhang/Documents/Speed Run/out/eval/manifest.json",
+        "n_heldout": 10,
+        "n_train": 40,
+        "name": "split",
+        "passed": null
+    },
+    {
+        "brier": 0.1662,
+        "detail": "ECE=0.0198 (max 0.05); an overconfident predictor scores ECE=0.1097 and would fail",
+        "ece": 0.0198,
+        "ece_max": 0.05,
+        "gate": true,
+        "log_loss": 0.4997,
+        "n": 2000,
+        "name": "calibration",
+        "overconfident_ece": 0.1097,
+        "overconfident_fails": true,
+        "passed": true,
+        "reliability": [
+            {
+                "bin": "0.0-0.1",
+                "n": 198,
+                "obs": 0.056,
+                "pred": 0.054
+            },
+            {
+                "bin": "0.1-0.2",
+                "n": 194,
+                "obs": 0.129,
+                "pred": 0.152
+            },
+            {
+                "bin": "0.2-0.3",
+                "n": 186,
+                "obs": 0.172,
+                "pred": 0.25
+            },
+            {
+                "bin": "0.3-0.4",
+                "n": 196,
+                "obs": 0.352,
+                "pred": 0.347
+            },
+            {
+                "bin": "0.4-0.5",
+                "n": 217,
+                "obs": 0.456,
+                "pred": 0.45
+            },
+            {
+                "bin": "0.5-0.6",
+                "n": 205,
+                "obs": 0.566,
+                "pred": 0.551
+            },
+            {
+                "bin": "0.6-0.7",
+                "n": 198,
+                "obs": 0.657,
+                "pred": 0.647
+            },
+            {
+                "bin": "0.7-0.8",
+                "n": 197,
+                "obs": 0.701,
+                "pred": 0.749
+            },
+            {
+                "bin": "0.8-0.9",
+                "n": 191,
+                "obs": 0.832,
+                "pred": 0.844
+            },
+            {
+                "bin": "0.9-1.0",
+                "n": 218,
+                "obs": 0.945,
+                "pred": 0.95
+            }
+        ]
+    },
+    {
+        "accuracy": 0.7053,
+        "auc_delta": 0.1009,
+        "auc_delta_min": 0.05,
+        "auc_delta_null": 0.0,
+        "auc_memory_only": 0.685,
+        "auc_performance": 0.786,
+        "brier": 0.1883,
+        "detail": "performance AUC 0.786 vs memory-only 0.685 (delta +0.101, min 0.05); null-signal control (difficulty removed) delta +0.000 < 0.05 -> gate has teeth",
+        "gate": true,
+        "n": 1500,
+        "name": "performance",
+        "null_would_fail": true,
+        "passed": true
+    },
+    {
+        "controls": {
+            "constant_responsive": false,
+            "inverted_responsive": false,
+            "shipped_responsive": true
+        },
+        "detail": "projected 141 range 137-145 (>= +/-3); endpoints 120.0->180.0; gate-teeth: constant & inverted equating tables both fail responsive (False, False), shipped passes (True); method: Monte-Carlo raw->scaled via documented equating table",
+        "endpoints": [
+            120.0,
+            180.0
+        ],
+        "gate": true,
+        "mc_band": [
+            137.2,
+            144.8
+        ],
+        "min_range_points": 3,
+        "n_items": 76,
+        "n_monotone_checks": 76,
+        "name": "score_map",
+        "passed": true,
+        "point": 141,
+        "range": [
+            137,
+            145
+        ],
+        "range_half_width": 4,
+        "trials": 3000
+    },
+    {
+        "ci_coverage": 0.9233,
+        "detail": "paired CI coverage 0.92 (min 0.9); false-positive under difficulty-mismatched pools: paired 0.03 (max 0.05) vs unpaired 1.00",
+        "false_positive_paired": 0.0267,
+        "false_positive_unpaired": 0.9967,
+        "gate": true,
+        "name": "choke_validity",
+        "passed": true
+    },
+    {
+        "detail": "routing recovers the true cause 0.93 of the time (95% CI 0.91-0.95, n=720); honest-mastery drop improves held-out Brier by +0.0117 (95% CI +0.0090..+0.0143: 0.2435 -> 0.2318); SYNTHETIC learners -- validates the mechanism, not a field result.",
+        "gate": false,
+        "honest_mastery_brier_honest": 0.2318,
+        "honest_mastery_brier_improvement": 0.0117,
+        "honest_mastery_brier_off": 0.2435,
+        "honest_mastery_ci": [
+            0.009,
+            0.0143
+        ],
+        "honest_mastery_n_skills": 700,
+        "name": "blind_review",
+        "note": "Seeded synthetic learners with a known ground-truth cause per skill; reuses the shipped join/classify/route helpers and the real lucky-win detector. Report-only -- real paired reviews replace the generators unchanged.",
+        "params": {
+            "guess_blind": 0.1,
+            "guess_timed": 0.35,
+            "hm_holdout_items": 12,
+            "hm_learners": 140,
+            "hm_train_items": 16,
+            "route_items_per_skill": 14,
+            "route_learners": 120
+        },
+        "passed": null,
+        "routing_accuracy": 0.9292,
+        "routing_accuracy_ci": [
+            0.9111,
+            0.9472
+        ],
+        "routing_confusion": {
+            "knowledge": {
+                "content": 336,
+                "mixed": 12,
+                "pacing": 14
+            },
+            "pressure": {
+                "content": 15,
+                "mixed": 10,
+                "pacing": 333
+            }
+        },
+        "routing_n_skills": 720
+    },
+    {
+        "ci_high": 0.0069,
+        "ci_low": 0.0066,
+        "detail": "held-out P(correct) at equal 1680s: ef 0.800 (84 items) vs kcr 0.793 (105 items) vs kr 0.781 (140 items); ef-kcr +0.007 (95% CI +0.007..+0.007) -> ship (CI excludes 0)",
+        "ef_minus_kcr": 0.0067,
+        "gate": false,
+        "means": {
+            "ef": 0.8002,
+            "kcr": 0.7935,
+            "kr": 0.781
+        },
+        "n_items_per_arm": {
+            "ef": 84,
+            "kcr": 105,
+            "kr": 140
+        },
+        "name": "feedback",
+        "passed": null,
+        "ship_recommended": true
+    },
+    {
+        "ci_high": 0.0072,
+        "ci_low": 0.0062,
+        "daily_studier_null_ci": [
+            0.0,
+            0.0
+        ],
+        "daily_studier_null_delta": 0.0,
+        "deadline_mean": 0.8699,
+        "deadline_wins": true,
+        "delta": 0.0067,
+        "detail": "weighted exam-day retrievability at equal reviews (4/day x 28d, 60 cards): deadline 0.870 vs fixed 0.863; delta +0.007 (95% CI +0.006..+0.007) -> deadline-aware wins; daily-studier null delta +0.000 (95% CI +0.000..+0.000)",
+        "fixed_mean": 0.8632,
+        "gate": false,
+        "name": "exam_schedule",
+        "passed": null
+    },
+    {
+        "blind_auc": 0.6278,
+        "ci_high": 0.0412,
+        "ci_low": 0.0048,
+        "delta_auc": 0.0235,
+        "detail": "held-out within-session AUC: fatigue-aware 0.651 vs position-blind 0.628; dAUC +0.024 (95% CI +0.005..+0.041; min 0.02) -> signal is real",
+        "fatigue_auc": 0.6513,
+        "gate": false,
+        "name": "fatigue",
+        "passed": null,
+        "signal_real": true
+    },
+    {
+        "accuracy_ci": [
+            -0.0215,
+            0.0078
+        ],
+        "accuracy_diff": -0.0071,
+        "completion_ci": [
+            0.1412,
+            0.1764
+        ],
+        "completion_diff": 0.1595,
+        "completion_lift_ci_excludes_0": true,
+        "detail": "MECHANICS ONLY (unproven until a live cohort): planned-completion rate plan 0.66 vs no-plan 0.50; diff +0.159 (95% CI +0.141..+0.176, excludes 0=True); guardrail accuracy diff -0.007 (95% CI -0.021..+0.008, includes 0=True -> no score cannibalization)",
+        "gate": false,
+        "guardrail_no_cannibalization": true,
+        "name": "adherence",
+        "passed": null
+    },
+    {
+        "ci_high": 0.088,
+        "ci_low": 0.0863,
+        "detail": "held-out P(correct) on conditional-tagged LR items at equal 60 events: drill 0.767 vs generic 0.680 vs plain 0.638; drill-generic +0.087 (95% CI +0.086..+0.088) -> ship (CI excludes 0)",
+        "drill_minus_generic": 0.0872,
+        "gate": false,
+        "means": {
+            "drill": 0.7674,
+            "generic": 0.6802,
+            "plain": 0.6385
+        },
+        "name": "conditional",
+        "passed": null,
+        "ship_recommended": true
+    },
+    {
+        "ci_high": 0.1193,
+        "ci_low": 0.1053,
+        "detail": "held-out P(correct) on unseen 3+ arrow chain inferences at equal 60 events (24-item bank): drill 0.760 vs generic 0.648 vs plain 0.586; drill-generic +0.112 (95% CI +0.105..+0.119) -> ship (CI excludes 0)",
+        "drill_minus_generic": 0.1122,
+        "gate": false,
+        "means": {
+            "drill": 0.7601,
+            "generic": 0.6479,
+            "plain": 0.5863
+        },
+        "name": "conditional_chain",
+        "passed": null,
+        "ship_recommended": true
+    },
+    {
+        "ci_high": 0.088,
+        "ci_low": 0.0863,
+        "detail": "held-out P(correct) on quantifier judgments (novel terms) at equal 60 events: drill 0.767 vs generic 0.680 vs plain 0.638; drill-generic +0.087 (95% CI +0.086..+0.088) -> ship (CI excludes 0); SECONDARY speeded drill-generic +0.101 (95% CI +0.100..+0.101)",
+        "drill_minus_generic": 0.0872,
+        "gate": false,
+        "means": {
+            "drill": 0.7674,
+            "generic": 0.6802,
+            "plain": 0.6385
+        },
+        "name": "quantifier",
+        "passed": null,
+        "ship_recommended": true,
+        "speeded_ci_high": 0.1014,
+        "speeded_ci_low": 0.0996,
+        "speeded_drill_minus_generic": 0.1005,
+        "speeded_means": {
+            "drill": 0.6696,
+            "generic": 0.5691,
+            "plain": 0.5238
+        }
+    },
+    {
+        "detail": "true-no-change false-direction 0.033, difficulty-mix-drift false-direction 0.000 (both max 0.05); true-improvement detection 0.938 (min 0.8) -> panel ON",
+        "detection_rate": 0.9375,
+        "false_direction_rate": 0.0325,
+        "gate": true,
+        "mix_drift_false_direction_rate": 0.0,
+        "name": "growth",
+        "passed": true
+    },
+    {
+        "baseline_false_flag": 0.0133,
+        "detail": "planted-rush detection 0.870 (min 0.8); naturally-fast false-flag: per-baseline 0.013 (max 0.1) vs naive absolute-clock 0.860 -> valid (beats naive)",
+        "detection_rate": 0.87,
+        "gate": true,
+        "naive_false_flag": 0.86,
+        "name": "rush",
+        "passed": true
+    },
+    {
+        "ci_high_seconds": 482.1,
+        "ci_low_seconds": 452.3,
+        "detail": "reclaimable seconds recover true wasted time: est 468s vs true 800s (recovery 58%); 95% CI 452-482s excludes 0; false-unwinnable 0.026 (max 0.05); true-leak-0 null mean 0.0s -> valid",
+        "false_unwinnable_rate": 0.0261,
+        "gate": false,
+        "name": "triage_leak",
+        "null_mean_seconds": 0.0,
+        "passed": null,
+        "recovery_fraction": 0.5845,
+        "ship_recommended": true
+    },
+    {
+        "ci_high": 0.1218,
+        "ci_low": 0.1067,
+        "detail": "held-out P(correct) on unseen inverted-stem items at equal 60 events (24-item bank): drill 0.852 vs generic 0.738 vs plain 0.679; drill-generic +0.114 (95% CI +0.107..+0.122) -> ship (CI excludes 0); SECONDARY speeded drill-generic +0.148 (95% CI +0.141..+0.157)",
+        "drill_minus_generic": 0.1143,
+        "gate": false,
+        "means": {
+            "drill": 0.8521,
+            "generic": 0.7378,
+            "plain": 0.6789
+        },
+        "name": "stem_polarity",
+        "passed": null,
+        "ship_recommended": true,
+        "speeded_drill_minus_generic": 0.1483
+    },
+    {
+        "ci_high": 0.1101,
+        "ci_low": 0.0947,
+        "detail": "held-out four-cell sort accuracy (chance 0.25) at equal 60 events (24-item bank): drill 0.872 vs generic 0.769 vs plain 0.706; drill-generic +0.102 (95% CI +0.095..+0.110) -> ship (CI excludes 0)",
+        "drill_minus_generic": 0.1024,
+        "gate": false,
+        "means": {
+            "drill": 0.8715,
+            "generic": 0.7692,
+            "plain": 0.7058
+        },
+        "name": "assumption_discrimination",
+        "passed": null,
+        "ship_recommended": true
+    },
+    {
+        "detail": "50/50-changer false-direction 0.050 (max 0.06); planted 2:1 detection 0.863 (min 0.8) -> ledger ON",
+        "detection_rate": 0.8625,
+        "false_direction_rate": 0.05,
+        "gate": true,
+        "name": "answer_change",
+        "passed": true
+    },
+    {
+        "card_recall": 0.86,
+        "detail": "card recall 0.86 vs reworded-item accuracy 0.82 -> gap +0.04 (95% CI -0.05..+0.15) over 30 cards x2; per-topic gaps -0.11..+0.26; distance-graded companion: transfer step",
+        "gap": 0.043,
+        "gap_ci": [
+            -0.054,
+            0.146
+        ],
+        "gate": false,
+        "items_per_card": 2,
+        "n_cards": 30,
+        "name": "paraphrase",
+        "passed": null,
+        "per_topic": {
+            "lr.assumption_necessary": {
+                "accuracy": 0.9,
+                "gap": -0.114,
+                "n_cards": 5,
+                "recall": 0.786
+            },
+            "lr.flaw": {
+                "accuracy": 0.8,
+                "gap": 0.037,
+                "n_cards": 5,
+                "recall": 0.837
+            },
+            "lr.inference_must_be_true": {
+                "accuracy": 0.9,
+                "gap": -0.014,
+                "n_cards": 5,
+                "recall": 0.886
+            },
+            "lr.parallel_reasoning": {
+                "accuracy": 0.8,
+                "gap": 0.083,
+                "n_cards": 5,
+                "recall": 0.883
+            },
+            "lr.strengthen": {
+                "accuracy": 0.6,
+                "gap": 0.259,
+                "n_cards": 5,
+                "recall": 0.859
+            },
+            "lr.weaken": {
+                "accuracy": 0.9,
+                "gap": 0.006,
+                "n_cards": 5,
+                "recall": 0.906
+            }
+        },
+        "reworded_item_accuracy": 0.817,
+        "verdict": "gap indistinguishable from 0 -- performance model may be echoing the memory model; reported honestly"
+    },
+    {
+        "curve": [
+            {
+                "d_hi": 0.125,
+                "d_lo": 0.0,
+                "mean_correct": 0.8357,
+                "n": 140
+            },
+            {
+                "d_hi": 0.25,
+                "d_lo": 0.125,
+                "mean_correct": 0.7214,
+                "n": 140
+            },
+            {
+                "d_hi": 0.375,
+                "d_lo": 0.25,
+                "mean_correct": 0.6857,
+                "n": 70
+            },
+            {
+                "d_hi": 0.5,
+                "d_lo": 0.375,
+                "mean_correct": 0.6857,
+                "n": 70
+            },
+            {
+                "d_hi": 0.625,
+                "d_lo": 0.5,
+                "mean_correct": 0.65,
+                "n": 140
+            },
+            {
+                "d_hi": 0.75,
+                "d_lo": 0.625,
+                "mean_correct": 0.5929,
+                "n": 140
+            },
+            {
+                "d_hi": 0.875,
+                "d_lo": 0.75,
+                "mean_correct": 0.5286,
+                "n": 280
+            },
+            {
+                "d_hi": 1.0,
+                "d_lo": 0.875,
+                "mean_correct": 0.45,
+                "n": 280
+            }
+        ],
+        "detail": "near-surface 0.75 vs far-surface 0.49 -> memorization gap +0.26 (95% CI +0.20..+0.32); transfer index 0.49; structure slope beta=-0.37 over 7 schemas, 1260 synthetic items [partial-transfer]",
+        "far_mean_distance": 0.9292,
+        "gate": false,
+        "heldout_below_leak_gate": true,
+        "leak_cosine_max": 0.9,
+        "learner": "partial-transfer",
+        "marker_downweight": 0.15,
+        "max_far_surface_cosine": 0.144,
+        "memorization_gap": 0.2619,
+        "memorization_gap_ci": [
+            0.1952,
+            0.319
+        ],
+        "n_far_topics": 84,
+        "n_gap_units": 84,
+        "n_items": 1260,
+        "n_near_topics": 84,
+        "n_schemas": 7,
+        "name": "transfer",
+        "near_accuracy": 0.7476,
+        "near_mean_distance": 0.1916,
+        "passed": null,
+        "per_schema": [
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.25,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Causal (X causes Y; correlation/temporal support)",
+                "near_accuracy": 0.7167,
+                "schema": "struct.causal",
+                "structure_slope": -0.3554,
+                "transfer_index": 0.4667
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.2833,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Conditional (if-then chains, sufficient/necessary)",
+                "near_accuracy": 0.6667,
+                "schema": "struct.conditional",
+                "structure_slope": -0.3493,
+                "transfer_index": 0.3833
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.2333,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Analogy (two cases share relevant structure)",
+                "near_accuracy": 0.7333,
+                "schema": "struct.analogy",
+                "structure_slope": -0.3851,
+                "transfer_index": 0.5
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.3167,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Statistical generalization (sample -> population)",
+                "near_accuracy": 0.7167,
+                "schema": "struct.statistical",
+                "structure_slope": -0.4056,
+                "transfer_index": 0.4
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.1667,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Part/whole (composition & division)",
+                "near_accuracy": 0.7333,
+                "schema": "struct.parts_whole",
+                "structure_slope": -0.2682,
+                "transfer_index": 0.5667
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.3167,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Comparison / proportion (percentages vs numbers)",
+                "near_accuracy": 0.8667,
+                "schema": "struct.comparison",
+                "structure_slope": -0.4026,
+                "transfer_index": 0.55
+            },
+            {
+                "badge": "memorized-here",
+                "memorization_gap": 0.2667,
+                "n_far_topics": 12,
+                "n_near_topics": 12,
+                "name": "Principle application (general rule -> specific case)",
+                "near_accuracy": 0.8,
+                "schema": "struct.principle_application",
+                "structure_slope": -0.4256,
+                "transfer_index": 0.5333
+            }
+        ],
+        "structure_slope": -0.3702,
+        "transfer_index": 0.4857
+    },
+    {
+        "cosine_threshold": 0.9,
+        "detail": "0 leak(s) in 40x10 pairs; detector self-test OK (verbatim+reworded caught, unrelated clean)",
+        "detector_self_test": {
+            "ok": true,
+            "reworded_caught_by_shingle": true,
+            "reworded_cosine": 0.481,
+            "reworded_fuzzy": 0.472,
+            "unrelated_not_flagged": true,
+            "verbatim_caught": true
+        },
+        "detector_self_test_ok": true,
+        "flagged": [],
+        "fuzzy_threshold": 0.45,
+        "gate": true,
+        "n_flagged": 0,
+        "n_heldout": 10,
+        "n_train": 40,
+        "name": "leakage",
+        "passed": true
+    },
+    {
+        "built": 5,
+        "ci_high": 0.061,
+        "ci_low": 0.0501,
+        "coverage_ok": true,
+        "detail": "oracle gate: planted false-pass 0/20, fuzz false-pass 0/3014 accepted (valid-walk coverage 3000/3000) (max 0.0); built 5 examples (round-trip=True, dnf-abstain=True, malicious-safe=True). REPORT arm (equal 900s): faded 0.5717 vs worked 0.5161 vs solve 0.4189; faded-worked +0.056 (95% CI +0.050..+0.061) -> ship (CI excludes 0)",
+        "dnf_abstain_ok": true,
+        "faded_minus_worked": 0.0556,
+        "false_pass_max": 0.0,
+        "false_pass_rate": 0.0,
+        "fuzz_accepted": 3014,
+        "fuzz_false_pass": 0,
+        "fuzz_valid_accepted": 3000,
+        "fuzz_valid_walks": 3000,
+        "gate": true,
+        "malicious_safe": true,
+        "name": "worked_example",
+        "passed": true,
+        "planted_false_pass": 0,
+        "planted_total": 20,
+        "report_events": {
+            "faded": 22,
+            "solve": 12,
+            "worked": 20
+        },
+        "report_means": {
+            "faded": 0.5717,
+            "solve": 0.4189,
+            "worked": 0.5161
+        },
+        "roundtrip_ok": true,
+        "ship_recommended": true
+    },
+    {
+        "coverage_ok": true,
+        "curated_mislabel": 0,
+        "curated_non_flip": 0,
+        "curated_twins": 47,
+        "curated_unverified": 0,
+        "detail": "curated: 47 twins over 16 items, mislabel 0, non-flip 0, unverified 0 (indep. oracle cross-check); fuzz: 0 disagreements over 3512 independently-checked flips (max 0.0); malicious-safe=True. LLM does inert targeting/nouns; the oracle proves every verdict.",
+        "fuzz_disagree": 0,
+        "fuzz_flips_checked": 3512,
+        "gate": true,
+        "malicious_safe": true,
+        "mislabel_max": 0.0,
+        "mislabel_rate": 0.0,
+        "n_source_items": 16,
+        "name": "evil_twin",
+        "passed": true
+    },
+    {
+        "checked": 49,
+        "checker_agreement": 1.0,
+        "checker_false_pass_max": 0.02,
+        "checker_false_pass_rate": 0.0,
+        "cutoff": "verdict == CORRECT_USEFUL",
+        "degraded": false,
+        "detail": "counts {'CORRECT_USEFUL': 49, 'WRONG': 0, 'CORRECT_BUT_BAD_TEACHING': 0} pass_rate=1.0 wrong_rate=0.0 checker_false_pass=0.0 model=offline-rule-based",
+        "dropped_unsupported": 0,
+        "gate": true,
+        "gate_passed": true,
+        "model_used": "offline-rule-based",
+        "name": "card_check",
+        "pass_rate": 1.0,
+        "pass_rate_min": 0.7,
+        "passed": true,
+        "verdict_counts": {
+            "CORRECT_BUT_BAD_TEACHING": 0,
+            "CORRECT_USEFUL": 49,
+            "WRONG": 0
+        },
+        "wrong_rate": 0.0,
+        "wrong_rate_max": 0.02
+    },
+    {
+        "bm25_precision_at_k": 0.3333,
+        "bm25_reciprocal_rank": 0.9162,
+        "ci_high": 0.0222,
+        "ci_low": 0.0,
+        "detail": "NOT statistically distinguishable on this query set: reciprocal_rank 0.9238 vs 0.9162 (P@3 0.3519 vs 0.3333); paired bootstrap 95% CI on mean diff [0.0, 0.0222] includes 0 -- an honest negative. A real semantic embedder (not this lexical TF-IDF stand-in) would be needed to win decisively.",
+        "embedding_precision_at_k": 0.3519,
+        "embedding_reciprocal_rank": 0.9238,
+        "embedding_wins": false,
+        "gate": false,
+        "k": 3,
+        "mean_diff": 0.0076,
+        "metric": "reciprocal_rank",
+        "n_queries": 36,
+        "name": "baselines",
+        "passed": null
+    }
+]

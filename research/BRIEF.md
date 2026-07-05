@@ -7,6 +7,7 @@ We want a small set of **genuinely novel features grounded in learning theory** 
 this software different from (a) plain Anki and (b) every other LSAT prep product.
 
 Two-stage process:
+
 1. **Research** (you, if you are a research agent): find real, cited evidence from
    learning science + LSAT pedagogy and propose novel features.
 2. **Debate** (later agents): argue the proposals against each other, refine, and select.
@@ -29,6 +30,7 @@ Tech stack: Rust core (`rslib/`), Python lib (`pylib/anki`, `lsat/` package), Qt
 (`qt/aqt`), SvelteKit dashboard (`ts/routes/lsat-dashboard`), protobuf RPC, FSRS scheduler.
 
 Already built (in `lsat/`):
+
 - **FSRS spaced repetition** (Anki native) + per-topic **memory model** (`lsat/models/memory.py`).
 - **Question-type interleaving** toggle (`lsat/interleaving.py`) — interleaved vs blocked order.
 - **Points-at-stake queue** (Rust RPC) — prioritizes cards by weighted "points at stake".
@@ -72,6 +74,7 @@ manipulation**, **successive relearning**, **contrasting cases / analogical comp
 ## Deliverable (research agents)
 
 Write your file `research/NN-<lens>.md` with:
+
 - **Lens & scope** (1 short paragraph).
 - **Key findings** — bulleted, each with citation(s), a number/effect size, and an evidence
   rating. Include at least one "myth/that-doesn't-work" warning relevant to your lens.

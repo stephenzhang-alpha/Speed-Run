@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from lsat.events import read_events
-from lsat.taxonomy import Taxonomy, load_taxonomy
+from lsat.taxonomy import Taxonomy
 
 if TYPE_CHECKING:
     from anki.collection import Collection
@@ -291,7 +291,6 @@ def fit_performance_model(
     col: Collection, taxonomy: Taxonomy | None = None
 ) -> PerformanceModel:
     """Fit the performance model from the graded-event log."""
-    _ = taxonomy or load_taxonomy()
     events = read_events(col)
     if not events:
         return PerformanceModel(

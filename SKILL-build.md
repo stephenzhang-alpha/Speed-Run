@@ -9,13 +9,14 @@ Anki's build is the riskiest part of day one. The build orchestrator is a Rust r
 
 ## Prerequisites (all platforms)
 
-- **Rustup** — https://rustup.rs/. The version pinned in `rust-toolchain.toml` is downloaded automatically. If you remove that file to use a distro Rust, newer Rust usually *builds* but may fail tests; older Rust may not build at all. (Anki has had releases that don't build on a too-new Rust, so prefer the pinned version.)
+- **Rustup** — https://rustup.rs/. The version pinned in `rust-toolchain.toml` is downloaded automatically. If you remove that file to use a distro Rust, newer Rust usually _builds_ but may fail tests; older Rust may not build at all. (Anki has had releases that don't build on a too-new Rust, so prefer the pinned version.)
 - **N2 or Ninja.** N2 gives better status output: `tools/install-n2` (on Windows `bash tools\install-n2`; if WSL conflicts with MSYS2 bash, run `C:\msys64\usr\bin\bash.exe tools/install-n2`). Or install Ninja 1.10+ from your distro/Homebrew, or the 1.11.1 release binary on PATH.
 - **(Optional) `just`** — `brew install just` or `uv tool install just`. Anki is experimenting with `just` as the official command runner; it may become the source of truth later.
-- **Python 3.9+** (3.9 recommended; 3.10+ has had less testing). You don't have to install Node or protoc — the build fetches them. You *can* override with `PYTHON_BINARY`, `NODE_BINARY`, `YARN_BINARY`, `PROTOC_BINARY`.
+- **Python 3.9+** (3.9 recommended; 3.10+ has had less testing). You don't have to install Node or protoc — the build fetches them. You _can_ override with `PYTHON_BINARY`, `NODE_BINARY`, `YARN_BINARY`, `PROTOC_BINARY`.
 - **Repo path:** no spaces, and keep it short on Windows.
 
 Platform-specific requirements live in `docs/windows.md`, `docs/mac.md`, `docs/linux.md`. On modern Ubuntu/Debian in particular:
+
 - `sudo apt remove python3-protobuf` (it conflicts with the build).
 - If using system Qt (6.2+) instead of the downloaded PyQt: `sudo apt install python3-pyqt6.qt{quick,webengine} python3-venv pyqt6-dev-tools`, then before any `./run`:
   ```bash
@@ -27,9 +28,11 @@ Platform-specific requirements live in `docs/windows.md`, `docs/mac.md`, `docs/l
 ## Run it
 
 From the top of the repo:
+
 ```bash
 ./run            # .\run on Windows
 ```
+
 This **builds Anki and runs it in place**. The first build is slow (downloads + compiles many deps), then Anki launches automatically. `./run` auto-enables `ANKIDEV` (extra logging; automatic backups disabled — so only use it on a throwaway profile). Load a specific profile with `-p "<profile>"`.
 
 ## Tests & checks (needed for the Wednesday proof and the Rust change)
@@ -39,6 +42,7 @@ This **builds Anki and runs it in place**. The first build is slow (downloads + 
 ./ninja check:svelte:editor   # a single check, by name
 ./ninja check:svelte          # a group of checks
 ```
+
 Rust tests can also be run directly with `cargo test` from `rslib` while iterating (but `./ninja check` is the source of truth and also runs Python/TS checks). See the `anki-protobuf-backend` skill for where backend tests live.
 
 ## Formatting & lint
@@ -52,6 +56,7 @@ cargo clippy --fix    # fix clippy issues
 ## Optimized builds
 
 `./run` is non-optimized (fast compile, slower Anki). For an optimized run:
+
 ```bash
 ./tools/runopt
 # or: RELEASE=1 ./run   (RELEASE=2 optimizes further, builds much slower)
@@ -63,6 +68,7 @@ cargo clippy --fix    # fix clippy issues
 tools/build            # builds Python wheels -> out/wheels
 tools/build-installer  # builds an installer -> out/installer/dist (e.g. MSI on Windows)
 ```
+
 For the brief's "installs and runs on a clean device" proof, build the installer and verify it on a fresh VM/container.
 
 ## Clean builds, caches, offline
@@ -83,6 +89,7 @@ For the brief's "installs and runs on a clean device" proof, build the installer
 ```bash
 mkdir .vscode && cd .vscode && ln -sf ../.vscode.dist/* .
 ```
+
 Then open the repo root in VS Code and install the recommended extensions. The Python venv built by the project is at `out/pyenv` (select it via "Python: Select Interpreter"). **Code completion depends on generated files, so run `./run` or `tools/build` before relying on completion.** If you invoke Rust outside the build (plain `cargo`, or rust-analyzer), its output goes to `target/`, separate from `out/`.
 
 ## Troubleshooting

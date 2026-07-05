@@ -60,6 +60,7 @@ class AnkiWebViewKind(Enum):
     IMPORT_LOG = "import log"
     IMPORT_ANKI_PACKAGE = "anki package import"
     LSAT_DASHBOARD = "lsat dashboard"
+    LSAT_MOBILE = "lsat mobile"
 
 
 class AuthInterceptor(QWebEngineUrlRequestInterceptor):
@@ -144,6 +145,11 @@ class AnkiWebPage(QWebEnginePage):
             AnkiWebViewKind.IMPORT_CSV,
             AnkiWebViewKind.IMPORT_LOG,
             AnkiWebViewKind.LSAT_DASHBOARD,
+            # The lsat-mobile PWA (drills / section runner) shown in a desktop
+            # window POSTs to /_anki/lsat*, so it needs the bearer-injecting
+            # api-access profile like the dashboard. It loads only our first-party
+            # SvelteKit PWA (never untrusted card JS), so the trust level matches.
+            AnkiWebViewKind.LSAT_MOBILE,
         )
 
         global _profile_with_api_access, _profile_without_api_access

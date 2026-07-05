@@ -44,9 +44,10 @@ failures.
                 <div class="skill-top">
                     <span class="label">{s.label}</span>
                     <span class="chip">
-                        <span class="arr" aria-hidden="true"
-                            >{s.status === "improved" ? "↑" : "↓"}</span
-                        >{s.status}
+                        <span class="arr" aria-hidden="true">
+                            {s.status === "improved" ? "↑" : "↓"}
+                        </span>
+                        {s.status}
                     </span>
                 </div>
                 <div class="delta">{signedPoints(s.delta)}</div>
@@ -58,7 +59,8 @@ failures.
                 {/if}
                 {#if s.next_step}
                     <p class="next">
-                        <span class="next-arr" aria-hidden="true">→</span>{s.next_step}
+                        <span class="next-arr" aria-hidden="true">→</span>
+                        {s.next_step}
                     </p>
                 {/if}
             </div>
@@ -67,8 +69,8 @@ failures.
 
     {#if gathering > 0}
         <p class="gathering">
-            {gathering} more skill{gathering === 1 ? "" : "s"} still gathering evidence &mdash; keep
-            going.
+            {gathering} more skill{gathering === 1 ? "" : "s"} still gathering evidence &mdash;
+            keep going.
         </p>
     {/if}
 </div>

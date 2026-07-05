@@ -13,12 +13,12 @@ The winning MVP strategy is **two layers**: use Anki's existing sync for the sta
 
 The standard collection (cards, notes, **revlog**, decks, config) syncs via a sync server. What it already guarantees, and why it covers most of 7b:
 
-- **Two sync modes.** A *normal* (incremental) sync sends only changes since the last sync, tracked by **USN** (Update Sequence Number): locally changed objects carry `usn = -1`, and the server assigns the next USN on sync. A *full* sync is the fallback when sides can't be merged.
+- **Two sync modes.** A _normal_ (incremental) sync sends only changes since the last sync, tracked by **USN** (Update Sequence Number): locally changed objects carry `usn = -1`, and the server assigns the next USN on sync. A _full_ sync is the fallback when sides can't be merged.
 - **Both-sides merge.** After the initial one-way upload/download, Anki **merges changes from multiple locations**, and under normal circumstances **reviews and edits made on two devices before syncing are both preserved**. The `revlog` is effectively **append-only** (each review row has a unique millisecond id), so two reviews on two devices both survive — **this is exactly the 10+10 test, and Anki passes it natively**.
 - **Deletions** are tracked in the `graves` table (card/note/deck) so they propagate.
 - **Conflict fallback.** When an automatic merge isn't possible (e.g. a schema change like adding a card template, or an incompatible divergence), Anki requires a **full sync** and the user chooses **Upload** (this device wins) or **Download** (server wins), overwriting the other side.
 
-**The same-card case (what to document).** When the same card is reviewed on both devices offline, both `revlog` rows are preserved on merge (no double-count of history), and the card's *current* scheduling state resolves to one device's update. Don't assert Anki's internal tiebreak from memory — **run the 7b test and document the observed winner** for the standard collection. For history integrity you can rely on the append-only revlog; for the *current state* you state the rule you observe (and, if you want determinism independent of wall-clock, prefer Layer-2 handling for any state you compute yourself).
+**The same-card case (what to document).** When the same card is reviewed on both devices offline, both `revlog` rows are preserved on merge (no double-count of history), and the card's _current_ scheduling state resolves to one device's update. Don't assert Anki's internal tiebreak from memory — **run the 7b test and document the observed winner** for the standard collection. For history integrity you can rely on the append-only revlog; for the _current state_ you state the rule you observe (and, if you want determinism independent of wall-clock, prefer Layer-2 handling for any state you compute yourself).
 
 ### Self-hosted sync server (do this so desktop ⇄ AnkiDroid sync at all)
 
@@ -36,7 +36,7 @@ SYNC_USER1=user:pass anki-sync-server
 ```
 
 - `SYNC_USER1=user:pass` is required (add `SYNC_USER2…` for more). `SYNC_HOST` / `SYNC_PORT` set the bind address. `PASSWORDS_HASHED=1` to use PHC-format hashes.
-- The server stores its **own copy** of the collection in a folder that **must not** be your client's Anki data folder. You must *sync* data in, not copy files.
+- The server stores its **own copy** of the collection in a folder that **must not** be your client's Anki data folder. You must _sync_ data in, not copy files.
 - It listens over **plain HTTP** — keep it on your LAN or put a VPN / HTTPS reverse proxy in front. `protoc` must be installed to build.
 - **Point both clients at it:** set the sync URL in desktop preferences and in AnkiDroid's advanced/sync settings (e.g. `http://192.168.1.x:8080/`). AnkiDroid explicitly supports a self-hosted server.
 - **Scheduler parity:** confirm the desktop and your AnkiDroid build use the same scheduler version (v3); a mismatch can force full syncs. Verify against your AnkiDroid version rather than assuming.
@@ -62,7 +62,7 @@ For records that are genuinely mutable (e.g. a per-topic mastery snapshot, a sav
 
 - An HLC timestamp = `(physical_time, logical_counter)`; on each event a device takes `max(its physical clock, last seen physical time)` and bumps the counter on ties. This stays monotonic **even if a phone's wall clock is wrong or skewed**, so a device with a bad clock can't spuriously win.
 - **Tiebreak deterministically by `device_id`** when HLC timestamps are equal, so the winner is always well-defined and reproducible.
-- **Write the rule down (verbatim, in the README):** *"For mutable derived records, the record with the greater HLC timestamp wins; ties are broken by the lexicographically greater device_id. Graded responses are an append-only, id-keyed event log and are never overwritten."*
+- **Write the rule down (verbatim, in the README):** _"For mutable derived records, the record with the greater HLC timestamp wins; ties are broken by the lexicographically greater device_id. Graded responses are an append-only, id-keyed event log and are never overwritten."_
 
 ### Where to put the custom data
 

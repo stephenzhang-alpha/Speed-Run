@@ -8,7 +8,7 @@ sufficient -> necessary arrow and its contrapositive. Grading is deterministic
 server-side (lsat/conditional.py); the reveal teaches the direction + contrapositive.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
 
     import Card from "./Card.svelte";
     import * as client from "./client";
@@ -20,14 +20,13 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
     let state: State = "loading";
     let result: ConditionalResult | null = null;
     let picked = "";
-    let error = "";
     let shownAt = 0;
+    let nextBtn: HTMLButtonElement | undefined;
 
     async function load(): Promise<void> {
         state = "loading";
         result = null;
         picked = "";
-        error = "";
         try {
             const d = await client.conditionalDrill();
             if (d.done || !d.item_id) {
@@ -39,7 +38,7 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
             shownAt = Date.now();
             state = "asking";
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -58,8 +57,10 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
                 other,
                 Date.now() - shownAt,
             );
+            await tick();
+            nextBtn?.focus();
         } catch (e) {
-            error = String(e);
+            console.error(e);
             state = "error";
         }
     }
@@ -73,20 +74,25 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
     <Card title="No drills right now"><p class="muted">Check back later.</p></Card>
 {:else if state === "error"}
     <Card title="Couldn't load a drill">
-        <p class="muted">{error}</p>
+        <p class="muted">Couldn't reach the server. Try again.</p>
         <button class="next" on:click={load}>Try again</button>
     </Card>
 {:else if drill}
-    <Card title="Conditional logic" subtitle="Which clause is the sufficient condition?">
+    <Card
+        title="Conditional logic"
+        subtitle="Which clause is the sufficient condition?"
+    >
         <p class="sentence">{drill.sentence}</p>
-        <div class="opts">
+        <div class="opts" aria-busy={state === "answered" && !result}>
             {#each drill.options as opt (opt)}
                 <button
                     type="button"
                     class="opt"
                     class:picked={picked === opt}
                     class:right={result?.graded && opt === result.sufficient}
-                    class:wrong={result?.graded && picked === opt && opt !== result.sufficient}
+                    class:wrong={result?.graded &&
+                        picked === opt &&
+                        opt !== result.sufficient}
                     disabled={state !== "asking"}
                     on:click={() => pick(opt)}
                 >
@@ -95,21 +101,31 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
             {/each}
         </div>
 
+        {#if state === "answered" && !result}
+            <p class="checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && result}
             {#if result.graded}
-                <p class="verdict" class:ok={result.correct}>
+                <p class="verdict" class:ok={result.correct} aria-live="polite">
                     {result.correct
                         ? "Correct — that's the trigger (sufficient) condition."
                         : "Not quite — the sufficient condition is the trigger."}
                 </p>
                 <div class="arrows">
-                    <div><span class="lbl">Translation</span><code>{result.arrow}</code></div>
-                    <div><span class="lbl">Contrapositive</span><code>{result.contrapositive}</code></div>
+                    <div>
+                        <span class="lbl">Translation</span>
+                        <code>{result.arrow}</code>
+                    </div>
+                    <div>
+                        <span class="lbl">Contrapositive</span>
+                        <code>{result.contrapositive}</code>
+                    </div>
                 </div>
             {:else}
                 <p class="muted">{result.reason}</p>
             {/if}
-            <button class="next" on:click={load}>Next drill</button>
+            <button class="next" bind:this={nextBtn} on:click={load}>Next drill</button>
         {/if}
     </Card>
 {/if}
@@ -118,6 +134,11 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
     .muted {
         color: var(--lsat-fg-subtle);
         margin: 0;
+    }
+    .checking {
+        margin: 0.6rem 0 0;
+        font-size: 0.85rem;
+        color: var(--lsat-fg-subtle);
     }
     .sentence {
         font-size: 1.02rem;
@@ -148,6 +169,10 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
     }
     .opt:disabled {
         cursor: default;
+    }
+    .opt:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .opt.picked {
         border-width: 2px;
@@ -195,9 +220,13 @@ server-side (lsat/conditional.py); the reveal teaches the direction + contraposi
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: white;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
 </style>

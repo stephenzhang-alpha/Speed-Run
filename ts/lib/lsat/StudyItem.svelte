@@ -8,7 +8,7 @@ graded feedback, and (on a miss with trap labels) identify the trap. Mirrors the
 desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridge.
 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { createEventDispatcher, onMount } from "svelte";
 
     import AnswerFeedback from "./AnswerFeedback.svelte";
     import Card from "./Card.svelte";
@@ -16,9 +16,18 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     import ConfidenceTap from "./ConfidenceTap.svelte";
     import ContrastCard from "./ContrastCard.svelte";
     import TrapTap from "./TrapTap.svelte";
-    import type { AnswerResult, ClassifyResult, StudyItemData, TrapResult } from "./types";
+    import type {
+        AnswerResult,
+        ClassifyResult,
+        StudyItemData,
+        TrapResult,
+    } from "./types";
 
     export let phase = "timed";
+
+    // Lets the parent open the EvilTwin ("Skill or luck?") drill from the
+    // lucky-guess CTA (which used to be a dead link back to this same route).
+    const dispatch = createEventDispatcher<{ practicetwin: void }>();
 
     type State =
         | "loading"
@@ -27,6 +36,7 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
         | "confidence"
         | "grading"
         | "answered"
+        | "queued"
         | "done"
         | "error";
 
@@ -63,8 +73,20 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     let identified = "";
     let error = "";
     let shownAt = 0;
+    let classifying = false; // in-flight guard for the classify POST
+    let trapPending = false; // in-flight guard for the trap POST
+    let advancing = false; // in-flight guard for load(): a double-tap on "Next" would
+    // otherwise call nextItem() twice and, offline, shift() two items from the
+    // prefetch cache -- silently losing the second.
+    // The study phase (timed/blind/relaxed) latched WHEN THE ITEM IS SHOWN, so a
+    // mid-item toggle of the session control can't mislabel this answer's event.
+    let capturedPhase = phase;
 
     async function load(): Promise<void> {
+        if (advancing) {
+            return; // guard: a double-tap must not consume two prefetched items
+        }
+        advancing = true;
         state = "loading";
         chosen = "";
         confidence = "";
@@ -82,24 +104,33 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
             }
             item = it;
             shownAt = Date.now();
+            capturedPhase = phase; // latch at display time (see capturedPhase decl)
             // Identification-first: LR items must be classified before solving.
             const isLR = (it.skill_tags ?? []).some((t) => t.startsWith("lr."));
             state = isLR ? "classify" : "answering";
         } catch (e) {
             error = String(e);
             state = "error";
+        } finally {
+            advancing = false;
         }
     }
 
     async function classify(named: string): Promise<void> {
-        if (!item || state !== "classify" || classifyResult) {
+        // In-flight guard: without `classifying`, a fast double-tap (or a second
+        // chip) passes the unchanged guard twice and double-logs the identification,
+        // overwriting `identified` before it rides the graded answer.
+        if (!item || state !== "classify" || classifyResult || classifying) {
             return;
         }
+        classifying = true;
         try {
             classifyResult = await client.submitClassify(item.item_id, named);
             identified = classifyResult.classify_correct ? "1" : "0";
         } catch {
             /* classify feedback is best-effort; never block solving */
+        } finally {
+            classifying = false;
         }
         state = "answering";
     }
@@ -123,14 +154,28 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
         confidence = conf;
         state = "grading";
         try {
-            answer = await client.submitAnswer(
+            const res = await client.submitAnswer(
                 item.item_id,
                 chosen,
                 confidence,
                 Date.now() - shownAt,
-                phase,
+                capturedPhase,
                 identified,
             );
+            // Offline: the answer was saved to the local queue and will sync (and be
+            // graded) on reconnect. There is no grade to show yet — acknowledge + advance.
+            if (res.queued) {
+                state = "queued";
+                return;
+            }
+            // An item with no answer key is abstained server-side (graded:false, no
+            // event logged); don't render a misleading "wrong" — skip to the next.
+            if (res.graded === false) {
+                error = "This question can't be graded (missing answer key). Skipping.";
+                state = "error";
+                return;
+            }
+            answer = res;
             state = "answered";
         } catch (e) {
             error = String(e);
@@ -139,13 +184,18 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     }
 
     async function chooseTrap(family: string): Promise<void> {
-        if (!item) {
+        // In-flight guard: TrapTap only disables its chips once trapResult is set
+        // (after the await), so without trapPending a double-tap double-logs the trap.
+        if (!item || trapResult || trapPending) {
             return;
         }
+        trapPending = true;
         try {
             trapResult = await client.submitTrap(item.item_id, chosen, family);
         } catch {
             /* trap feedback is best-effort */
+        } finally {
+            trapPending = false;
         }
     }
 
@@ -153,7 +203,10 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     // 1/2/3 rate confidence; Enter/Space advances. Ignored while typing anywhere.
     function handleKey(e: KeyboardEvent): void {
         const t = e.target as HTMLElement | null;
-        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+        if (
+            t &&
+            (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)
+        ) {
             return;
         }
         if (state === "answering" && item) {
@@ -196,12 +249,25 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     <Card><p class="muted">Loading&hellip;</p></Card>
 {:else if state === "done"}
     <Card title="All caught up">
-        <p class="muted">No questions due right now. Great work &mdash; check back later.</p>
+        <p class="muted">
+            No questions due right now. Great work &mdash; check back later.
+        </p>
     </Card>
 {:else if state === "error"}
     <Card title="Couldn't load a question">
         <p class="muted">{error}</p>
-        <button class="next" on:click={load}>Try again</button>
+        <button class="next" on:click={load} disabled={advancing}>Try again</button>
+    </Card>
+{:else if state === "queued"}
+    <Card title="Saved offline">
+        <p class="muted" aria-live="polite">
+            You're offline &mdash; this answer is saved on your device and will sync
+            (and be graded) automatically when you reconnect.
+        </p>
+        <button class="next" on:click={load} disabled={advancing}>
+            Next question
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+        </button>
     </Card>
 {:else if item}
     <Card>
@@ -212,7 +278,12 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
                 <span class="classify-q">First: what type of question is this?</span>
                 <div class="classify-chips">
                     {#each QTYPES as [id, label] (id)}
-                        <button type="button" class="chip" on:click={() => classify(id)}>
+                        <button
+                            type="button"
+                            class="chip"
+                            disabled={classifying || !!classifyResult}
+                            on:click={() => classify(id)}
+                        >
                             {label}
                         </button>
                     {/each}
@@ -248,33 +319,49 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
             <ConfidenceTap on:select={(e) => grade(e.detail)} />
         {/if}
 
+        {#if state === "grading"}
+            <p class="muted checking" aria-live="polite">Checking&hellip;</p>
+        {/if}
+
         {#if state === "answered" && answer}
-            <AnswerFeedback correct={answer.correct} correctLetter={answer.correct_letter} />
+            <AnswerFeedback
+                correct={answer.correct}
+                correctLetter={answer.correct_letter}
+            />
             {#if luckyGuess}
-                <a class="prove-it" href="/lsat-mobile">
-                    <span
-                        >Right &mdash; but was that <em>skill or luck?</em> A guess that
-                        lands isn't mastery yet.</span
-                    >
+                <button
+                    type="button"
+                    class="prove-it"
+                    on:click={() => dispatch("practicetwin")}
+                >
+                    <span>
+                        Right &mdash; but was that <em>skill or luck?</em>
+                        A guess that lands isn't mastery yet.
+                    </span>
                     <b>Prove it with a Skill-or-luck twin &rarr;</b>
-                </a>
+                </button>
             {/if}
             {#if !answer.correct && answer.contrast}
                 <div class="contrast-wrap" class:hyper={hypercorrection}>
                     {#if hypercorrection}
                         <p class="hyper-eyebrow">
-                            <span class="he-mk" aria-hidden="true">◆</span> High-confidence miss
-                            &mdash; the highest-value fix
+                            <span class="he-mk" aria-hidden="true">◆</span>
+                            High-confidence miss &mdash; the highest-value fix
                         </p>
                     {/if}
                     <ContrastCard {chosen} contrast={answer.contrast} />
                 </div>
             {/if}
             {#if !answer.correct && answer.has_traps}
-                <TrapTap {chosen} result={trapResult} on:select={(e) => chooseTrap(e.detail)} />
+                <TrapTap
+                    {chosen}
+                    result={trapResult}
+                    on:select={(e) => chooseTrap(e.detail)}
+                />
             {/if}
-            <button class="next" on:click={load}>
-                Next question<span class="arrow" aria-hidden="true">&rarr;</span>
+            <button class="next" on:click={load} disabled={advancing}>
+                Next question
+                <span class="arrow" aria-hidden="true">&rarr;</span>
             </button>
         {/if}
     </Card>
@@ -336,6 +423,10 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     .chip:active {
         transform: scale(0.96);
     }
+    .chip:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     /* Verdict on the identification step, as a soft status pill with a glyph. */
     .classify-fb {
         display: inline-flex;
@@ -393,6 +484,10 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     .choice:active:not(:disabled) {
         transform: scale(0.99);
     }
+    .choice:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
+    }
     .choice:disabled {
         cursor: default;
     }
@@ -441,17 +536,17 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     .choice.chosen .letter {
         background: var(--lsat-accent);
         border-color: var(--lsat-accent);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
     }
     .choice.right .letter {
-        background: var(--lsat-good);
+        background: var(--lsat-good-soft);
         border-color: var(--lsat-good);
-        color: #fff;
+        color: var(--lsat-good);
     }
     .choice.wrong .letter {
-        background: var(--lsat-bad);
+        background: var(--lsat-bad-soft);
         border-color: var(--lsat-bad);
-        color: #fff;
+        color: var(--lsat-bad);
     }
     .text {
         margin-top: 0.15rem;
@@ -468,7 +563,7 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
         border: none;
         border-radius: var(--lsat-radius-pill);
         background: var(--lsat-hero);
-        color: #fff;
+        color: var(--lsat-ink-on-accent);
         font: inherit;
         font-weight: 650;
         cursor: pointer;
@@ -482,6 +577,10 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
     }
     .next:active {
         transform: scale(0.97);
+    }
+    .next:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .next .arrow {
         transition: transform var(--lsat-transition) var(--lsat-ease);
@@ -504,6 +603,17 @@ desktop reviewer template but uses the HTTP client instead of the Qt pycmd bridg
         font-size: 0.86rem;
         line-height: 1.4;
         text-decoration: none;
+        /* it's a <button> now (was a dead <a> to this same route): reset native
+         * button chrome so it keeps the card look, and make it full-width + tappable. */
+        width: 100%;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        appearance: none;
+    }
+    .prove-it:focus-visible {
+        outline: none;
+        box-shadow: var(--lsat-ring);
     }
     .prove-it em {
         font-style: italic;
